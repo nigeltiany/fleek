@@ -1,0 +1,40 @@
+{
+  "project_info": {
+    "project_number": "142753093178",
+    "firebase_url": "https://fl-dating.firebaseio.com",
+    "project_id": "fl-dating",
+    "storage_bucket": "fl-dating.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:142753093178:android:d059cf16865b4f60694703",
+        "android_client_info": {
+          "package_name": "com.groundup.fl_dating"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "142753093178-jtgd571m4f6n2dqtebs18j3nrmk78u91.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyA_fiMthUjItEViTO5vS-ihXApc1RN98EM"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "142753093178-jtgd571m4f6n2dqtebs18j3nrmk78u91.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
