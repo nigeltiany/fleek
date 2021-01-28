@@ -511,8 +511,8 @@ class FireStoreUtils {
 
           if (fleekUser.id != FirebaseAuth.instance.currentUser.uid) {
             AppUser user = AppUser.fromJson(fleekUser.data());
-            double distance = getDistance(user.location, currentUser.location);
-            user.milesAway = '$distance Miles Away';
+            int distance = getDistance(user.location, currentUser.location).ceil();
+            user.milesAway = '${distance < 3 ? '~2' : distance} Miles Away';
             fleekUsers.insert(0, user);
             fleekCardsStreamController.add(fleekUsers);
             if (fleekUsers.isEmpty) {
@@ -533,11 +533,11 @@ class FireStoreUtils {
     
     List<String> viewedUsers = List<String>();
     
-    QuerySnapshot result1 = await firestore.collection(SWIPES).where('swiperUserID', isEqualTo: user.userID).get().catchError((onError) {
+    QuerySnapshot result = await firestore.collection(SWIPES).where('swiperUserID', isEqualTo: user.userID).get().catchError((onError) {
       print('${(onError as PlatformException).message}');
     });
     
-    result1.docs.forEach((element) {
+    result.docs.forEach((element) {
      viewedUsers.add(Swipe.fromJson(element.data()).forUserID);
     });
     
