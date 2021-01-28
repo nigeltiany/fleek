@@ -21,6 +21,7 @@ dependencies:
   flutter_facebook_login: ^3.0.0
   flutter_secure_storage: ^3.3.5
   flutter_spinkit: ^4.1.2
+  geoflutterfire: ^2.2.1
   http: ^0.12.1
   image_picker: ^0.6.5
   in_app_purchase: ^0.3.4+1

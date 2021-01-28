@@ -8,6 +8,7 @@ import 'package:dating/model/ChannelParticipation.dart';
 import 'package:dating/model/ChatModel.dart';
 import 'package:dating/model/ChatVideoContainer.dart';
 import 'package:dating/model/ConversationModel.dart';
+import 'package:dating/model/Gender.dart';
 import 'package:dating/model/HomeConversationModel.dart';
 import 'package:dating/model/MessageData.dart';
 import 'package:dating/model/Swipe.dart';
@@ -23,6 +24,7 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart';
 import 'package:gecies/gecies.dart';
+import 'package:geoflutterfire/geoflutterfire.dart';
 import 'package:http/http.dart' as http;
 import 'package:location/location.dart';
 import 'package:path/path.dart' as Path;
@@ -31,6 +33,9 @@ import 'package:provider/provider.dart';
 import 'package:video_thumbnail/video_thumbnail.dart';
 
 import '../constants.dart';
+
+final geo = Geoflutterfire();
+
 
 class FireStoreUtils {
   static FirebaseMessaging firebaseMessaging = FirebaseMessaging();
@@ -138,9 +143,9 @@ class FireStoreUtils {
     List matchList = List<Swipe>();
     await firestore
         .collection(SWIPES)
-        .where('user1', isEqualTo: userID)
+        .where('swiperUserID', isEqualTo: userID)
         .where('hasBeenSeen', isEqualTo: true)
-        .getDocuments()
+        .get()
         .then((querysnapShot) {
       querysnapShot.docs.forEach((doc) {
         Swipe match = Swipe.fromJson(doc.data());
@@ -169,7 +174,7 @@ class FireStoreUtils {
     matchedUsersList.clear();
     matchedUsersList = await getMatches(userID);
     matchedUsersList.forEach((matchedUser) {
-      friendIDs.add(matchedUser.user2);
+      friendIDs.add(matchedUser.forUserID);
     });
     matches.clear();
     for (String id in friendIDs) {
@@ -485,20 +490,31 @@ class FireStoreUtils {
         latitude: locationData.latitude,
         longitude: locationData.longitude,
       );
-      await firestore.collection(USERS)
+      
+      var viewedUsers = await _getViewedUsers(currentUser);
+      viewedUsers.add(currentUser.userID); // Do not show user their own account
+
+      var query = firestore.collection(USERS)
         .where('showMe', isEqualTo: true)
-        .where('developerAccount', isEqualTo: kDebugMode).get().then((value) async {
+        .where('developerAccount', isEqualTo: kDebugMode)
+        .where('id', whereNotIn: viewedUsers);
+      
+      if (currentUser.settings.genderPreference != GenderPreference.ALL) {
+        query = query.where('settings.genderPreference', isEqualTo: currentUser.settings.genderPreference.toFirebaseString());
+      }
+
+      geo.collection(collectionRef: query).within(center: currentUser.location, radius: currentUser.settings.distanceRadius, field: 'location');
+
+      await query.get().then((value) async {
 
         value.docs.forEach((DocumentSnapshot fleekUser) async {
 
           if (fleekUser.id != FirebaseAuth.instance.currentUser.uid) {
             AppUser user = AppUser.fromJson(fleekUser.data());
             double distance = getDistance(user.location, currentUser.location);
-            if (await _isValidUserForfleekSwipe(user, distance)) {
-              user.milesAway = '$distance Miles Away';
-              fleekUsers.insert(0, user);
-              fleekCardsStreamController.add(fleekUsers);
-            }
+            user.milesAway = '$distance Miles Away';
+            fleekUsers.insert(0, user);
+            fleekCardsStreamController.add(fleekUsers);
             if (fleekUsers.isEmpty) {
               fleekCardsStreamController.add(fleekUsers);
             }
@@ -513,24 +529,26 @@ class FireStoreUtils {
     yield* fleekCardsStreamController.stream;
   }
 
-  Future<bool> _isValidUserForfleekSwipe(AppUser user, double distance) async {
-    //make sure that we haven't swiped right this user before
-    QuerySnapshot result1 = await firestore
-      .collection(SWIPES)
-      .where('user1', isEqualTo: FirebaseAuth.instance.currentUser.uid)
-      .where('user2', isEqualTo: user.userID)
-      .get()
-      .catchError((onError) {
+  Future<List<String>> _getViewedUsers(AppUser user) async {
+    
+    List<String> viewedUsers = List<String>();
+    
+    QuerySnapshot result1 = await firestore.collection(SWIPES).where('swiperUserID', isEqualTo: user.userID).get().catchError((onError) {
       print('${(onError as PlatformException).message}');
     });
-    return result1.docs.isEmpty && isPreferredGender(user, user.settings.gender) && isInPreferredDistance(user, distance);
+    
+    result1.docs.forEach((element) {
+     viewedUsers.add(Swipe.fromJson(element.data()).forUserID);
+    });
+    
+    return viewedUsers;
   }
 
   matchChecker(BuildContext context) async {
     String myID = FirebaseAuth.instance.currentUser.uid;
     QuerySnapshot result = await firestore
       .collection(SWIPES)
-      .where('user2', isEqualTo: myID)
+      .where('forUserID', isEqualTo: myID)
       .where('type', isEqualTo: 'like')
       .get();
     if (result.docs.isNotEmpty) {
@@ -538,14 +556,14 @@ class FireStoreUtils {
         Swipe match = Swipe.fromJson(document.data());
         QuerySnapshot unSeenMatches = await firestore
           .collection(SWIPES)
-          .where('user1', isEqualTo: myID)
+          .where('swiperUserID', isEqualTo: myID)
           .where('type', isEqualTo: 'like')
-          .where('user2', isEqualTo: match.user1)
+          .where('forUserID', isEqualTo: match.swiperUserID)
           .where('hasBeenSeen', isEqualTo: false)
           .get();
         if (unSeenMatches.docs.isNotEmpty) {
           unSeenMatches.docs.forEach((DocumentSnapshot unSeenMatch) async {
-            DocumentSnapshot matchedUserDocSnapshot = await firestore.collection(USERS).doc(match.user1).get();
+            DocumentSnapshot matchedUserDocSnapshot = await firestore.collection(USERS).doc(match.swiperUserID).get();
             AppUser matchedUser = AppUser.fromJson(matchedUserDocSnapshot.data());
             push(context, MatchScreen(matchedUser: matchedUser));
             updateHasBeenSeen(unSeenMatch.data());
@@ -561,8 +579,8 @@ class FireStoreUtils {
     Swipe leftSwipe = Swipe(
       id: documentReference.id,
       type: 'dislike',
-      user1: FirebaseAuth.instance.currentUser.uid,
-      user2: dislikedUser.userID,
+      swiperUserID: FirebaseAuth.instance.currentUser.uid,
+      forUserID: dislikedUser.userID,
       created_at: Timestamp.now(),
       createdAt: Timestamp.now(),
       hasBeenSeen: false,
@@ -575,8 +593,8 @@ class FireStoreUtils {
     // if not, send him match request
     QuerySnapshot querySnapshot = await firestore
       .collection(SWIPES)
-      .where('user1', isEqualTo: user.userID)
-      .where('user2', isEqualTo: FirebaseAuth.instance.currentUser.uid)
+      .where('swiperUserID', isEqualTo: user.userID)
+      .where('forUserID', isEqualTo: FirebaseAuth.instance.currentUser.uid)
       .where('type', isEqualTo: 'like')
       .get();
 
@@ -589,8 +607,8 @@ class FireStoreUtils {
         hasBeenSeen: true,
         created_at: Timestamp.now(),
         createdAt: Timestamp.now(),
-        user1: FirebaseAuth.instance.currentUser.uid,
-        user2: user.userID,
+        swiperUserID: FirebaseAuth.instance.currentUser.uid,
+        forUserID: user.userID,
       );
       await document.set(swipe.toJson(), SetOptions(merge: true));
       if (user.settings.pushNewMatchesEnabled) {
@@ -616,8 +634,8 @@ class FireStoreUtils {
     DocumentReference documentReference = firestore.collection(SWIPES).doc();
     Swipe swipe = Swipe(
       id: documentReference.id,
-      user1: myID,
-      user2: user.userID,
+      swiperUserID: myID,
+      forUserID: user.userID,
       hasBeenSeen: false,
       createdAt: Timestamp.now(),
       created_at: Timestamp.now(),
@@ -651,8 +669,8 @@ class FireStoreUtils {
   undo(AppUser fleekUser) async {
     await firestore
         .collection(SWIPES)
-        .where('user1', isEqualTo: FirebaseAuth.instance.currentUser.uid)
-        .where('user2', isEqualTo: fleekUser.userID)
+        .where('swiperUserID', isEqualTo: FirebaseAuth.instance.currentUser.uid)
+        .where('forUserID', isEqualTo: fleekUser.userID)
         .getDocuments()
         .then((value) async {
       if (value.docs.isNotEmpty) {

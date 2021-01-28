@@ -9,7 +9,7 @@ class Settings with ChangeNotifier {
   bool _pushTopPicksEnabled = true;
   GenderPreference _genderPreference;
   Gender _gender;
-  num _distanceRadius = double.infinity;
+  double _distanceRadius = double.infinity;
   bool _showMe = false;
 
   Settings();
@@ -22,7 +22,7 @@ class Settings with ChangeNotifier {
       ..pushTopPicksEnabled = parsedJson['pushTopPicksEnabled'] ?? true
       ..genderPreference = genderPreferenceFromFirebaseString(parsedJson['genderPreference']) ?? GenderPreference.FEMALE
       ..gender = genderFromFirebaseString(parsedJson['gender']) ?? Gender.MALE
-      ..distanceRadius = parsedJson['distanceRadius'] is num ? parsedJson['distanceRadius'] : double.infinity
+      ..distanceRadius = parsedJson['distanceRadius'] is double ? parsedJson['distanceRadius'] : double.infinity
       ..showMe = parsedJson['showMe'] ?? true;
   }
 
@@ -81,9 +81,9 @@ class Settings with ChangeNotifier {
     notifyListeners();
   }
 
-  num get distanceRadius => _distanceRadius;
+  double get distanceRadius => _distanceRadius;
 
-  set distanceRadius(num value) {
+  set distanceRadius(double value) {
     _distanceRadius = value;
     notifyListeners();
   }

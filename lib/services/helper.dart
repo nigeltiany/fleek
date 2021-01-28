@@ -251,26 +251,6 @@ Future<LocationData> getCurrentLocation() async {
   return await location.getLocation();
 }
 
-bool isInPreferredDistance(AppUser user, double distance) {
-  if (!user.settings.distanceRadius.isNaN) {
-    if (distance <= user.settings.distanceRadius) {
-      return true;
-    } else {
-      return false;
-    }
-  } else {
-    return true;
-  }
-}
-
-bool isPreferredGender(AppUser user, Gender gender) {
-  if (user.settings.genderPreference == GenderPreference.ALL) {
-    return true;
-  } else {
-    return gender.toFirebaseString() == user.settings.genderPreference.toFirebaseString();
-  }
-}
-
 double getDistance(UserLocation userLocation, UserLocation myLocation) {
   final Distance distance = new Distance();
   final double milesAway = distance.as(
