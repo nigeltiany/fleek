@@ -490,17 +490,15 @@ class FireStoreUtils {
         latitude: locationData.latitude,
         longitude: locationData.longitude,
       );
-      
-      var viewedUsers = await _getViewedUsers(currentUser);
-      viewedUsers.add(currentUser.userID); // Do not show user their own account
 
       var query = firestore.collection(USERS)
-        .where('showMe', isEqualTo: true)
-        .where('developerAccount', isEqualTo: kDebugMode)
-        .where('id', whereNotIn: viewedUsers);
-      
+        .where('showMe', isEqualTo: true) // The person must want to be shown
+        .where('developerAccount', isEqualTo: kDebugMode) // and is not a developer account
+        .where('settings.genderPreference', whereIn: [currentUser.settings.gender.toFirebaseString(), GenderPreference.ALL.toFirebaseString()]); // and likes people of my gender or all people
+
+      // If I have a preference, add my preference to the query
       if (currentUser.settings.genderPreference != GenderPreference.ALL) {
-        query = query.where('settings.genderPreference', isEqualTo: currentUser.settings.genderPreference.toFirebaseString());
+        query = query.where('settings.gender', isEqualTo: currentUser.settings.genderPreference.toFirebaseString());
       }
 
       geo.collection(collectionRef: query).within(center: currentUser.location, radius: currentUser.settings.distanceRadius, field: 'location');
@@ -512,9 +510,11 @@ class FireStoreUtils {
           if (fleekUser.id != FirebaseAuth.instance.currentUser.uid) {
             AppUser user = AppUser.fromJson(fleekUser.data());
             int distance = getDistance(user.location, currentUser.location).ceil();
-            user.milesAway = '${distance < 3 ? '~2' : distance} Miles Away';
-            fleekUsers.insert(0, user);
-            fleekCardsStreamController.add(fleekUsers);
+            if (await _userAlreadyViewed(user)) {
+              user.milesAway = '${distance < 3 ? '~2' : distance} Miles Away';
+              fleekUsers.insert(0, user);
+              fleekCardsStreamController.add(fleekUsers);
+            }
             if (fleekUsers.isEmpty) {
               fleekCardsStreamController.add(fleekUsers);
             }
@@ -529,11 +529,13 @@ class FireStoreUtils {
     yield* fleekCardsStreamController.stream;
   }
 
-  Future<List<String>> _getViewedUsers(AppUser user) async {
+  Future<bool> _userAlreadyViewed(AppUser user) async {
     
     List<String> viewedUsers = List<String>();
     
-    QuerySnapshot result = await firestore.collection(SWIPES).where('swiperUserID', isEqualTo: user.userID).get().catchError((onError) {
+    QuerySnapshot result = await firestore.collection(SWIPES)
+      .where('swiperUserID', isEqualTo: FirebaseAuth.instance.currentUser.uid)
+      .where('forUserID', isEqualTo: user.userID).get().catchError((onError) {
       print('${(onError as PlatformException).message}');
     });
     
@@ -541,7 +543,7 @@ class FireStoreUtils {
      viewedUsers.add(Swipe.fromJson(element.data()).forUserID);
     });
     
-    return viewedUsers;
+    return result.docs.isEmpty;
   }
 
   matchChecker(BuildContext context) async {
