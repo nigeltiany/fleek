@@ -221,53 +221,52 @@ class _ChatScreenState extends State<ChatScreen> {
                   ),
                   color: isDarkMode(context) ? Colors.grey[700] : Colors.grey.shade200,
                 ),
-                child: Row(
-                  children: <Widget>[
-                    InkWell(
-                      onTap: () => _onMicClicked(),
-                      child: Icon(
-                        Icons.mic,
-                        color: currentRecordingState == RecordingState.HIDDEN ? Color(COLOR_PRIMARY) : Colors.red,
-                      ),
-                    ),
-                    Expanded(
-                      child: TextField(
-                        controller: _messageController,
-                        textAlignVertical: TextAlignVertical.center,
-                        textCapitalization: TextCapitalization.sentences,
-                        maxLines: 5,
-                        minLines: 1,
-                        keyboardType: TextInputType.multiline,
-                        decoration: _inputAreaDecoration,
-                        onChanged: (s) {
-                          setState(() {});
-                        },
-                        onTap: () {
-                          setState(() {
-                            currentRecordingState = RecordingState.HIDDEN;
-                          });
-                        },
-                      ),
-                    ),
-                  ],
+                child: TextField(
+                  controller: _messageController,
+                  textAlignVertical: TextAlignVertical.center,
+                  textCapitalization: TextCapitalization.sentences,
+                  maxLines: 5,
+                  minLines: 1,
+                  keyboardType: TextInputType.multiline,
+                  decoration: _inputAreaDecoration,
+                  onChanged: (s) {
+                    setState(() {});
+                  },
+                  onTap: () {
+                    setState(() {
+                      currentRecordingState = RecordingState.HIDDEN;
+                    });
+                  },
                 ),
               ),
             ),
           ),
-          IconButton(
-            icon: Icon(Icons.send,
-              color: _messageController.text.isEmpty ? Color(COLOR_PRIMARY).withOpacity(.5) : Color(COLOR_PRIMARY),
-            ),
-            onPressed: () async {
-              if (_messageController.text.isNotEmpty) {
-                await _sendMessage(_messageController.text, null, '');
-                _messageController.clear();
-                setState(() {});
-              }
-            },
-          )
+          _chatAction(),
         ],
       ),
+    );
+  }
+
+  Widget _chatAction() {
+    if (_messageController.text.isEmpty) {
+      return IconButton(
+        icon: Icon(Icons.mic,
+          color: currentRecordingState == RecordingState.HIDDEN ? Color(COLOR_PRIMARY) : Colors.red,
+        ),
+        onPressed: _onMicClicked,
+      );
+    }
+     return IconButton(
+      icon: Icon(Icons.send,
+        color: Color(COLOR_PRIMARY),
+      ),
+      onPressed: () async {
+        if (_messageController.text.isNotEmpty) {
+          await _sendMessage(_messageController.text, null, '');
+          _messageController.clear();
+          setState(() {});
+        }
+      },
     );
   }
 

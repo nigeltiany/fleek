@@ -24,7 +24,7 @@ class AppUser with ChangeNotifier {
 
   bool _isVip = false;
 
-  //tinder related fields
+  //Fleek related fields
   UserLocation _location;
   UserLocation _signUpLocation;
   String _bio;
