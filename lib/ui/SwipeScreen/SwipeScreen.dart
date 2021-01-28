@@ -22,7 +22,7 @@ class SwipeScreen extends StatefulWidget {
 
 class _SwipeScreenState extends State<SwipeScreen> {
   FireStoreUtils _fireStoreUtils = FireStoreUtils();
-  Stream<List<AppUser>> tinderUsers;
+  Stream<List<AppUser>> fleekUsers;
   List<AppUser> swipedUsers = [];
   List<AppUser> users = [];
   CardController controller;
@@ -35,19 +35,19 @@ class _SwipeScreenState extends State<SwipeScreen> {
     super.initState();
     user = context.read<AppUser>();
     _fireStoreUtils.matchChecker(context);
-    tinderUsers = _fireStoreUtils.getTinderUsers(user);
+    fleekUsers = _fireStoreUtils.getFleekUsers(user);
   }
 
   @override
   void dispose() {
-    _fireStoreUtils.closeTinderStream();
+    _fireStoreUtils.closeFleekStream();
     super.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
     return StreamBuilder<List<AppUser>>(
-      stream: tinderUsers,
+      stream: fleekUsers,
       initialData: [],
       builder: (context, snapshot) {
         if (snapshot.hasError) return Text('Error: ${snapshot.error}');
@@ -68,10 +68,10 @@ class _SwipeScreenState extends State<SwipeScreen> {
     );
   }
 
-  Widget _buildCard(AppUser tinderUser) {
+  Widget _buildCard(AppUser fleekUser) {
     return GestureDetector(
       onTap: () async {
-        _launchDetailsScreen(tinderUser);
+        _launchDetailsScreen(fleekUser);
       },
       child: Card(
         child: Stack(
@@ -84,9 +84,9 @@ class _SwipeScreenState extends State<SwipeScreen> {
                     width: double.infinity,
                     height: double.infinity,
                     fit: BoxFit.cover,
-                    imageUrl: tinderUser.profilePictureURL == DEFAULT_AVATAR_URL
+                    imageUrl: fleekUser.profilePictureURL == DEFAULT_AVATAR_URL
                         ? ''
-                        : tinderUser.profilePictureURL,
+                        : fleekUser.profilePictureURL,
                     placeholder: (context, imageUrl) {
                       return Icon(
                         Icons.account_circle,
@@ -115,7 +115,7 @@ class _SwipeScreenState extends State<SwipeScreen> {
                   color: Colors.white,
                 ),
                 iconSize: 30,
-                onPressed: () => _onCardSettingsClick(tinderUser),
+                onPressed: () => _onCardSettingsClick(fleekUser),
               ),
             ),
             Positioned(
@@ -124,7 +124,7 @@ class _SwipeScreenState extends State<SwipeScreen> {
               child: Visibility(
                 visible: swipedUsers.isNotEmpty,
                 child: FloatingActionButton(
-                  heroTag: '${tinderUser.userID}',
+                  heroTag: '${fleekUser.userID}',
                   backgroundColor: Color(COLOR_PRIMARY),
                   mini: true,
                   child: Icon(
@@ -146,9 +146,9 @@ class _SwipeScreenState extends State<SwipeScreen> {
                   Padding(
                     padding: const EdgeInsets.only(bottom: 8.0),
                     child: Text(
-                      user.age == null || tinderUser.age.isNaN
-                          ? '${tinderUser.fullName()}'
-                          : '${tinderUser.fullName()}, ${tinderUser.age}',
+                      user.age == null || fleekUser.age.isNaN
+                          ? '${fleekUser.fullName()}'
+                          : '${fleekUser.fullName()}, ${fleekUser.age}',
                       style: TextStyle(
                         color: Colors.white,
                         fontWeight: FontWeight.bold,
@@ -165,7 +165,7 @@ class _SwipeScreenState extends State<SwipeScreen> {
                       Padding(
                         padding: const EdgeInsets.only(left: 8.0),
                         child: Text(
-                          '${tinderUser.school}',
+                          '${fleekUser.school}',
                           style: TextStyle(
                             color: Colors.white,
                           ),
@@ -182,7 +182,7 @@ class _SwipeScreenState extends State<SwipeScreen> {
                       Padding(
                         padding: const EdgeInsets.only(left: 8.0),
                         child: Text(
-                          '${tinderUser.milesAway}',
+                          '${fleekUser.milesAway}',
                           style: TextStyle(
                             color: Colors.white,
                           ),
@@ -204,12 +204,12 @@ class _SwipeScreenState extends State<SwipeScreen> {
     );
   }
 
-  Future<void> _launchDetailsScreen(AppUser tinderUser) async {
+  Future<void> _launchDetailsScreen(AppUser fleekUser) async {
     CardSwipeOrientation result =
     await Navigator.of(context).push(new MaterialPageRoute(
         builder: (context) =>
             UserDetailsScreen(
-              user: tinderUser,
+              user: fleekUser,
               isMatch: false,
             )));
     if (result != null) {

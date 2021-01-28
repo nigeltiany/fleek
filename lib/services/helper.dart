@@ -274,9 +274,10 @@ bool isPreferredGender(AppUser user, Gender gender) {
 double getDistance(UserLocation userLocation, UserLocation myLocation) {
   final Distance distance = new Distance();
   final double milesAway = distance.as(
-      LengthUnit.Mile,
-      new LatLng(userLocation.latitude, userLocation.longitude),
-      new LatLng(myLocation.latitude, myLocation.longitude));
+    LengthUnit.Mile,
+    LatLng(userLocation.latitude, userLocation.longitude),
+    LatLng(myLocation.latitude, myLocation.longitude),
+  );
   return milesAway;
 }
 

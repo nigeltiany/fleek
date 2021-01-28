@@ -14,7 +14,6 @@ class AppUser with ChangeNotifier {
   Settings _settings;
 
   String _phoneNumber;
-  bool _active = false;
   Firestore.Timestamp _lastOnlineTimestamp = Firestore.Timestamp.now();
   String _userID;
   String _profilePictureURL;
@@ -22,7 +21,9 @@ class AppUser with ChangeNotifier {
   String _fcmToken;
   String _publicKey;
 
+  bool _active = false;
   bool _isVip = false;
+  bool _developerAccount = kDebugMode;
 
   //Fleek related fields
   UserLocation _location;
@@ -51,6 +52,7 @@ class AppUser with ChangeNotifier {
     _profilePictureURL = cp.profilePictureURL ?? _profilePictureURL;
     _fcmToken = cp.fcmToken ?? _fcmToken;
     _isVip = cp.isVip ?? _isVip;
+    _developerAccount = cp._developerAccount ?? _developerAccount;
 
     //dating app related fields
     _location = cp.location ?? _location;
@@ -80,6 +82,7 @@ class AppUser with ChangeNotifier {
       ..profilePictureURL = parsedJson['profilePictureURL'] ?? ''
       ..fcmToken = parsedJson['fcmToken'] ?? ''
       ..isVip = parsedJson['isVip' ?? false]
+      ..developerAccount = parsedJson['developerAccount' ?? kDebugMode]
       ..publicKey = parsedJson['publicKey'] // allow null
 
       //dating app related fields
@@ -107,11 +110,12 @@ class AppUser with ChangeNotifier {
       'appIdentifier': this.appIdentifier,
       'fcmToken': this.fcmToken,
       'isVip': this.isVip,
+      'developerAccount': this.developerAccount,
 
       // Do NOT write the public key
       //'publicKey': this.publicKey,
 
-      //tinder related fields
+      //fleek related fields
       'showMe': this.settings != null ? this.settings.showMe : false,
       'location': this.location != null ? this.location.toJson() : UserLocation().toJson(),
       'signUpLocation': this.signUpLocation != null ? this.signUpLocation.toJson() : UserLocation().toJson(),
@@ -175,6 +179,13 @@ class AppUser with ChangeNotifier {
 
   set active(bool value) {
     _active = value;
+    notifyListeners();
+  }
+
+  bool get developerAccount => _developerAccount;
+
+  set developerAccount(bool value) {
+    _developerAccount = value;
     notifyListeners();
   }
 

@@ -20,6 +20,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:firebase_storage/firebase_storage.dart';
 import 'package:flutter/cupertino.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart';
 import 'package:gecies/gecies.dart';
 import 'package:http/http.dart' as http;
@@ -40,7 +41,7 @@ class FireStoreUtils {
   List<HomeConversationModel> homeConversations = [];
   List<BlockUserModel> blockedList = [];
   List<AppUser> matches = [];
-  StreamController tinderCardsStreamController;
+  StreamController fleekCardsStreamController;
 
   Future<AppUser> getCurrentUser(String uid) async {
     DocumentSnapshot userDocument = await firestore.collection(USERS).doc(uid).get();
@@ -473,39 +474,46 @@ class FireStoreUtils {
     return false;
   }
 
-  Stream<List<AppUser>> getTinderUsers(AppUser currentUser) async* {
-    tinderCardsStreamController = StreamController<List<AppUser>>();
-    List<AppUser> tinderUsers = [];
+  Stream<List<AppUser>> getFleekUsers(AppUser currentUser) async* {
+
+    fleekCardsStreamController = StreamController<List<AppUser>>();
+    List<AppUser> fleekUsers = [];
     LocationData locationData = await getCurrentLocation();
+
     if (locationData != null) {
       currentUser.location = UserLocation(
         latitude: locationData.latitude,
         longitude: locationData.longitude,
       );
-      await firestore.collection(USERS).where('showMe', isEqualTo: true).get().then((value) async {
-        value.docs.forEach((DocumentSnapshot tinderUser) async {
-          if (tinderUser.id != FirebaseAuth.instance.currentUser.uid) {
-            AppUser user = AppUser.fromJson(tinderUser.data());
-            double distance =
-            getDistance(user.location, currentUser.location);
-            if (await _isValidUserForTinderSwipe(user, distance)) {
-              user.milesAway = '$distance Miles Aways';
-              tinderUsers.insert(0, user);
-              tinderCardsStreamController.add(tinderUsers);
+      await firestore.collection(USERS)
+        .where('showMe', isEqualTo: true)
+        .where('developerAccount', isEqualTo: kDebugMode).get().then((value) async {
+
+        value.docs.forEach((DocumentSnapshot fleekUser) async {
+
+          if (fleekUser.id != FirebaseAuth.instance.currentUser.uid) {
+            AppUser user = AppUser.fromJson(fleekUser.data());
+            double distance = getDistance(user.location, currentUser.location);
+            if (await _isValidUserForfleekSwipe(user, distance)) {
+              user.milesAway = '$distance Miles Away';
+              fleekUsers.insert(0, user);
+              fleekCardsStreamController.add(fleekUsers);
             }
-            if (tinderUsers.isEmpty) {
-              tinderCardsStreamController.add(tinderUsers);
+            if (fleekUsers.isEmpty) {
+              fleekCardsStreamController.add(fleekUsers);
             }
           }
+
         });
+
       }, onError: (e) {
         print(e);
       });
     }
-    yield* tinderCardsStreamController.stream;
+    yield* fleekCardsStreamController.stream;
   }
 
-  Future<bool> _isValidUserForTinderSwipe(AppUser user, double distance) async {
+  Future<bool> _isValidUserForfleekSwipe(AppUser user, double distance) async {
     //make sure that we haven't swiped right this user before
     QuerySnapshot result1 = await firestore
       .collection(SWIPES)
@@ -640,11 +648,11 @@ class FireStoreUtils {
     await firebaseStorageRef.delete();
   }
 
-  undo(AppUser tinderUser) async {
+  undo(AppUser fleekUser) async {
     await firestore
         .collection(SWIPES)
         .where('user1', isEqualTo: FirebaseAuth.instance.currentUser.uid)
-        .where('user2', isEqualTo: tinderUser.userID)
+        .where('user2', isEqualTo: fleekUser.userID)
         .getDocuments()
         .then((value) async {
       if (value.docs.isNotEmpty) {
@@ -656,12 +664,12 @@ class FireStoreUtils {
     });
   }
 
-  closeTinderStream() {
-    tinderCardsStreamController.close();
+  closeFleekStream() {
+    fleekCardsStreamController.close();
   }
 
   void updateCardStream(List<AppUser> data) {
-    tinderCardsStreamController.add(data);
+    fleekCardsStreamController.add(data);
   }
 
   Future<bool> incrementSwipe() async {
