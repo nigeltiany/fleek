@@ -106,7 +106,7 @@ class _UserDetailsScreenState extends State<UserDetailsScreen> {
                     child: Row(
                       children: <Widget>[
                         Text(
-                          '${user.fullName()}',
+                          '${user.userName}',
                           style: TextStyle(
                               fontWeight: FontWeight.bold, fontSize: 27),
                         ),

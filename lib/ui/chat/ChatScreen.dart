@@ -116,7 +116,7 @@ class _ChatScreenState extends State<ChatScreen> {
       crossAxisAlignment: CrossAxisAlignment.center,
       children: <Widget>[
         Text(
-          homeConversationModel.members.first.fullName(),
+          homeConversationModel.members.first.userName,
           style: TextStyle(
             color: isDarkMode(context) ? Colors.grey.shade200 : Colors.white,
             fontWeight: FontWeight.bold,
@@ -908,10 +908,9 @@ class _ChatScreenState extends State<ChatScreen> {
             if (isSuccessful) {
               Navigator.pop(context);
               _showAlertDialog(context, 'Block',
-                  '${homeConversationModel.members.first
-                      .fullName()} has been blocked.');
+                  '${homeConversationModel.members.first.userName} has been blocked.');
             } else {
-              _showAlertDialog(context, 'Block', 'Couldn''\'t block ${homeConversationModel.members.first.fullName()}, please try again later.');
+              _showAlertDialog(context, 'Block', 'Couldn''\'t block ${homeConversationModel.members.first.userName}, please try again later.');
             }
           },
         ),
@@ -926,9 +925,9 @@ class _ChatScreenState extends State<ChatScreen> {
 
             if (isSuccessful) {
               Navigator.pop(context);
-              _showAlertDialog(context, 'Report', '${homeConversationModel.members.first.fullName()} has been reported and blocked.');
+              _showAlertDialog(context, 'Report', '${homeConversationModel.members.first.userName} has been reported and blocked.');
             } else {
-              _showAlertDialog(context, 'Report', 'Couldn''\'t report ${homeConversationModel.members.first.fullName()}, please try again later.');
+              _showAlertDialog(context, 'Report', 'Couldn''\'t report ${homeConversationModel.members.first.userName}, please try again later.');
             }
           },
         ),

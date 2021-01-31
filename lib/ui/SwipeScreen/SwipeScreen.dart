@@ -21,11 +21,12 @@ class SwipeScreen extends StatefulWidget {
 }
 
 class _SwipeScreenState extends State<SwipeScreen> {
+
   FireStoreUtils _fireStoreUtils = FireStoreUtils();
   Stream<List<AppUser>> fleekUsers;
   List<AppUser> swipedUsers = [];
   List<AppUser> users = [];
-  CardController controller;
+  CardController cardController;
   AppUser user;
 
   _SwipeScreenState();
@@ -34,7 +35,7 @@ class _SwipeScreenState extends State<SwipeScreen> {
   void initState() {
     super.initState();
     user = context.read<AppUser>();
-    _fireStoreUtils.matchChecker(context);
+    // _fireStoreUtils.matchChecker(context);
     fleekUsers = _fireStoreUtils.getFleekUsers(user);
   }
 
@@ -147,8 +148,8 @@ class _SwipeScreenState extends State<SwipeScreen> {
                     padding: const EdgeInsets.only(bottom: 8.0),
                     child: Text(
                       user.age == null || fleekUser.age.isNaN
-                          ? '${fleekUser.fullName()}'
-                          : '${fleekUser.fullName()}, ${fleekUser.age}',
+                          ? '${fleekUser.userName}'
+                          : '${fleekUser.userName}, ${fleekUser.age}',
                       style: TextStyle(
                         color: Colors.white,
                         fontWeight: FontWeight.bold,
@@ -156,23 +157,23 @@ class _SwipeScreenState extends State<SwipeScreen> {
                       ),
                     ),
                   ),
-                  Row(
-                    children: <Widget>[
-                      Icon(
-                        Icons.school,
-                        color: Colors.white,
-                      ),
-                      Padding(
-                        padding: const EdgeInsets.only(left: 8.0),
-                        child: Text(
-                          '${fleekUser.school}',
-                          style: TextStyle(
-                            color: Colors.white,
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
+                  // Row(
+                  //   children: <Widget>[
+                  //     Icon(
+                  //       Icons.school,
+                  //       color: Colors.white,
+                  //     ),
+                  //     Padding(
+                  //       padding: const EdgeInsets.only(left: 8.0),
+                  //       child: Text(
+                  //         '${fleekUser.school}',
+                  //         style: TextStyle(
+                  //           color: Colors.white,
+                  //         ),
+                  //       ),
+                  //     ),
+                  //   ],
+                  // ),
                   Row(
                     children: <Widget>[
                       Icon(
@@ -205,18 +206,19 @@ class _SwipeScreenState extends State<SwipeScreen> {
   }
 
   Future<void> _launchDetailsScreen(AppUser fleekUser) async {
-    CardSwipeOrientation result =
-    await Navigator.of(context).push(new MaterialPageRoute(
-        builder: (context) =>
-            UserDetailsScreen(
-              user: fleekUser,
-              isMatch: false,
-            )));
+    CardSwipeOrientation result = await Navigator.of(context).push(
+      MaterialPageRoute(
+        builder: (context) => UserDetailsScreen(
+          user: fleekUser,
+          isMatch: false,
+        ),
+      ),
+    );
     if (result != null) {
       if (result == CardSwipeOrientation.LEFT) {
-        controller.triggerLeft();
+        cardController.triggerLeft();
       } else {
-        controller.triggerRight();
+        cardController.triggerRight();
       }
     }
   }
@@ -224,7 +226,7 @@ class _SwipeScreenState extends State<SwipeScreen> {
   _onCardSettingsClick(AppUser user) {
     final action = CupertinoActionSheet(
       message: Text(
-        user.fullName(),
+        user.userName,
         style: TextStyle(fontSize: 15.0),
       ),
       actions: <Widget>[
@@ -241,11 +243,10 @@ class _SwipeScreenState extends State<SwipeScreen> {
               users.remove(user);
               _fireStoreUtils.updateCardStream(users);
               Scaffold.of(context).showSnackBar(SnackBar(content: Text
-                ('${user.fullName()} has been blocked.'),),);
+                ('${user.userName} has been blocked.'),),);
             } else {
               Scaffold.of(context).showSnackBar(SnackBar(content: Text
-                ('Couldn\'t block ${user
-                  .fullName()}, please try again later.'),),);
+                ('Couldn\'t block ${user.userName}, please try again later.'),),);
             }
           },
         ),
@@ -262,11 +263,10 @@ class _SwipeScreenState extends State<SwipeScreen> {
               users.removeWhere((element) => element.userID == user.userID);
               _fireStoreUtils.updateCardStream(users);
               Scaffold.of(context).showSnackBar(SnackBar(content: Text
-                ('${user.fullName()} has been reported and blocked.'),),);
+                ('${user.userName} has been reported and blocked.'),),);
             } else {
               Scaffold.of(context).showSnackBar(SnackBar(content: Text
-                ('Couldn\'t report ${user
-                  .fullName()}, please try again later.'),),);
+                ('Couldn\'t report ${user.userName}, please try again later.'),),);
             }
           },
         ),
@@ -358,7 +358,7 @@ class _SwipeScreenState extends State<SwipeScreen> {
                       .height * 0.9,
                   cardBuilder: (context, index) =>
                       _buildCard(data[index]),
-                  cardController: controller = CardController(),
+                  cardController: cardController = CardController(),
                   swipeCompleteCallback:
                       (CardSwipeOrientation orientation, int index) async {
                     if (orientation == CardSwipeOrientation.LEFT ||
@@ -412,7 +412,7 @@ class _SwipeScreenState extends State<SwipeScreen> {
                   elevation: 1,
                   heroTag: 'left',
                   onPressed: () {
-                    controller.triggerLeft();
+                    cardController.triggerLeft();
                   },
                   backgroundColor: Colors.white,
                   mini: false,
@@ -426,13 +426,13 @@ class _SwipeScreenState extends State<SwipeScreen> {
                   elevation: 1,
                   heroTag: 'center',
                   onPressed: () {
-                    controller.triggerRight();
+                    cardController.triggerRight();
                   },
-                  backgroundColor: Colors.white,
+                  backgroundColor: Color(COLOR_PRIMARY),
                   mini: true,
                   child: Icon(
                     Icons.star,
-                    color: Colors.blue,
+                    color: Colors.white,
                     size: 30,
                   ),
                 ),
@@ -440,13 +440,13 @@ class _SwipeScreenState extends State<SwipeScreen> {
                   elevation: 1,
                   heroTag: 'right',
                   onPressed: () {
-                    controller.triggerRight();
+                    cardController.triggerRight();
                   },
                   backgroundColor: Colors.white,
                   mini: false,
                   child: Icon(
                     Icons.favorite,
-                    color: Colors.green,
+                    color: Colors.redAccent,
                     size: 40,
                   ),
                 )
@@ -495,4 +495,5 @@ class _SwipeScreenState extends State<SwipeScreen> {
       },
     );
   }
+  
 }

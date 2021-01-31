@@ -371,7 +371,7 @@ class FireStoreUtils {
       if (element.settings.pushNewMessages) {
         await sendNotification(
           element.fcmToken,
-          isGroup ? conversationModel.name : user.fullName(),
+          isGroup ? conversationModel.name : user.userName,
           message.content.content[user.userID],
         );
       }
@@ -413,7 +413,7 @@ class FireStoreUtils {
 
   Future<bool> leaveGroup(AppUser user, ConversationModel conversationModel) async {
     bool isSuccessful = false;
-    //conversationModel.lastMessage = "${user.fullName()} left";
+    //conversationModel.lastMessage = "${user.userName} left";
     conversationModel.lastMessageDate = Timestamp.now();
     await updateChannel(conversationModel).then((_) async {
       await firestore
@@ -491,6 +491,8 @@ class FireStoreUtils {
         longitude: locationData.longitude,
       );
 
+      var viewedUsers = await firestore.collectionGroup("VIEWED_USERS_FOR::${currentUser.userID}").get();
+
       var query = firestore.collection(USERS)
         .where('showMe', isEqualTo: true) // The person must want to be shown
         .where('developerAccount', isEqualTo: kDebugMode) // and is not a developer account
@@ -501,16 +503,20 @@ class FireStoreUtils {
         query = query.where('settings.gender', isEqualTo: currentUser.settings.genderPreference.toFirebaseString());
       }
 
-      geo.collection(collectionRef: query).within(center: currentUser.location, radius: currentUser.settings.distanceRadius, field: 'location');
+      geo.collection(collectionRef: query).within(
+        center: currentUser.location,
+        radius: currentUser.settings.distanceRadius,
+        field: 'location',
+      ).listen((value) {
 
-      await query.get().then((value) async {
+        print("fetched user count: ${value.length}");
 
-        value.docs.forEach((DocumentSnapshot fleekUser) async {
+        value.forEach((DocumentSnapshot fleekUser) async {
 
           if (fleekUser.id != FirebaseAuth.instance.currentUser.uid) {
             AppUser user = AppUser.fromJson(fleekUser.data());
             int distance = getDistance(user.location, currentUser.location).ceil();
-            if (await _userAlreadyViewed(user)) {
+            if (viewedUsers.docs.where((element) => (element.data()["viewedUserIDs"] as List).contains(user.userID)).isEmpty) {
               user.milesAway = '${distance < 3 ? '~2' : distance} Miles Away';
               fleekUsers.insert(0, user);
               fleekCardsStreamController.add(fleekUsers);
@@ -522,11 +528,12 @@ class FireStoreUtils {
 
         });
 
-      }, onError: (e) {
-        print(e);
       });
+
     }
+
     yield* fleekCardsStreamController.stream;
+
   }
 
   Future<bool> _userAlreadyViewed(AppUser user) async {
@@ -583,7 +590,6 @@ class FireStoreUtils {
       type: 'dislike',
       swiperUserID: FirebaseAuth.instance.currentUser.uid,
       forUserID: dislikedUser.userID,
-      created_at: Timestamp.now(),
       createdAt: Timestamp.now(),
       hasBeenSeen: false,
     );
@@ -607,7 +613,6 @@ class FireStoreUtils {
         id: document.id,
         type: 'like',
         hasBeenSeen: true,
-        created_at: Timestamp.now(),
         createdAt: Timestamp.now(),
         swiperUserID: FirebaseAuth.instance.currentUser.uid,
         forUserID: user.userID,
@@ -618,7 +623,7 @@ class FireStoreUtils {
           user.fcmToken,
           'New match',
           'You have got a new '
-          'match: ${user.fullName()}.'
+          'match: ${user.userName}.'
         );
       }
 
@@ -640,10 +645,9 @@ class FireStoreUtils {
       forUserID: user.userID,
       hasBeenSeen: false,
       createdAt: Timestamp.now(),
-      created_at: Timestamp.now(),
       type: 'like',
     );
-    await documentReference.setData(swipe.toJson()).then((onValue) {
+    await documentReference.set(swipe.toJson()).then((onValue) {
       isSuccessful = true;
     }, onError: (e) {
       isSuccessful = false;
@@ -653,10 +657,7 @@ class FireStoreUtils {
 
   updateHasBeenSeen(Map<String, dynamic> target) async {
     target['hasBeenSeen'] = true;
-    await firestore
-        .collection(SWIPES)
-        .doc(target['id'] ?? '')
-        .updateData(target);
+    await firestore.collection(SWIPES).doc(target['id'] ?? '').update(target);
   }
 
   Future<void> deleteImage(String imageFileUrl) async {

@@ -64,10 +64,6 @@ class AppUser with ChangeNotifier {
     notifyListeners();
   }
 
-  String fullName() {
-    return '$firstName $lastName';
-  }
-
   factory AppUser.fromJson(Map<String, dynamic> parsedJson) {
     return AppUser()
       ..email = parsedJson['email'] ?? ''

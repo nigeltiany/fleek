@@ -71,7 +71,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
             child: SizedBox(
               width: double.infinity,
               child: Text(
-                user.fullName(),
+                user.userName,
                 style: TextStyle(
                     color: isDarkMode(context) ? Colors.white : Colors.black,
                     fontSize: 20),
