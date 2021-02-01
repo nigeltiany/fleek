@@ -1,4 +1,8 @@
+import 'package:dating/components/GenderSelector.dart';
+import 'package:dating/components/OrientationSelector.dart';
+import 'package:dating/model/Gender.dart';
 import 'package:dating/model/User.dart';
+import 'package:dating/services/FirebaseHelper.dart';
 import 'package:dating/services/helper.dart';
 import 'package:dating/ui/SwipeScreen/SwipeScreen.dart';
 import 'package:dating/ui/conversationsScreen/ConversationsScreen.dart';
@@ -23,15 +27,39 @@ class HomeScreen extends StatefulWidget {
   }
 }
 
-class _HomeState extends State<HomeScreen> {
+class _HomeState extends State<HomeScreen> with TickerProviderStateMixin {
 
   AppUser user;
   int _currentIndex = 1;
+
+  TabController _genderTabController;
+  TabController _orientationTabController;
 
   @override
   void initState() {
     super.initState();
     user = context.read<AppUser>();
+
+    _genderTabController = TabController(
+      initialIndex: user.settings.gender.index,
+      length: 2,
+      vsync: this,
+    );
+
+    _orientationTabController = TabController(
+      initialIndex: user.settings.genderPreference.index,
+      length: 3,
+      vsync: this,
+    );
+
+    [_genderTabController, _orientationTabController].forEach((controller) {
+      controller.addListener(() async {
+        user.settings.gender = _genderTabController.index == 0 ? Gender.MALE : Gender.FEMALE;
+        user.settings.genderPreference = GenderPreference.values[_orientationTabController.index];
+        await FireStoreUtils.updateCurrentUser(context.read<AppUser>());
+      });
+    });
+
   }
 
   Widget _logo({ bool active = false }) {
@@ -67,10 +95,7 @@ class _HomeState extends State<HomeScreen> {
     } else if (_currentIndex == 1) {
       button = IconButton(
         icon: Icon(Icons.tune, color: Colors.grey),
-        onPressed: () {
-          setState(() {
-          });
-        },
+        onPressed: showFiltersBottomSheet,
       );
     } else {
       button = Container();
@@ -139,6 +164,28 @@ class _HomeState extends State<HomeScreen> {
           );
         },
       ),
+    );
+  }
+
+  showFiltersBottomSheet() {
+    showModalBottomSheet<void>(
+      context: context,
+      builder: (BuildContext context) {
+        return Container(
+          color: isDarkMode(context) ? Color(0xFF303030) : Colors.white,
+          child: Padding(
+            padding: const EdgeInsets.all(16.0),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                GenderSelector(tabController: _genderTabController),
+                SizedBox(height: 24),
+                OrientationSelector(tabController: _orientationTabController),
+              ],
+            ),
+          ),
+        );
+      },
     );
   }
 

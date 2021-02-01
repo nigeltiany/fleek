@@ -52,10 +52,10 @@ class _SettingsScreenState extends State<SettingsScreen> {
         backgroundColor: isDarkMode(context) ? Colors.black : Colors.white,
         brightness: isDarkMode(context) ? Brightness.dark : Brightness.light,
         centerTitle: true,
-        title: Text(
-          'Settings',
+        title: Text('Settings',
           style: TextStyle(
-              color: isDarkMode(context) ? Colors.white : Colors.black),
+            color: isDarkMode(context) ? Colors.white : Colors.black,
+          ),
         ),
       ),
       body: SingleChildScrollView(
@@ -64,19 +64,17 @@ class _SettingsScreenState extends State<SettingsScreen> {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: <Widget>[
                 Padding(
-                  padding: const EdgeInsets.only(
-                      right: 16.0, left: 16, top: 16, bottom: 8),
-                  child: Text(
-                    'Discovery',
+                  padding: const EdgeInsets.only(right: 16.0, left: 16, top: 16, bottom: 8),
+                  child: Text('Discovery',
                     style: TextStyle(
-                        color: isDarkMode(context)
-                            ? Colors.white54 : Colors.black54, fontSize: 18),
+                      color: isDarkMode(context) ? Colors.white54 : Colors.black54,
+                      fontSize: 18,
+                    ),
                   ),
                 ),
                 Material(
                   elevation: 2,
-                  color: isDarkMode(context)
-                      ? Colors.black12 : Colors.white,
+                  color: isDarkMode(context) ? Colors.black12 : Colors.white,
                   child: Column(
                     mainAxisSize: MainAxisSize.min,
                     crossAxisAlignment: CrossAxisAlignment.start,

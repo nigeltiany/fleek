@@ -9,7 +9,6 @@ import 'package:dating/ui/profile_setup/steps/bio.dart';
 import 'package:dating/ui/profile_setup/steps/congratulations.dart';
 import 'package:dating/ui/profile_setup/steps/preferences.dart';
 import 'package:dating/ui/profile_setup/steps/location.dart';
-import 'package:dating/ui/profile_setup/steps/preferences.dart';
 import 'package:dating/ui/profile_setup/steps/profile_image.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';

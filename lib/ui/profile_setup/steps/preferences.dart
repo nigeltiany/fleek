@@ -1,3 +1,5 @@
+import 'package:dating/components/GenderSelector.dart';
+import 'package:dating/components/OrientationSelector.dart';
 import 'package:dating/components/PrimaryButton.dart';
 import 'package:dating/constants.dart';
 import 'package:dating/model/Gender.dart';
@@ -113,92 +115,14 @@ class _PreferencesSetupState extends State<PreferencesSetup> with TickerProvider
   Widget _genderSelector () {
     return  Padding(
       padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text("Gender", style: TextStyle(
-              color: Colors.black,
-              fontSize: 18
-            ),
-          ),
-          SizedBox(height: 12,),
-          TabBar(
-            controller: _genderTabController,
-            unselectedLabelColor: Color(COLOR_PRIMARY),
-            indicatorSize: TabBarIndicatorSize.tab,
-            indicator: BoxDecoration(
-                gradient: LinearGradient(
-                  colors: [Color(COLOR_PRIMARY_DARK), Color(COLOR_PRIMARY)],
-                ),
-                borderRadius: BorderRadius.circular(50),
-                color: Color(COLOR_PRIMARY_DARK)
-            ),
-            tabs: [
-              Tab(
-                child: Align(
-                  alignment: Alignment.center,
-                  child: Text("Male"),
-                ),
-              ),
-              Tab(
-                child: Align(
-                  alignment: Alignment.center,
-                  child: Text("Female"),
-                ),
-              ),
-            ],
-          ),
-        ],
-      ),
+      child: GenderSelector(tabController: _genderTabController),
     );
   }
 
   Widget _orientationSelector () {
     return  Padding(
       padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text("Show me", style: TextStyle(
-              color: Colors.black,
-              fontSize: 18
-            ),
-          ),
-          SizedBox(height: 12,),
-          TabBar(
-            controller: _orientationTabController,
-            unselectedLabelColor: Color(COLOR_PRIMARY),
-            indicatorSize: TabBarIndicatorSize.tab,
-            indicator: BoxDecoration(
-                gradient: LinearGradient(
-                  colors: [Color(COLOR_PRIMARY_DARK), Color(COLOR_PRIMARY)],
-                ),
-                borderRadius: BorderRadius.circular(50),
-                color: Color(COLOR_PRIMARY_DARK)
-            ),
-            tabs: [
-              Tab(
-                child: Align(
-                  alignment: Alignment.center,
-                  child: Text("Guys"),
-                ),
-              ),
-              Tab(
-                child: Align(
-                  alignment: Alignment.center,
-                  child: Text("Ladies"),
-                ),
-              ),
-              Tab(
-                child: Align(
-                  alignment: Alignment.center,
-                  child: Text("Everyone"),
-                ),
-              ),
-            ],
-          ),
-        ],
-      ),
+      child: OrientationSelector(tabController: _orientationTabController),
     );
   }
 
