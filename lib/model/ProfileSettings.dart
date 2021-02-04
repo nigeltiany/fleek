@@ -1,4 +1,5 @@
 import 'package:dating/model/Gender.dart';
+import 'package:dating/model/SearchInterests.dart';
 import 'package:flutter/foundation.dart';
 
 class Settings with ChangeNotifier {
@@ -9,6 +10,7 @@ class Settings with ChangeNotifier {
   bool _pushTopPicksEnabled = true;
   GenderPreference _genderPreference;
   Gender _gender;
+  SearchInterest _searchInterest;
   double _distanceRadius = double.infinity;
   bool _showMe = false;
 
@@ -21,6 +23,7 @@ class Settings with ChangeNotifier {
       ..pushSuperLikesEnabled = parsedJson['pushSuperLikesEnabled'] ?? true
       ..pushTopPicksEnabled = parsedJson['pushTopPicksEnabled'] ?? true
       ..genderPreference = genderPreferenceFromFirebaseString(parsedJson['genderPreference']) ?? GenderPreference.FEMALE
+      ..searchInterest = searchInterestFromFirebaseString(parsedJson['searchInterest']) ?? SearchInterest.DATES
       ..gender = genderFromFirebaseString(parsedJson['gender']) ?? Gender.MALE
       ..distanceRadius = parsedJson['distanceRadius'] is double ? parsedJson['distanceRadius'] : double.infinity
       ..showMe = parsedJson['showMe'] ?? true;
@@ -33,6 +36,7 @@ class Settings with ChangeNotifier {
       'pushSuperLikesEnabled': this.pushSuperLikesEnabled,
       'pushTopPicksEnabled': this.pushTopPicksEnabled,
       'genderPreference': this.genderPreference.toFirebaseString(),
+      'searchInterest': this.searchInterest.toFirebaseString(),
       'gender': this.gender.toFirebaseString(),
       'distanceRadius': this.distanceRadius,
       'showMe': this.showMe
@@ -78,6 +82,13 @@ class Settings with ChangeNotifier {
 
   set gender(Gender value) {
     _gender = value;
+    notifyListeners();
+  }
+
+  SearchInterest get searchInterest => _searchInterest;
+
+  set searchInterest(SearchInterest value) {
+    _searchInterest = value;
     notifyListeners();
   }
 

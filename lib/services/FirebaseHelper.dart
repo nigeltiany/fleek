@@ -15,6 +15,7 @@ import 'package:dating/model/Swipe.dart';
 import 'package:dating/model/SwipeCounterModel.dart';
 import 'package:dating/model/User.dart';
 import 'package:dating/model/UserLocation.dart';
+import 'package:dating/model/SearchInterests.dart';
 import 'package:dating/services/helper.dart';
 import 'package:dating/ui/matchScreen/MatchScreen.dart';
 import 'package:firebase_auth/firebase_auth.dart';
@@ -496,7 +497,8 @@ class FireStoreUtils {
       var query = firestore.collection(USERS)
         .where('showMe', isEqualTo: true) // The person must want to be shown
         .where('developerAccount', isEqualTo: kDebugMode) // and is not a developer account
-        .where('settings.genderPreference', whereIn: [currentUser.settings.gender.toFirebaseString(), GenderPreference.ALL.toFirebaseString()]); // and likes people of my gender or all people
+        .where('settings.genderPreference', whereIn: [currentUser.settings.gender.toFirebaseString(), GenderPreference.ALL.toFirebaseString()]) // and likes people of my gender or all people
+        .where('settings.searchInterest', isEqualTo: currentUser.settings.searchInterest.toFirebaseString());
 
       // If I have a preference, add my preference to the query
       if (currentUser.settings.genderPreference != GenderPreference.ALL) {

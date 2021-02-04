@@ -10,6 +10,7 @@ class AppUser with ChangeNotifier {
   String _firstName;
   String _lastName;
   String _userName;
+  String _birthDate;
 
   Settings _settings;
 
@@ -70,6 +71,7 @@ class AppUser with ChangeNotifier {
       ..firstName = parsedJson['firstName'] ?? ''
       ..lastName = parsedJson['lastName'] ?? ''
       ..userName = parsedJson['userName'] ?? ''
+      ..birthDate = parsedJson['birthDate'] ?? ''
       ..active = parsedJson['active'] ?? false
       ..lastOnlineTimestamp = parsedJson['lastOnlineTimestamp']
       ..settings = Settings.fromJson(parsedJson['settings'] ?? Settings().toJson())
@@ -97,6 +99,7 @@ class AppUser with ChangeNotifier {
       "firstName": this.firstName,
       "lastName": this.lastName,
       "userName": this.userName,
+      "birthDate": this.birthDate,
       "settings": this.settings != null ? this.settings.toJson() : Settings().toJson(),
       "phoneNumber": this.phoneNumber,
       "id": this.userID,
@@ -147,6 +150,13 @@ class AppUser with ChangeNotifier {
 
   set userName(String value) {
     _userName = value;
+    notifyListeners();
+  }
+
+  String get birthDate => _birthDate;
+
+  set birthDate(String value) {
+    _birthDate = value;
     notifyListeners();
   }
 

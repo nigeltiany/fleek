@@ -1,10 +1,13 @@
 import 'package:dating/components/GenderSelector.dart';
+import 'package:dating/components/InterestSelector.dart';
 import 'package:dating/components/OrientationSelector.dart';
 import 'package:dating/model/Gender.dart';
+import 'package:dating/model/SearchInterests.dart';
 import 'package:dating/model/User.dart';
 import 'package:dating/services/FirebaseHelper.dart';
 import 'package:dating/services/helper.dart';
 import 'package:dating/ui/SwipeScreen/SwipeScreen.dart';
+import 'package:dating/ui/accountDetails/AccountDetailsScreen.dart';
 import 'package:dating/ui/conversationsScreen/ConversationsScreen.dart';
 import 'package:dating/ui/profile/ProfileScreen.dart';
 import 'package:dating/ui/settings/SettingsScreen.dart';
@@ -34,6 +37,7 @@ class _HomeState extends State<HomeScreen> with TickerProviderStateMixin {
 
   TabController _genderTabController;
   TabController _orientationTabController;
+  TabController _searchInterestController;
 
   @override
   void initState() {
@@ -48,14 +52,21 @@ class _HomeState extends State<HomeScreen> with TickerProviderStateMixin {
 
     _orientationTabController = TabController(
       initialIndex: user.settings.genderPreference.index,
-      length: 3,
+      length: GenderPreference.values.length,
       vsync: this,
     );
 
-    [_genderTabController, _orientationTabController].forEach((controller) {
+    _searchInterestController = TabController(
+      initialIndex: user.settings.searchInterest.index,
+      length: SearchInterest.values.length,
+      vsync: this,
+    );
+
+    [_genderTabController, _orientationTabController, _searchInterestController].forEach((controller) {
       controller.addListener(() async {
         user.settings.gender = _genderTabController.index == 0 ? Gender.MALE : Gender.FEMALE;
         user.settings.genderPreference = GenderPreference.values[_orientationTabController.index];
+        user.settings.searchInterest = SearchInterest.values[_searchInterestController.index];
         await FireStoreUtils.updateCurrentUser(context.read<AppUser>());
       });
     });
@@ -91,7 +102,12 @@ class _HomeState extends State<HomeScreen> with TickerProviderStateMixin {
   Iterable<Widget> _trailingWidgetIcon () {
     Widget button;
     if (_currentIndex == 0) {
-      button = Container();
+      button = IconButton(
+        icon: Icon(Icons.account_circle_rounded, color: Colors.grey),
+        onPressed: () {
+          push(context, AccountDetailsScreen(user: user));
+        },
+      );
     } else if (_currentIndex == 1) {
       button = IconButton(
         icon: Icon(Icons.tune, color: Colors.grey),
@@ -181,6 +197,8 @@ class _HomeState extends State<HomeScreen> with TickerProviderStateMixin {
                 GenderSelector(tabController: _genderTabController),
                 SizedBox(height: 24),
                 OrientationSelector(tabController: _orientationTabController),
+                SizedBox(height: 24),
+                InterestSelector(tabController: _searchInterestController)
               ],
             ),
           ),

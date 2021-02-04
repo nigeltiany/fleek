@@ -9,20 +9,21 @@ class ContactUsScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      floatingActionButton: FloatingActionButton(
-        onPressed: () {
-          String url = "tel:12345678";
-          launch(url);
-        },
-        backgroundColor: Color(COLOR_ACCENT),
-        child: Icon(
-          Icons.call,
-          color: isDarkMode(context) ? Colors.black : Colors.white,
-        ),
-      ),
+      // floatingActionButton: FloatingActionButton(
+      //   onPressed: () {
+      //     String url = "tel:12345678";
+      //     launch(url);
+      //   },
+      //   backgroundColor: Color(COLOR_ACCENT),
+      //   child: Icon(
+      //     Icons.call,
+      //     color: isDarkMode(context) ? Colors.black : Colors.white,
+      //   ),
+      // ),
       appBar: AppBar(
+        elevation: 0,
         brightness: isDarkMode(context) ? Brightness.dark : Brightness.light,
-        backgroundColor: isDarkMode(context) ? Colors.black : Colors.white,
+        backgroundColor: isDarkMode(context) ? Colors.black : Colors.transparent,
         iconTheme: IconThemeData(
             color: isDarkMode(context) ? Colors.white : Colors.black),
         title: Text(
@@ -34,35 +35,16 @@ class ContactUsScreen extends StatelessWidget {
       ),
       body: Column(children: <Widget>[
         Material(
-            elevation: 2,
-            color: isDarkMode(context)
-                ? Colors.black12 : Colors.white,
+            elevation: 0,
+            color: isDarkMode(context) ? Colors.black12 : Colors.transparent,
             child: Column(
                 mainAxisSize: MainAxisSize.min,
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: <Widget>[
-                  Padding(
-                    padding:
-                    const EdgeInsets.only(right: 16.0, left: 16, top: 16),
-                    child: Text(
-                      'Our Address',
-                      style: TextStyle(
-                          color: isDarkMode(context)
-                              ? Colors.white : Colors.black,
-                          fontSize: 24,
-                          fontWeight: FontWeight.bold),
-                    ),
-                  ),
-                  Padding(
-                    padding: const EdgeInsets.only(
-                        right: 16.0, left: 16, top: 16, bottom: 16),
-                    child:
-                        Text('1412 Steiner Street, San Francisco, CA, 94115'),
-                  ),
                   ListTile(
                     onTap: () async {
                       var url =
-                          'mailto:office@idating.com?subject=Instamobile contact ticket';
+                          'mailto:hello@confab.im?subject=Fleek Dating App';
                       if (await canLaunch(url)) {
                         await launch(url);
                       } else {

@@ -1,22 +1,14 @@
 import 'dart:io';
 
 import 'package:cached_network_image/cached_network_image.dart';
-import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:dating/components/ProfileImagePicker.dart';
-import 'package:dating/model/MessageData.dart';
 import 'package:dating/model/User.dart';
 import 'package:dating/services/FirebaseHelper.dart';
 import 'package:dating/services/helper.dart';
-import 'package:dating/ui/accountDetails/AccountDetailsScreen.dart';
-import 'package:dating/ui/auth/AuthScreen.dart';
-import 'package:dating/ui/contactUs/ContactUsScreen.dart';
 import 'package:dating/ui/fullScreenImageViewer/FullScreenImageViewer.dart';
-import 'package:dating/ui/upgradeAccount/UpgradeAccount.dart';
-import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/widgets.dart';
-import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:page_view_indicators/circle_page_indicator.dart';
 import 'package:provider/provider.dart';
@@ -33,6 +25,7 @@ class ProfileScreen extends StatefulWidget {
 }
 
 class _ProfileScreenState extends State<ProfileScreen> {
+
   final ImagePicker _imagePicker = ImagePicker();
   AppUser user;
   FireStoreUtils _fireStoreUtils = FireStoreUtils();
@@ -70,11 +63,11 @@ class _ProfileScreenState extends State<ProfileScreen> {
             padding: const EdgeInsets.only(top: 16.0, right: 32, left: 32),
             child: SizedBox(
               width: double.infinity,
-              child: Text(
-                user.userName,
+              child: Text(user.userName,
                 style: TextStyle(
-                    color: isDarkMode(context) ? Colors.white : Colors.black,
-                    fontSize: 20),
+                  color: isDarkMode(context) ? Colors.white : Colors.black,
+                  fontSize: 20,
+                ),
                 textAlign: TextAlign.center,
               ),
             ),
@@ -90,120 +83,55 @@ class _ProfileScreenState extends State<ProfileScreen> {
                   textAlign: TextAlign.start,
                   style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
                 ),
-                _pages.length >= 2
-                    ? CirclePageIndicator(
+                _pages.length >= 2 ?
+                CirclePageIndicator(
                   selectedDotColor: Color(COLOR_ACCENT),
                   dotColor: Colors.grey,
                   itemCount: _pages.length,
                   currentPageNotifier: _currentPageNotifier,
                 )
-                    : null
+                :
+                null
               ]),
             ),
           ),
           Padding(
             padding: EdgeInsets.only(top: 16, bottom: 8),
             child: SizedBox(
-                height: user.photos.length > 3 ? 260 : 130,
-                width: double.infinity,
-                child: PageView(
-                  children: _gridPages,
-                  onPageChanged: (int index) {
-                    _currentPageNotifier.value = index;
-                  },
-                )),
-          ),
-          Column(
-            children: <Widget>[
-              ListTile(
-                dense: true,
-                onTap: () {
-                  push(context, new AccountDetailsScreen(user: user));
+              height: user.photos.length > 3 ? 260 : 130,
+              width: double.infinity,
+              child: PageView(
+                children: _gridPages,
+                onPageChanged: (int index) {
+                  _currentPageNotifier.value = index;
                 },
-                title: Text(
-                  'Account Details',
-                  style: TextStyle(fontSize: 16),
-                ),
-                leading: Icon(
-                  Icons.person,
-                  color: Colors.blue,
-                ),
               ),
-              ListTile(
-                dense: true,
-                onTap: () {
-                  showModalBottomSheet(
-                    isScrollControlled: true,
-                    context: context,
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.vertical(
-                        top: Radius.circular(20),
-                      ),
-                    ),
-                    builder: (context) {
-                      return UpgradeAccount();
-                    },
-                  );
-                },
-                title: Text(
-                  user.isVip != null && user.isVip
-                      ? 'Cancel subscription'
-                      : 'Upgrade Account',
-                  style: TextStyle(fontSize: 16),
-                ),
-                leading: Image.asset(
-                  'assets/images/vip.png',
-                  height: 24,
-                  width: 24,
-                ),
-              ),
-              ListTile(
-                dense: true,
-                onTap: () {
-                  push(context, new ContactUsScreen());
-                },
-                title: Text(
-                  'Contact Us',
-                  style: TextStyle(fontSize: 16),
-                ),
-                leading: Icon(
-                  Icons.call,
-                  color: Colors.green,
-                ),
-              ),
-            ],
+            ),
           ),
           Padding(
-            padding: const EdgeInsets.symmetric(vertical: 16.0, horizontal: 24),
-            child: ConstrainedBox(
-              constraints: const BoxConstraints(minWidth: double.infinity),
-              child: FlatButton(
-                color: Colors.transparent,
-                child: Text(
-                  'Logout',
+            padding: const EdgeInsets.only(right: 16, left: 16),
+            child: ListTile(
+              title: ListTile(
+                title: Text('My Bio',
+                  textAlign: TextAlign.start,
                   style: TextStyle(
                     fontSize: 16,
                     fontWeight: FontWeight.bold,
-                    color: isDarkMode(context) ? Colors.white : Colors.black,
                   ),
                 ),
-                splashColor: isDarkMode(context)
-                    ? Colors.grey[700]
-                    : Colors.grey.shade200,
-                onPressed: () async {
-                  user.active = false;
-                  user.lastOnlineTimestamp = Timestamp.now();
-                  await FireStoreUtils.updateCurrentUser(user);
-                  await FirebaseAuth.instance.signOut();
-                  await context.read<FlutterSecureStorage>().deleteAll();
-                  context.read<AppUser>().copy(AppUser());
-                  pushAndRemoveUntil(context, AuthScreen(), false);
-                },
-                padding: EdgeInsets.only(top: 12, bottom: 12),
-                shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(8.0),
-                    side: BorderSide(color: Colors.grey.shade200)),
+                trailing: IconButton(
+                  icon: Icon(Icons.edit),
+                  padding: EdgeInsets.all(4),
+                  splashRadius: 24,
+                  onPressed: () {
+                    // TODO: Open modal to edit bio
+                  },
+                ),
+                contentPadding: EdgeInsets.zero,
               ),
+              isThreeLine: true,
+              subtitle: Text("lorem fj  jek n flkan k nfleak nl naelk fla eknalefkna aekn ken alekn nalke n knalek n knleak nk nlaekn lna lakne nlaken nalekn nlaekn k nalek n nlakn lkae akne kan lkaen lkaen lkenfk nel n"),
+              contentPadding: EdgeInsets.zero,
             ),
           ),
         ]),
