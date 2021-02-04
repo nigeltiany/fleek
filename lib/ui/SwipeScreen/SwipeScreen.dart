@@ -27,16 +27,16 @@ class _SwipeScreenState extends State<SwipeScreen> {
   List<AppUser> swipedUsers = [];
   List<AppUser> users = [];
   CardController cardController;
-  AppUser user;
+  AppUser currentUser;
 
   _SwipeScreenState();
 
   @override
   void initState() {
     super.initState();
-    user = context.read<AppUser>();
+    currentUser = context.read<AppUser>();
     // _fireStoreUtils.matchChecker(context);
-    fleekUsers = _fireStoreUtils.getFleekUsers(user);
+    fleekUsers = _fireStoreUtils.getFleekUsers(currentUser);
   }
 
   @override
@@ -147,7 +147,7 @@ class _SwipeScreenState extends State<SwipeScreen> {
                   Padding(
                     padding: const EdgeInsets.only(bottom: 8.0),
                     child: Text(
-                      user.age == null || fleekUser.age.isNaN
+                      currentUser.age == null || fleekUser.age.isNaN
                           ? '${fleekUser.userName}'
                           : '${fleekUser.userName}, ${fleekUser.age}',
                       style: TextStyle(
@@ -235,11 +235,10 @@ class _SwipeScreenState extends State<SwipeScreen> {
           onPressed: () async {
             Navigator.pop(context);
             showProgress(context, 'Blocking user...', false);
-            bool isSuccessful = await _fireStoreUtils.blockUser(
-                user, 'block');
+            bool isSuccessful = await _fireStoreUtils.blockUser(user, 'block');
             Navigator.of(context).pop(); // Close Dialog
             if (isSuccessful) {
-              await _fireStoreUtils.onSwipeLeft(user);
+              await _fireStoreUtils.onSwipeLeft(currentUser: currentUser, dislikedUser: user);
               users.remove(user);
               _fireStoreUtils.updateCardStream(users);
               Scaffold.of(context).showSnackBar(SnackBar(content: Text
@@ -259,7 +258,7 @@ class _SwipeScreenState extends State<SwipeScreen> {
                 user, 'report');
             Navigator.of(context).pop(); // Close Dialog
             if (isSuccessful) {
-              await _fireStoreUtils.onSwipeLeft(user);
+              await _fireStoreUtils.onSwipeLeft(currentUser: currentUser, dislikedUser: user);
               users.removeWhere((element) => element.userID == user.userID);
               _fireStoreUtils.updateCardStream(users);
               Scaffold.of(context).showSnackBar(SnackBar(content: Text
@@ -284,7 +283,7 @@ class _SwipeScreenState extends State<SwipeScreen> {
   }
 
   _undo() async {
-    if (user.isVip != null && user.isVip) {
+    if (currentUser.isVip != null && currentUser.isVip) {
       AppUser undoUser = swipedUsers.removeLast();
       users.insert(0, undoUser);
       _fireStoreUtils.updateCardStream(users);
@@ -363,13 +362,12 @@ class _SwipeScreenState extends State<SwipeScreen> {
                       (CardSwipeOrientation orientation, int index) async {
                     if (orientation == CardSwipeOrientation.LEFT ||
                         orientation == CardSwipeOrientation.RIGHT) {
-                      bool isValidSwipe = user.isVip != null && user.isVip
+                      bool isValidSwipe = currentUser.isVip != null && currentUser.isVip
                           ? true
                           : await _fireStoreUtils.incrementSwipe();
                       if (isValidSwipe) {
                         if (orientation == CardSwipeOrientation.RIGHT) {
-                          AppUser result = await _fireStoreUtils
-                              .onSwipeRight(data[index]);
+                          AppUser result = await _fireStoreUtils.onSwipeRight(currentUser: currentUser, likedUser: data[index]);
                           if (result != null) {
                             data.removeAt(index);
                             _fireStoreUtils.updateCardStream(data);
@@ -382,8 +380,7 @@ class _SwipeScreenState extends State<SwipeScreen> {
                         }
                         else if (orientation == CardSwipeOrientation.LEFT) {
                           swipedUsers.add(data[index]);
-                          await _fireStoreUtils
-                              .onSwipeLeft(data[index]);
+                          await _fireStoreUtils.onSwipeLeft(currentUser: currentUser, dislikedUser: data[index]);
                           data.removeAt(index);
                           _fireStoreUtils.updateCardStream(data);
                         }

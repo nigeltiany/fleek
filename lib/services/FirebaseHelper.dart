@@ -492,7 +492,7 @@ class FireStoreUtils {
         longitude: locationData.longitude,
       );
 
-      var viewedUsers = await firestore.collectionGroup("VIEWED_USERS_FOR::${currentUser.userID}").get();
+      var viewedUsers = await firestore.collectionGroup("${currentUser.settings.searchInterest.toFirebaseString()}::VIEWED_USERS_FOR::${currentUser.userID}").get();
 
       var query = firestore.collection(USERS)
         .where('showMe', isEqualTo: true) // The person must want to be shown
@@ -584,9 +584,8 @@ class FireStoreUtils {
     }
   }
 
-  onSwipeLeft(AppUser dislikedUser) async {
-    DocumentReference documentReference =
-    firestore.collection(SWIPES).doc();
+  onSwipeLeft({ @required AppUser currentUser, @required AppUser dislikedUser }) async {
+    DocumentReference documentReference = firestore.collection(SWIPES).doc();
     Swipe leftSwipe = Swipe(
       id: documentReference.id,
       type: 'dislike',
@@ -594,16 +593,17 @@ class FireStoreUtils {
       forUserID: dislikedUser.userID,
       createdAt: Timestamp.now(),
       hasBeenSeen: false,
+      searchInterest: currentUser.settings.searchInterest
     );
     await documentReference.set(leftSwipe.toJson());
   }
 
-  Future<AppUser> onSwipeRight(AppUser user) async {
+  Future<AppUser> onSwipeRight({ @required AppUser currentUser, @required AppUser likedUser }) async {
     // check if this user sent a match request before ? if yes, it's a match,
     // if not, send him match request
     QuerySnapshot querySnapshot = await firestore
       .collection(SWIPES)
-      .where('swiperUserID', isEqualTo: user.userID)
+      .where('swiperUserID', isEqualTo: likedUser.userID)
       .where('forUserID', isEqualTo: FirebaseAuth.instance.currentUser.uid)
       .where('type', isEqualTo: 'like')
       .get();
@@ -617,37 +617,39 @@ class FireStoreUtils {
         hasBeenSeen: true,
         createdAt: Timestamp.now(),
         swiperUserID: FirebaseAuth.instance.currentUser.uid,
-        forUserID: user.userID,
+        forUserID: likedUser.userID,
+        searchInterest: currentUser.settings.searchInterest
       );
       await document.set(swipe.toJson(), SetOptions(merge: true));
-      if (user.settings.pushNewMatchesEnabled) {
+      if (likedUser.settings.pushNewMatchesEnabled) {
         await sendNotification(
-          user.fcmToken,
+          likedUser.fcmToken,
           'New match',
           'You have got a new '
-          'match: ${user.userName}.'
+          'match: ${likedUser.userName}.'
         );
       }
 
-      return user;
+      return likedUser;
     } else {
       //this user didn't send me a match request, let's send match request
       // and keep swippeing
-      await sendSwipeRequest(user, FirebaseAuth.instance.currentUser.uid);
+      await sendSwipeRequest(currentUser: currentUser, likedUser: likedUser);
       return null;
     }
   }
 
-  Future<bool> sendSwipeRequest(AppUser user, String myID) async {
+  Future<bool> sendSwipeRequest({ @required AppUser currentUser, @required AppUser likedUser }) async {
     bool isSuccessful;
     DocumentReference documentReference = firestore.collection(SWIPES).doc();
     Swipe swipe = Swipe(
       id: documentReference.id,
-      swiperUserID: myID,
-      forUserID: user.userID,
+      swiperUserID: FirebaseAuth.instance.currentUser.uid,
+      forUserID: likedUser.userID,
       hasBeenSeen: false,
       createdAt: Timestamp.now(),
       type: 'like',
+      searchInterest: currentUser.settings.searchInterest
     );
     await documentReference.set(swipe.toJson()).then((onValue) {
       isSuccessful = true;
