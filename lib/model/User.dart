@@ -31,6 +31,7 @@ class AppUser with ChangeNotifier {
   UserLocation _signUpLocation;
   String _bio;
   String _school;
+  String _schoolCode = "002905";
   List<dynamic> _photos = [];
 
   //internal use only, don't save to db
@@ -84,7 +85,8 @@ class AppUser with ChangeNotifier {
       //dating app related fields
       ..location = UserLocation.fromJson(parsedJson['location'] ?? UserLocation().toJson())
       ..signUpLocation = UserLocation.fromJson(parsedJson['signUpLocation'] ?? UserLocation().toJson())
-      ..school = parsedJson['school'] ?? 'N/A'
+      ..school = parsedJson['school'] ?? 'North Carolina A&T University'
+      ..school = parsedJson['schoolCode'] ?? '002905'
       ..bio = parsedJson['bio'] ?? 'N/A'
       ..photos = parsedJson['photos'] ?? [].cast<String>();
   }
@@ -117,6 +119,7 @@ class AppUser with ChangeNotifier {
       'signUpLocation': this.signUpLocation != null ? this.signUpLocation.toJson() : UserLocation().toJson(),
       'bio': this.bio,
       'school': this.school,
+      'schoolCode': this.schoolCode,
       'photos': this.photos,
     };
   }
@@ -251,6 +254,13 @@ class AppUser with ChangeNotifier {
 
   set school(String value) {
     _school = value;
+    notifyListeners();
+  }
+
+  String get schoolCode => _schoolCode;
+
+  set schoolCode(String value) {
+    _schoolCode = value;
     notifyListeners();
   }
 
