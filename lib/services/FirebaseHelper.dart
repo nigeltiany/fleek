@@ -512,9 +512,9 @@ class FireStoreUtils {
 
       });
 
-    }
+    // }
 
-    // yield* fleekCardsStreamController.stream;
+    yield* fleekCardsStreamController.stream;
 
   }
 
