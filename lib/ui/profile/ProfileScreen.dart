@@ -37,9 +37,14 @@ class _ProfileScreenState extends State<ProfileScreen> {
   List _pages = [];
   List<Widget> _gridPages = [];
 
+  TextEditingController _bioController;
+
   @override
   void initState() {
+    super.initState();
     user = context.read<AppUser>();
+    _bioController = TextEditingController();
+    _bioController.text = user.bio;
     images.clear();
     images.addAll(user.photos);
     if (images.isNotEmpty) {
@@ -49,7 +54,12 @@ class _ProfileScreenState extends State<ProfileScreen> {
     } else {
       images.add(null);
     }
-    super.initState();
+  }
+
+  @override
+  void dispose() {
+    _currentPageNotifier.dispose();
+    super.dispose();
   }
 
   @override
@@ -124,13 +134,13 @@ class _ProfileScreenState extends State<ProfileScreen> {
                   padding: EdgeInsets.all(4),
                   splashRadius: 24,
                   onPressed: () {
-                    // TODO: Open modal to edit bio
+                    _showBioEditor(context);
                   },
                 ),
                 contentPadding: EdgeInsets.zero,
               ),
               isThreeLine: true,
-              subtitle: Text("lorem fj  jek n flkan k nfleak nl naelk fla eknalefkna aekn ken alekn nalke n knalek n knleak nk nlaekn lna lakne nlaken nalekn nlaekn k nalek n nlakn lkae akne kan lkaen lkaen lkenfk nel n"),
+              subtitle: Text(user.bio),
               contentPadding: EdgeInsets.zero,
             ),
           ),
@@ -314,9 +324,84 @@ class _ProfileScreenState extends State<ProfileScreen> {
     showCupertinoModalPopup(context: context, builder: (context) => action);
   }
 
-  @override
-  void dispose() {
-    _currentPageNotifier.dispose();
-    super.dispose();
+  _showBioEditor(BuildContext ctx) {
+    final preferredHeight = AppBar().preferredSize.height;
+    showModalBottomSheet(
+      context: ctx,
+      enableDrag: false,
+      isScrollControlled: true,
+      builder: (BuildContext context) {
+        return Container(
+          padding: EdgeInsets.only(bottom: MediaQuery.of(context).viewInsets.bottom),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Expanded(
+                child: Stack(
+                  children: [
+                    ListTile(
+                      contentPadding: EdgeInsets.only(
+                        top: preferredHeight,
+                        left: 16,
+                        right: 16
+                      ),
+                      tileColor: Color(COLOR_PRIMARY_DARK),
+                      leading: IconButton(
+                        icon: Icon(Icons.arrow_back),
+                        onPressed: () {
+                          Navigator.of(context).pop();
+                        },
+                      ),
+                      title: Text("Bio",
+                        style: TextStyle(
+                          fontSize: 18,
+                          fontWeight: FontWeight.bold
+                        ),
+                      ),
+                      trailing: IconButton(
+                        icon: Icon(Icons.check),
+                        onPressed: () async {
+                          user.bio = _bioController.text;
+                          await FireStoreUtils.updateCurrentUser(user);
+                          _bioController.text = "";
+                          Navigator.of(context).pop();
+                        },
+                      ),
+                    ),
+                    Positioned(
+                      width: MediaQuery.of(context).size.width,
+                      top: preferredHeight * 2,
+                      bottom: 0,
+                      child: SingleChildScrollView(
+                        child: Container(
+                          child: Padding(
+                            padding: const EdgeInsets.fromLTRB(32.0, 32.0, 32.0, 0.0), // content padding
+                            child: Column(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                Flexible(
+                                  fit: FlexFit.loose,
+                                  child: TextField(
+                                    autofocus: true,
+                                    maxLines: null,
+                                    keyboardType: TextInputType.multiline,
+                                    controller: _bioController,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ), // From with TextField inside
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              )
+            ],
+          ),
+        );
+      },
+    );
   }
+
 }
