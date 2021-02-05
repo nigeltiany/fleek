@@ -403,61 +403,38 @@ class FireStoreUtils {
 
   Future<void> updateChannel(ConversationModel conversationModel) async {
     await firestore
-        .collection(CHANNELS)
-        .doc(conversationModel.id)
-        .update(conversationModel.toJson());
+      .collection(CHANNELS)
+      .doc(conversationModel.id)
+      .update(conversationModel.toJson());
   }
 
   Future<void> createChannelParticipation(ChannelParticipation channelParticipation) async {
     await firestore.collection(CHANNEL_PARTICIPATION).add(channelParticipation.toJson());
   }
 
-  Future<bool> leaveGroup(AppUser user, ConversationModel conversationModel) async {
-    bool isSuccessful = false;
-    //conversationModel.lastMessage = "${user.userName} left";
-    conversationModel.lastMessageDate = Timestamp.now();
-    await updateChannel(conversationModel).then((_) async {
-      await firestore
-          .collection(CHANNEL_PARTICIPATION)
-          .where('channel', isEqualTo: conversationModel.id)
-          .where('user', isEqualTo: FirebaseAuth.instance.currentUser.uid)
-          .get()
-          .then((onValue) async {
-        await firestore
-            .collection(CHANNEL_PARTICIPATION)
-            .doc(onValue.docs.first.id)
-            .delete()
-            .then((onValue) {
-          isSuccessful = true;
-        });
-      });
-    });
-    return isSuccessful;
-  }
-
   Future<bool> blockUser(AppUser blockedUser, String type) async {
     bool isSuccessful = false;
     BlockUserModel blockUserModel = BlockUserModel(
-        type: type,
-        source: FirebaseAuth.instance.currentUser.uid,
-        dest: blockedUser.userID,
-        createdAt: Timestamp.now());
+      type: type,
+      source: FirebaseAuth.instance.currentUser.uid,
+      dest: blockedUser.userID,
+      createdAt: Timestamp.now(),
+    );
     await firestore
-        .collection(REPORTS)
-        .add(blockUserModel.toJson())
-        .then((onValue) {
-      isSuccessful = true;
+      .collection(REPORTS)
+      .add(blockUserModel.toJson())
+      .then((onValue) {
+        isSuccessful = true;
     });
     return isSuccessful;
   }
 
   Stream<bool> getBlocks() async* {
     StreamController<bool> refreshStreamController = StreamController();
-    firestore
-        .collection(REPORTS)
-        .where('source', isEqualTo: FirebaseAuth.instance.currentUser.uid)
-        .snapshots()
-        .listen((onData) {
+
+    firestore.collection(REPORTS)
+      .where('source', isEqualTo: FirebaseAuth.instance.currentUser.uid,).
+    snapshots().listen((onData) {
       List<BlockUserModel> list = [];
       for (DocumentSnapshot block in onData.docs) {
         list.add(BlockUserModel.fromJson(block.data()));
@@ -468,6 +445,7 @@ class FireStoreUtils {
         refreshStreamController.sink.add(true);
       }
     });
+
     yield* refreshStreamController.stream;
   }
 
@@ -505,15 +483,17 @@ class FireStoreUtils {
         query = query.where('settings.gender', isEqualTo: currentUser.settings.genderPreference.toFirebaseString());
       }
 
-      geo.collection(collectionRef: query).within(
-        center: currentUser.location,
-        radius: currentUser.settings.distanceRadius,
-        field: 'location',
-      ).listen((value) {
+      // geo.collection(collectionRef: query).within(
+      //   center: currentUser.location,
+      //   radius: currentUser.settings.distanceRadius,
+      //   field: 'location',
+      // ).listen((value) {
 
-        print("fetched user count: ${value.length}");
+      query.snapshots().listen((value) {
 
-        value.forEach((DocumentSnapshot fleekUser) async {
+        print("fetched user count: ${value.docs.length}");
+
+        value.docs.forEach((DocumentSnapshot fleekUser) async {
 
           if (fleekUser.id != FirebaseAuth.instance.currentUser.uid) {
             AppUser user = AppUser.fromJson(fleekUser.data());
@@ -665,11 +645,9 @@ class FireStoreUtils {
   }
 
   Future<void> deleteImage(String imageFileUrl) async {
-    var fileUrl = Uri.decodeFull(Path.basename(imageFileUrl))
-        .replaceAll(new RegExp(r'(\?alt).*'), '');
+    var fileUrl = Uri.decodeFull(Path.basename(imageFileUrl)).replaceAll(new RegExp(r'(\?alt).*'), '');
 
-    final Reference firebaseStorageRef =
-    FirebaseStorage.instance.ref().child(fileUrl);
+    final Reference firebaseStorageRef = FirebaseStorage.instance.ref().child(fileUrl);
     await firebaseStorageRef.delete();
   }
 
@@ -678,13 +656,13 @@ class FireStoreUtils {
         .collection(SWIPES)
         .where('swiperUserID', isEqualTo: FirebaseAuth.instance.currentUser.uid)
         .where('forUserID', isEqualTo: fleekUser.userID)
-        .getDocuments()
+        .get()
         .then((value) async {
       if (value.docs.isNotEmpty) {
         await firestore
-            .collection(SWIPES)
-            .doc(value.docs.first.id)
-            .delete();
+          .collection(SWIPES)
+          .doc(value.docs.first.id)
+          .delete();
       }
     });
   }
@@ -703,8 +681,9 @@ class FireStoreUtils {
     DocumentSnapshot validationDocumentSnapshot = await documentReference.get();
 
     if (validationDocumentSnapshot != null && validationDocumentSnapshot.exists) {
-      if ((validationDocumentSnapshot['count'] ?? 1) < 10) {
-        await firestore.doc(documentReference.path).update({'count': validationDocumentSnapshot['count'] + 1});
+      // TODO: set max number of swipes when payments are implemented
+      if ((validationDocumentSnapshot['count'] ?? 1) < double.infinity) {
+        // await firestore.doc(documentReference.path).update({'count': validationDocumentSnapshot['count'] + 1});
         return true;
       } else {
         return _shouldResetCounter(validationDocumentSnapshot);
