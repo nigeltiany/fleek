@@ -146,10 +146,7 @@ class _SwipeScreenState extends State<SwipeScreen> {
                 children: <Widget>[
                   Padding(
                     padding: const EdgeInsets.only(bottom: 8.0),
-                    child: Text(
-                      currentUser.age == null || fleekUser.age.isNaN
-                          ? '${fleekUser.userName}'
-                          : '${fleekUser.userName}, ${fleekUser.age}',
+                    child: Text(currentUser.birthDate == null ? '${fleekUser.userName}' : '${fleekUser.userName}, ${getUserAge(fleekUser.birthDate)}',
                       style: TextStyle(
                         color: Colors.white,
                         fontWeight: FontWeight.bold,
@@ -317,54 +314,30 @@ class _SwipeScreenState extends State<SwipeScreen> {
                   child: Padding(
                     padding: const EdgeInsets.all(16.0),
                     child: Text(
-                      'There’s no one around you. Try increasing '
-                          'the distance radius to get more recommendations.',
+                      'There’s no one around you. Try increasing the distance radius to get more recommendations.',
                       textAlign: TextAlign.center,
                     ),
                   ),
                 ),
               ),
               Container(
-                height: MediaQuery
-                    .of(context)
-                    .size
-                    .height * 0.9,
-                width: MediaQuery
-                    .of(context)
-                    .size
-                    .width,
+                height: MediaQuery.of(context).size.height * 0.9,
+                width: MediaQuery.of(context).size.width,
                 child: new TinderSwapCard(
                   animDuration: 500,
                   orientation: AmassOrientation.BOTTOM,
                   totalNum: data.length,
                   stackNum: 3,
                   swipeEdge: 15,
-                  maxWidth: MediaQuery
-                      .of(context)
-                      .size
-                      .width,
-                  maxHeight: MediaQuery
-                      .of(context)
-                      .size
-                      .height,
-                  minWidth: MediaQuery
-                      .of(context)
-                      .size
-                      .width * 0.9,
-                  minHeight: MediaQuery
-                      .of(context)
-                      .size
-                      .height * 0.9,
-                  cardBuilder: (context, index) =>
-                      _buildCard(data[index]),
+                  maxWidth: MediaQuery.of(context).size.width,
+                  maxHeight: MediaQuery.of(context).size.height,
+                  minWidth: MediaQuery.of(context).size.width * 0.9,
+                  minHeight: MediaQuery.of(context).size.height * 0.9,
+                  cardBuilder: (context, index) => _buildCard(data[index]),
                   cardController: cardController = CardController(),
-                  swipeCompleteCallback:
-                      (CardSwipeOrientation orientation, int index) async {
-                    if (orientation == CardSwipeOrientation.LEFT ||
-                        orientation == CardSwipeOrientation.RIGHT) {
-                      bool isValidSwipe = currentUser.isVip != null && currentUser.isVip
-                          ? true
-                          : await _fireStoreUtils.incrementSwipe();
+                  swipeCompleteCallback: (CardSwipeOrientation orientation, int index) async {
+                    if (orientation == CardSwipeOrientation.LEFT || orientation == CardSwipeOrientation.RIGHT) {
+                      bool isValidSwipe = currentUser.isVip != null && currentUser.isVip ? true : await _fireStoreUtils.incrementSwipe();
                       if (isValidSwipe) {
                         if (orientation == CardSwipeOrientation.RIGHT) {
                           AppUser result = await _fireStoreUtils.onSwipeRight(currentUser: currentUser, likedUser: data[index]);
@@ -377,8 +350,7 @@ class _SwipeScreenState extends State<SwipeScreen> {
                             data.removeAt(index);
                             _fireStoreUtils.updateCardStream(data);
                           }
-                        }
-                        else if (orientation == CardSwipeOrientation.LEFT) {
+                        } else if (orientation == CardSwipeOrientation.LEFT) {
                           swipedUsers.add(data[index]);
                           await _fireStoreUtils.onSwipeLeft(currentUser: currentUser, dislikedUser: data[index]);
                           data.removeAt(index);
@@ -396,70 +368,74 @@ class _SwipeScreenState extends State<SwipeScreen> {
                   },
                 ),
               ),
-            ]),
+            ],
           ),
-          Padding(
-            padding: const EdgeInsets.symmetric(vertical: 16.0),
-            child: Row(
-              crossAxisAlignment: CrossAxisAlignment.center,
-              mainAxisSize: MainAxisSize.max,
-              mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-              children: <Widget>[
-                FloatingActionButton(
-                  elevation: 1,
-                  heroTag: 'left',
-                  onPressed: () {
-                    cardController.triggerLeft();
-                  },
-                  backgroundColor: Colors.white,
-                  mini: false,
-                  child: Icon(
-                    Icons.close,
-                    color: Colors.red,
-                    size: 40,
-                  ),
+        ),
+        Padding(
+          padding: const EdgeInsets.symmetric(vertical: 16.0),
+          child: Row(
+            crossAxisAlignment: CrossAxisAlignment.center,
+            mainAxisSize: MainAxisSize.max,
+            mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+            children: <Widget>[
+              FloatingActionButton(
+                elevation: 1,
+                heroTag: 'left',
+                onPressed: () {
+                  cardController.triggerLeft();
+                },
+                backgroundColor: Colors.white,
+                mini: false,
+                child: Icon(
+                  Icons.close,
+                  color: Colors.red,
+                  size: 40,
                 ),
-                FloatingActionButton(
-                  elevation: 1,
-                  heroTag: 'center',
-                  onPressed: () {
-                    cardController.triggerRight();
-                  },
-                  backgroundColor: Color(COLOR_PRIMARY),
-                  mini: true,
-                  child: Icon(
-                    Icons.star,
-                    color: Colors.white,
-                    size: 30,
-                  ),
+              ),
+              FloatingActionButton(
+                elevation: 1,
+                heroTag: 'center',
+                onPressed: () {
+                  cardController.triggerRight();
+                },
+                backgroundColor: Color(COLOR_PRIMARY),
+                mini: true,
+                child: Icon(
+                  Icons.star,
+                  color: Colors.white,
+                  size: 30,
                 ),
-                FloatingActionButton(
-                  elevation: 1,
-                  heroTag: 'right',
-                  onPressed: () {
-                    cardController.triggerRight();
-                  },
-                  backgroundColor: Colors.white,
-                  mini: false,
-                  child: Icon(
-                    Icons.favorite,
-                    color: Colors.redAccent,
-                    size: 40,
-                  ),
-                )
-              ],
-            ),
-          )
-        ]);
+              ),
+              FloatingActionButton(
+                elevation: 1,
+                heroTag: 'right',
+                onPressed: () {
+                  cardController.triggerRight();
+                },
+                backgroundColor: Colors.white,
+                mini: false,
+                child: Icon(
+                  Icons.favorite,
+                  color: Colors.redAccent,
+                  size: 40,
+                ),
+              )
+            ],
+          ),
+        )
+      ],
+    );
   }
 
   void _showUpgradeAccountDialog() {
+
     Widget okButton = FlatButton(
       child: Text("OK"),
       onPressed: () {
         Navigator.pop(context);
       },
     );
+
     Widget upgradeButton = FlatButton(
       child: Text("Upgrade Now"),
       onPressed: () {
@@ -477,10 +453,10 @@ class _SwipeScreenState extends State<SwipeScreen> {
         );
       },
     );
+
     AlertDialog alert = AlertDialog(
       title: Text('Upgrade account'),
-      content: Text('Upgrade your account now to have unlimited swipes per '
-          'day and the ability to undo a swipe.'),
+      content: Text('Upgrade your account now to have unlimited swipes per day.'),
       actions: [upgradeButton, okButton],
     );
 
@@ -491,6 +467,7 @@ class _SwipeScreenState extends State<SwipeScreen> {
         return alert;
       },
     );
+
   }
   
 }

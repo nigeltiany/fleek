@@ -74,6 +74,10 @@ String validateConfirmPassword(String password, String confirmPassword) {
   }
 }
 
+int getUserAge (Timestamp birthDate) {
+  return ((DateTime.now().difference(DateTime.fromMillisecondsSinceEpoch(birthDate.millisecondsSinceEpoch)).inDays) / 365.25).floor();
+}
+
 //helper method to show progress
 ProgressDialog progressDialog;
 

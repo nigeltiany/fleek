@@ -702,11 +702,9 @@ class FireStoreUtils {
 
     DocumentSnapshot validationDocumentSnapshot = await documentReference.get();
 
-    if (validationDocumentSnapshot != null &&
-        validationDocumentSnapshot.exists) {
+    if (validationDocumentSnapshot != null && validationDocumentSnapshot.exists) {
       if ((validationDocumentSnapshot['count'] ?? 1) < 10) {
-        await firestore.doc(documentReference.path).updateData
-          ({'count': validationDocumentSnapshot['count'] + 1});
+        await firestore.doc(documentReference.path).update({'count': validationDocumentSnapshot['count'] + 1});
         return true;
       } else {
         return _shouldResetCounter(validationDocumentSnapshot);
@@ -753,15 +751,13 @@ class FireStoreUtils {
 
   Future<bool> _shouldResetCounter(DocumentSnapshot documentSnapshot) async {
     SwipeCounter counter = SwipeCounter.fromJson(documentSnapshot.data());
-    DateTime now = new DateTime.now();
-    DateTime from = DateTime.fromMillisecondsSinceEpoch(
-        counter.createdAt.millisecondsSinceEpoch);
+    DateTime now = DateTime.now();
+    DateTime from = DateTime.fromMillisecondsSinceEpoch(counter.createdAt.millisecondsSinceEpoch);
     Duration diff = now.difference(from);
     if (diff.inDays > 0) {
       counter.count = 1;
       counter.createdAt = Timestamp.now();
-      await firestore.collection(SWIPE_COUNT).doc(counter.authorID)
-          .updateData(counter.toJson());
+      await firestore.collection(SWIPE_COUNT).doc(counter.authorID).update(counter.toJson());
       return true;
     } else {
       return false;

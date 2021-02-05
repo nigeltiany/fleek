@@ -105,18 +105,19 @@ class _UserDetailsScreenState extends State<UserDetailsScreen> {
                     padding: const EdgeInsets.all(16.0),
                     child: Row(
                       children: <Widget>[
-                        Text(
-                          '${user.userName}',
+                        Text('${user.userName}',
                           style: TextStyle(
-                              fontWeight: FontWeight.bold, fontSize: 27),
+                            fontWeight: FontWeight.bold,
+                            fontSize: 27,
+                          ),
                         ),
-                        Text(
-                          user.age == null || user.age.isNaN || user.age == 'N/A'
-                              ? ''
-                              : '  ${user.age}',
+                        SizedBox(width: 16),
+                        Text(user.birthDate == null ? '' : '${getUserAge(user.birthDate)}',
                           style: TextStyle(
-                              fontSize: 19, fontWeight: FontWeight.w600),
-                        )
+                            fontSize: 19,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
                       ],
                     ),
                   ),

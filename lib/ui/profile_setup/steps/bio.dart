@@ -1,3 +1,4 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:dating/components/FormInput.dart';
 import 'package:dating/components/PrimaryButton.dart';
 import 'package:dating/constants.dart';
@@ -24,8 +25,9 @@ class _BioSetupState extends State<BioSetup> {
   final PageController pageController;
 
   TextEditingController _userNameController = TextEditingController();
-  TextEditingController _ageController = TextEditingController();
   TextEditingController _bioController = TextEditingController();
+  TextEditingController _DOB_Controller = TextEditingController();
+  DateTime dob;
 
   _BioSetupState(this.pageController);
 
@@ -80,11 +82,24 @@ class _BioSetupState extends State<BioSetup> {
         onSubmitted: (_) => FocusScope.of(context).nextFocus(),
       ),
       FormInput(
-        type: TextInputType.number,
+        type: TextInputType.datetime,
         textInputAction: TextInputAction.next,
-        controller: _ageController,
-        label: "Age",
-        onSubmitted: (_) => FocusScope.of(context).nextFocus(),
+        controller: _DOB_Controller,
+        label: "Birth Date",
+        readOnly: true,
+        onTap: () async {
+          var now = DateTime.now();
+          var eighteenYearsAgo = DateTime(now.year - 18, now.month, now.day);
+          dob = await showDatePicker(
+            context: context,
+            initialDate: eighteenYearsAgo,
+            firstDate: now.subtract(Duration(days: 365 * 35)),
+            lastDate: eighteenYearsAgo,
+          );
+          if (dob != null) {
+            _DOB_Controller.text = dob.toString().split(" ")[0];
+          }
+        },
       ),
       Container(
         height: 200.0,
@@ -109,8 +124,8 @@ class _BioSetupState extends State<BioSetup> {
           onTap: () async {
             var user = context.read<AppUser>();
             user.userName = _userNameController.text;
-            user.age = int.parse(_ageController.text.replaceAll(",", "").replaceAll(".", ""));
             user.bio = _bioController.text;
+            user.birthDate = Timestamp.fromDate(dob);
 
             await pageController.nextPage(duration: Duration(milliseconds: 400), curve: Curves.easeIn);
           },

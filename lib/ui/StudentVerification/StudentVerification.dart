@@ -5,11 +5,9 @@ import 'package:dating/constants.dart';
 import 'package:cloud_functions/cloud_functions.dart';
 import 'package:dating/model/ProfileSetup.dart';
 import 'package:dating/model/StudentStatus.dart';
-import 'package:dating/model/User.dart';
 import 'package:dating/services/helper.dart';
 import 'package:dating/ui/profile_setup/ProfileSetupScreen.dart';
 import 'package:firebase_auth/firebase_auth.dart';
-import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
 
 class StudentVerificationScreen extends StatefulWidget {
@@ -29,7 +27,6 @@ class _StudentVerificationScreenState extends State<StudentVerificationScreen> {
 
   TextEditingController _firstNameController = TextEditingController();
   TextEditingController _lastNameController = TextEditingController();
-  TextEditingController _DOB_Controller = TextEditingController();
   TextEditingController _schoolController = TextEditingController();
   TextEditingController _emailController = TextEditingController();
 
@@ -108,26 +105,6 @@ class _StudentVerificationScreenState extends State<StudentVerificationScreen> {
         onSubmitted: (_) => FocusScope.of(context).nextFocus(),
       ),
       FormInput(
-        type: TextInputType.datetime,
-        textInputAction: TextInputAction.next,
-        controller: _DOB_Controller,
-        label: "Birth Date",
-        readOnly: true,
-        onTap: () async {
-          var now = DateTime.now();
-          var eighteenYearsAgo = DateTime(now.year - 18, now.month, now.day);
-          DateTime dob = await showDatePicker(
-            context: context,
-            initialDate: eighteenYearsAgo,
-            firstDate: now.subtract(Duration(days: 365 * 35)),
-            lastDate: eighteenYearsAgo,
-          );
-          if (dob != null) {
-            _DOB_Controller.text = dob.toString().split(" ")[0];
-          }
-        },
-      ),
-      FormInput(
         type: TextInputType.emailAddress,
         textInputAction: TextInputAction.next,
         controller: _emailController,
@@ -178,9 +155,8 @@ class _StudentVerificationScreenState extends State<StudentVerificationScreen> {
     func.call(<String, String>{
       "firstname": _firstNameController.value.text,
       "lastname": _lastNameController.value.text,
-      "birthdate": _DOB_Controller.value.text,
       "student_email": _emailController.value.text,
-      "school_code": "002905"
+      "school_code": "002905" // A&T
     }).then((result) {
      print(result.data);
     }).catchError((e) {

@@ -10,7 +10,7 @@ class AppUser with ChangeNotifier {
   String _firstName;
   String _lastName;
   String _userName;
-  String _birthDate;
+  Firestore.Timestamp _birthDate;
 
   Settings _settings;
 
@@ -31,7 +31,6 @@ class AppUser with ChangeNotifier {
   UserLocation _signUpLocation;
   String _bio;
   String _school;
-  int _age;
   List<dynamic> _photos = [];
 
   //internal use only, don't save to db
@@ -59,7 +58,6 @@ class AppUser with ChangeNotifier {
     _location = cp.location ?? _location;
     _signUpLocation = cp.signUpLocation ?? _signUpLocation;
     _school = cp.school ?? _school;
-    _age = cp.age ?? _age;
     _bio = cp.bio ?? _bio;
     _photos = cp._photos ?? _bio;
     notifyListeners();
@@ -71,7 +69,7 @@ class AppUser with ChangeNotifier {
       ..firstName = parsedJson['firstName'] ?? ''
       ..lastName = parsedJson['lastName'] ?? ''
       ..userName = parsedJson['userName'] ?? ''
-      ..birthDate = parsedJson['birthDate'] ?? ''
+      ..birthDate = parsedJson['birthDate']
       ..active = parsedJson['active'] ?? false
       ..lastOnlineTimestamp = parsedJson['lastOnlineTimestamp']
       ..settings = Settings.fromJson(parsedJson['settings'] ?? Settings().toJson())
@@ -87,7 +85,6 @@ class AppUser with ChangeNotifier {
       ..location = UserLocation.fromJson(parsedJson['location'] ?? UserLocation().toJson())
       ..signUpLocation = UserLocation.fromJson(parsedJson['signUpLocation'] ?? UserLocation().toJson())
       ..school = parsedJson['school'] ?? 'N/A'
-      ..age = parsedJson['age'] ?? null
       ..bio = parsedJson['bio'] ?? 'N/A'
       ..photos = parsedJson['photos'] ?? [].cast<String>();
   }
@@ -120,7 +117,6 @@ class AppUser with ChangeNotifier {
       'signUpLocation': this.signUpLocation != null ? this.signUpLocation.toJson() : UserLocation().toJson(),
       'bio': this.bio,
       'school': this.school,
-      'age': this.age,
       'photos': this.photos,
     };
   }
@@ -153,9 +149,9 @@ class AppUser with ChangeNotifier {
     notifyListeners();
   }
 
-  String get birthDate => _birthDate;
+  Firestore.Timestamp get birthDate => _birthDate;
 
-  set birthDate(String value) {
+  set birthDate(Firestore.Timestamp value) {
     _birthDate = value;
     notifyListeners();
   }
@@ -255,13 +251,6 @@ class AppUser with ChangeNotifier {
 
   set school(String value) {
     _school = value;
-    notifyListeners();
-  }
-
-  int get age => _age;
-
-  set age(int value) {
-    _age = value;
     notifyListeners();
   }
 
