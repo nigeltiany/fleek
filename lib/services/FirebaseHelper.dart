@@ -464,11 +464,11 @@ class FireStoreUtils {
     List<AppUser> fleekUsers = [];
     LocationData locationData = await getCurrentLocation();
 
-    if (locationData != null) {
-      currentUser.location = UserLocation(
-        latitude: locationData.latitude,
-        longitude: locationData.longitude,
-      );
+    // if (locationData != null) {
+    //   currentUser.location = UserLocation(
+    //     latitude: locationData.latitude,
+    //     longitude: locationData.longitude,
+    //   );
 
       var viewedUsers = await firestore.collectionGroup("${currentUser.settings.searchInterest.toFirebaseString()}::VIEWED_USERS_FOR::${currentUser.userID}").get();
 
@@ -514,7 +514,7 @@ class FireStoreUtils {
 
     }
 
-    yield* fleekCardsStreamController.stream;
+    // yield* fleekCardsStreamController.stream;
 
   }
 
