@@ -1,6 +1,7 @@
 import 'dart:io';
 
 import 'package:dating/components/Avatar.dart';
+import 'package:dating/constants.dart';
 import 'package:dating/model/ConversationModel.dart';
 import 'package:dating/model/HomeConversationModel.dart';
 import 'package:dating/store/KeyPair.dart';
@@ -15,8 +16,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter/widgets.dart';
 import 'package:gecies/gecies.dart';
 import 'package:provider/provider.dart';
-
-import '../../constants.dart';
 
 class ConversationsScreen extends StatefulWidget {
   final AppUser user;
@@ -96,9 +95,9 @@ class _ConversationsState extends State<ConversationsScreen> {
                     width: 0,
                     height: 0,
                   )
-                      : Padding(
-                    padding: const EdgeInsets.only(
-                        top: 8.0, left: 4, right: 4),
+                  :
+                  Padding(
+                    padding: const EdgeInsets.only(top: 8.0, left: 4, right: 4),
                     child: InkWell(
                       onLongPress: () => _onMatchLongPress(friend),
                       onTap: () async {
@@ -121,8 +120,7 @@ class _ConversationsState extends State<ConversationsScreen> {
                       },
                       child: Column(
                         children: <Widget>[
-                          displayCircleImage(
-                              friend.profilePictureURL, 50, false),
+                          displayCircleImage(friend.profilePictureURL, 50, false),
                           Expanded(
                             child: Container(
                               width: 75,
@@ -165,12 +163,10 @@ class _ConversationsState extends State<ConversationsScreen> {
             ),
           );
         } else if (!snapshot.hasData || snapshot.data.isEmpty) {
-          return Expanded(
-            child: Center(
-              child: Text(
-                'No Conversations found.',
-                style: TextStyle(fontSize: 18),
-              ),
+          return Center(
+            child: Text(
+              'No Conversations found.',
+              style: TextStyle(fontSize: 18),
             ),
           );
         } else {

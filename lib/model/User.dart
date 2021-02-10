@@ -6,7 +6,7 @@ import 'package:dating/model/UserLocation.dart';
 import 'package:flutter/foundation.dart';
 
 class AppUser with ChangeNotifier {
-  String _email;
+
   String _firstName;
   String _lastName;
   String _userName;
@@ -14,7 +14,6 @@ class AppUser with ChangeNotifier {
 
   Settings _settings;
 
-  String _phoneNumber;
   Firestore.Timestamp _lastOnlineTimestamp = Firestore.Timestamp.now();
   String _userID;
   String _profilePictureURL;
@@ -41,14 +40,12 @@ class AppUser with ChangeNotifier {
   AppUser();
 
   copy(AppUser cp) {
-    _email = cp.email ?? _email;
     _firstName = cp.firstName ?? _firstName;
     _lastName = cp.lastName ?? _lastName;
     _userName = cp.userName ?? _userName;
     _active = cp.active ?? false;
     _lastOnlineTimestamp = cp.lastOnlineTimestamp;
     _settings = cp.settings ?? _settings;
-    _phoneNumber = cp.phoneNumber ?? _phoneNumber;
     _userID = cp.userID ?? _userID;
     _profilePictureURL = cp.profilePictureURL ?? _profilePictureURL;
     _fcmToken = cp.fcmToken ?? _fcmToken;
@@ -59,6 +56,7 @@ class AppUser with ChangeNotifier {
     _location = cp.location ?? _location;
     _signUpLocation = cp.signUpLocation ?? _signUpLocation;
     _school = cp.school ?? _school;
+    _schoolCode = cp.schoolCode ?? _schoolCode;
     _bio = cp.bio ?? _bio;
     _photos = cp._photos ?? _bio;
     notifyListeners();
@@ -66,7 +64,6 @@ class AppUser with ChangeNotifier {
 
   factory AppUser.fromJson(Map<String, dynamic> parsedJson) {
     return AppUser()
-      ..email = parsedJson['email'] ?? ''
       ..firstName = parsedJson['firstName'] ?? ''
       ..lastName = parsedJson['lastName'] ?? ''
       ..userName = parsedJson['userName'] ?? ''
@@ -74,7 +71,6 @@ class AppUser with ChangeNotifier {
       ..active = parsedJson['active'] ?? false
       ..lastOnlineTimestamp = parsedJson['lastOnlineTimestamp']
       ..settings = Settings.fromJson(parsedJson['settings'] ?? Settings().toJson())
-      ..phoneNumber = parsedJson['phoneNumber'] ?? ''
       ..userID = parsedJson['id'] ?? parsedJson['userID'] ?? ''
       ..profilePictureURL = parsedJson['profilePictureURL'] ?? ''
       ..fcmToken = parsedJson['fcmToken'] ?? ''
@@ -86,7 +82,7 @@ class AppUser with ChangeNotifier {
       ..location = UserLocation.fromJson(parsedJson['location'] ?? UserLocation().toJson())
       ..signUpLocation = UserLocation.fromJson(parsedJson['signUpLocation'] ?? UserLocation().toJson())
       ..school = parsedJson['school'] ?? 'North Carolina A&T University'
-      ..school = parsedJson['schoolCode'] ?? '002905'
+      ..schoolCode = parsedJson['schoolCode'] ?? '002905'
       ..bio = parsedJson['bio'] ?? 'N/A'
       ..photos = parsedJson['photos'] ?? [].cast<String>();
   }
@@ -94,13 +90,11 @@ class AppUser with ChangeNotifier {
   Map<String, dynamic> toJson() {
     photos.toList().removeWhere((element) => element == null);
     return {
-      "email": this.email,
       "firstName": this.firstName,
       "lastName": this.lastName,
       "userName": this.userName,
       "birthDate": this.birthDate,
       "settings": this.settings != null ? this.settings.toJson() : Settings().toJson(),
-      "phoneNumber": this.phoneNumber,
       "id": this.userID,
       'active': this.active,
       'lastOnlineTimestamp': this.lastOnlineTimestamp,
@@ -122,13 +116,6 @@ class AppUser with ChangeNotifier {
       'schoolCode': this.schoolCode,
       'photos': this.photos,
     };
-  }
-
-  String get email => _email;
-
-  set email(String value) {
-    _email = value;
-    notifyListeners();
   }
 
   String get firstName => _firstName;
@@ -170,13 +157,6 @@ class AppUser with ChangeNotifier {
 
   set settings(Settings value) {
     _settings = value;
-    notifyListeners();
-  }
-
-  String get phoneNumber => _phoneNumber;
-
-  set phoneNumber(String value) {
-    _phoneNumber = value;
     notifyListeners();
   }
 

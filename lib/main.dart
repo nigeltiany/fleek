@@ -155,12 +155,14 @@ class MyAppState extends State<MyApp> with WidgetsBindingObserver {
     if (FirebaseAuth.instance.currentUser != null && user != null) {
       if (state == AppLifecycleState.paused) {
         //user offline
+        user.userID = FirebaseAuth.instance.currentUser.uid;
         tokenStream?.pause();
         user.active = false;
         user.lastOnlineTimestamp = Timestamp.now();
         FireStoreUtils.updateCurrentUser(user);
       } else if (state == AppLifecycleState.resumed) {
         //user online
+        user.userID = FirebaseAuth.instance.currentUser.uid;
         tokenStream?.resume();
         user.active = true;
         FireStoreUtils.updateCurrentUser(user);

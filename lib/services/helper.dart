@@ -327,10 +327,10 @@ Future<void> goToNextScreenAfterAuth (BuildContext context, String uid) async {
         pushAndRemoveUntil(context, ProfileSetupScreen(userID: uid, step: ProfileSetupStep.NOT_STARTED,), false);
       }
     } else {
-      pushAndRemoveUntil(context, StudentVerificationScreen(userID: uid), false);
+      pushAndRemoveUntil(context, StudentVerificationScreen(), false);
     }
   } else {
-    pushAndRemoveUntil(context, StudentVerificationScreen(userID: uid), false);
+    pushAndRemoveUntil(context, StudentVerificationScreen(), false);
   }
 
 }
@@ -348,12 +348,16 @@ _goToHomeScreen (BuildContext context, String userID) async {
     Navigator.of(context).pop(); // Close Dialog
     context.read<AppUser>().copy(user);
 
-    KeyPair key = await getUserKeyPair(userID: user.userID);
+    var keyPair = context.read<KeyPair>();
+    if (keyPair.privateKeyBase64 == null || keyPair.publicKeyBase64 == null) {
+      KeyPair key = await getUserKeyPair(userID: user.userID);
 
-    context.read<KeyPair>().publicKeyBase64 = key.publicKeyBase64;
-    context.read<KeyPair>().privateKeyBase64 = key.privateKeyBase64;
+      keyPair.publicKeyBase64 = key.publicKeyBase64;
+      keyPair.privateKeyBase64 = key.privateKeyBase64;
+    }
+
     context.read<EncrypterState>().encrypter = (String message) async {
-      return await Gecies.encrypt(key.publicKeyBase64, message);
+      return await Gecies.encrypt(keyPair.publicKeyBase64, message);
     };
   }
 

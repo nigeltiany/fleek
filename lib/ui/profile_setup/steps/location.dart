@@ -3,7 +3,6 @@ import 'package:dating/components/SecondaryButton.dart';
 import 'package:dating/constants.dart';
 import 'package:dating/model/User.dart';
 import 'package:dating/model/UserLocation.dart';
-import 'package:dating/services/helper.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/scheduler.dart';
 import 'package:location/location.dart';
@@ -39,10 +38,9 @@ class _AllowLocationServicesState extends State<AllowLocationServices> {
 
   @override
   Widget build(BuildContext context) {
-    return Material(
-      child: Container(
-        color: isDarkMode(context) ? Colors.black : Colors.white,
-        child: SafeArea(
+    return Scaffold(
+      body: SafeArea(
+        child: Container(
           child: Column(
             children: [
               _title(),
@@ -76,7 +74,6 @@ class _AllowLocationServicesState extends State<AllowLocationServices> {
             SizedBox(height: 12),
             Text(_locationReady ? 'All set! We will show you matches close to you.' : 'Almost there! Enable location services to get people matches you.',
               style: TextStyle(
-                color: Colors.black,
                 fontSize: 16,
                 decoration: TextDecoration.none,
               ),

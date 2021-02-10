@@ -15,10 +15,9 @@ class AllSet extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Material(
-      child: Container(
-        color: isDarkMode(context) ? Colors.black : Colors.white,
-        child: SafeArea(
+    return Scaffold(
+      body: SafeArea(
+        child: Container(
           child: Column(
             children: [
               Spacer(),
@@ -40,7 +39,7 @@ class AllSet extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text('All Done!',
+            Text('All Set!',
               style: TextStyle(
                 color: Color(COLOR_PRIMARY_DARK),
                 fontSize: 28.0,
@@ -49,13 +48,13 @@ class AllSet extends StatelessWidget {
               ),
             ),
             SizedBox(height: 12),
-            Text('Go get them and remember to be respectful. ',
-              style: TextStyle(
-                color: Colors.black,
-                fontSize: 16,
-                decoration: TextDecoration.none,
-              ),
-            ),
+            // Text('Go get them and remember to be respectful. ',
+            //   style: TextStyle(
+            //     color: Colors.black,
+            //     fontSize: 16,
+            //     decoration: TextDecoration.none,
+            //   ),
+            // ),
           ],
         ),
       ),
@@ -68,7 +67,7 @@ class AllSet extends StatelessWidget {
       child: SizedBox(
         width: double.infinity,
         child: PrimaryButton(
-          label: "Get them",
+          label: "Continue",
           onTap: () async {
             pushAndRemoveUntil(context, HomeScreen(), false);
           },

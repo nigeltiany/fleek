@@ -24,7 +24,6 @@ class _BioSetupState extends State<BioSetup> {
 
   final PageController pageController;
 
-  TextEditingController _userNameController = TextEditingController();
   TextEditingController _bioController = TextEditingController();
   TextEditingController _DOB_Controller = TextEditingController();
   DateTime dob;
@@ -75,13 +74,6 @@ class _BioSetupState extends State<BioSetup> {
   Iterable<Widget> _formElements() {
     return [
       FormInput(
-        type: TextInputType.name,
-        textInputAction: TextInputAction.next,
-        controller: _userNameController,
-        label: "Username",
-        onSubmitted: (_) => FocusScope.of(context).nextFocus(),
-      ),
-      FormInput(
         type: TextInputType.datetime,
         textInputAction: TextInputAction.next,
         controller: _DOB_Controller,
@@ -98,6 +90,7 @@ class _BioSetupState extends State<BioSetup> {
           );
           if (dob != null) {
             _DOB_Controller.text = dob.toString().split(" ")[0];
+            setState(() {});
           }
         },
       ),
@@ -121,9 +114,8 @@ class _BioSetupState extends State<BioSetup> {
         width: double.infinity,
         child: PrimaryButton(
           label: "Continue",
-          onTap: () async {
+          onTap: dob == null ? null : () async {
             var user = context.read<AppUser>();
-            user.userName = _userNameController.text;
             user.bio = _bioController.text;
             user.birthDate = Timestamp.fromDate(dob);
 

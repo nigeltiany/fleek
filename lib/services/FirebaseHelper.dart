@@ -16,6 +16,7 @@ import 'package:dating/model/SwipeCounterModel.dart';
 import 'package:dating/model/User.dart';
 import 'package:dating/model/UserLocation.dart';
 import 'package:dating/model/SearchInterests.dart';
+import 'package:dating/model/UserPrivateDetails.dart';
 import 'package:dating/services/helper.dart';
 import 'package:dating/ui/matchScreen/MatchScreen.dart';
 import 'package:firebase_auth/firebase_auth.dart';
@@ -50,6 +51,15 @@ class FireStoreUtils {
   List<AppUser> matches = [];
   StreamController fleekCardsStreamController;
 
+  static Future<UserPrivateDetails> getCurrentUserPrivateDetails() async {
+    DocumentSnapshot userDocument = await firestore.collection("users_private").doc(FirebaseAuth.instance.currentUser.uid).get();
+    if (userDocument != null && userDocument.exists) {
+      return UserPrivateDetails.fromJson(userDocument.data());
+    } else {
+      return null;
+    }
+  }
+
   Future<AppUser> getCurrentUser(String uid) async {
     DocumentSnapshot userDocument = await firestore.collection(USERS).doc(uid).get();
     if (userDocument != null && userDocument.exists) {
@@ -62,7 +72,7 @@ class FireStoreUtils {
   static Future<AppUser> updateCurrentUser(AppUser user) async {
     return await firestore
         .collection(USERS)
-        .doc(user.userID)
+        .doc(FirebaseAuth.instance.currentUser.uid)
         .set(user.toJson(), SetOptions(merge: true))
         .then((document) {
       return user;
@@ -653,7 +663,9 @@ class FireStoreUtils {
   }
 
   closeFleekStream() {
-    fleekCardsStreamController.close();
+    if (fleekCardsStreamController != null) {
+      fleekCardsStreamController.close();
+    }
   }
 
   void updateCardStream(List<AppUser> data) {

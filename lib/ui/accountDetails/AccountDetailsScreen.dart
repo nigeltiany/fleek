@@ -1,5 +1,6 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:dating/model/User.dart';
+import 'package:dating/model/UserPrivateDetails.dart';
 import 'package:dating/services/FirebaseHelper.dart';
 import 'package:dating/services/helper.dart';
 import 'package:dating/ui/auth/AuthScreen.dart';
@@ -10,8 +11,7 @@ import 'package:flutter/widgets.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:provider/provider.dart';
 import 'package:settings_ui/settings_ui.dart';
-
-import '../../constants.dart';
+import 'package:dating/services/FirebaseHelper.dart';
 
 class AccountDetailsScreen extends StatefulWidget {
   final AppUser user;
@@ -25,13 +25,18 @@ class AccountDetailsScreen extends StatefulWidget {
 }
 
 class _AccountDetailsScreenState extends State<AccountDetailsScreen> {
+
   AppUser user;
-  GlobalKey<FormState> _key = new GlobalKey();
-  AutovalidateMode _validate = AutovalidateMode.disabled;
   int age;
   String firstName, lastName, bio, school, email, mobile;
 
   _AccountDetailsScreenState(this.user);
+
+  @override
+  void initState() {
+    super.initState();
+    user = context.read<AppUser>();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -52,81 +57,96 @@ class _AccountDetailsScreenState extends State<AccountDetailsScreen> {
       ),
       body: Padding(
         padding: const EdgeInsets.only(top: 24),
-        child: SettingsList(
-          backgroundColor: Colors.transparent,
-          sections: [
-            SettingsSection(
-              title: 'Public Info',
-              tiles: [
-                SettingsTile(
-                  title: 'Username',
-                  subtitle: 'some-username',
-                  // leading: Icon(Icons.language),
-                  onPressed: (BuildContext context) {},
-                ),
-                SettingsTile(
-                  title: 'Age',
-                  subtitle: '18',
-                  // leading: Icon(Icons.language),
-                  onPressed: (BuildContext context) {},
-                ),
-                SettingsTile(
-                  title: 'School',
-                  subtitle: 'NCAT',
-                  // leading: Icon(Icons.language),
-                  onPressed: (BuildContext context) {},
-                ),
-              ],
+        child: FutureBuilder<UserPrivateDetails>(
+          future: FireStoreUtils.getCurrentUserPrivateDetails(),
+          builder: (BuildContext context, AsyncSnapshot<UserPrivateDetails> snapshot) {
+            if (snapshot.hasData) {
+              return _sections(snapshot.data);
+            } else if (snapshot.hasError) {
+              return Center(child: Icon(Icons.error, color: Colors.redAccent,));
+            } else {
+              return Center(child: CircularProgressIndicator());
+            }
+          },
+        ),
+      ),
+    );
+  }
+
+  Widget _sections (UserPrivateDetails details) {
+    return SettingsList(
+      backgroundColor: Colors.transparent,
+      sections: [
+        SettingsSection(
+          title: 'Public Info',
+          tiles: [
+            SettingsTile(
+              title: 'Username',
+              subtitle: details.userName,
+              // leading: Icon(Icons.language),
+              onPressed: (BuildContext context) {},
             ),
-            SettingsSection(
-              title: 'Private Details',
-              tiles: [
-                SettingsTile(
-                  title: 'First Name',
-                  subtitle: 'Male',
-                  // leading: Icon(Icons.language),
-                  onPressed: (BuildContext context) {},
-                ),
-                SettingsTile(
-                  title: 'Last Name',
-                  subtitle: 'Three',
-                  // leading: Icon(Icons.language),
-                  onPressed: (BuildContext context) {},
-                ),
-                SettingsTile(
-                  title: 'Email Address',
-                  subtitle: 'some_private_non_school_email@mail.com',
-                  // leading: Icon(Icons.language),
-                  onPressed: (BuildContext context) {},
-                ),
-                SettingsTile(
-                  title: 'Phone Number',
-                  subtitle: '9192223333',
-                  // leading: Icon(Icons.language),
-                  onPressed: (BuildContext context) {},
-                ),
-              ],
+            SettingsTile(
+              title: 'Age',
+              subtitle: user.birthDate != null ? '${getUserAge(user.birthDate)}' : '',
+              // leading: Icon(Icons.language),
+              onPressed: (BuildContext context) {},
             ),
-            SettingsSection(
-              title: 'Account',
-              tiles: [
-                SettingsTile(
-                  title: "Logout",
-                  onPressed: (_) async {
-                    user.active = false;
-                    user.lastOnlineTimestamp = Timestamp.now();
-                    await FireStoreUtils.updateCurrentUser(user);
-                    await FirebaseAuth.instance.signOut();
-                    await context.read<FlutterSecureStorage>().deleteAll();
-                    context.read<AppUser>().copy(AppUser());
-                    pushAndRemoveUntil(context, AuthScreen(), false);
-                  },
-                ),
-              ],
+            SettingsTile(
+              title: 'School',
+              subtitle: user.school,
+              // leading: Icon(Icons.language),
+              onPressed: (BuildContext context) {},
             ),
           ],
         ),
-      ),
+        SettingsSection(
+          title: 'Private Details',
+          tiles: [
+            SettingsTile(
+              title: 'First Name',
+              subtitle: details.firstName,
+              // leading: Icon(Icons.language),
+              onPressed: (BuildContext context) {},
+            ),
+            SettingsTile(
+              title: 'Last Name',
+              subtitle: details.lastName,
+              // leading: Icon(Icons.language),
+              onPressed: (BuildContext context) {},
+            ),
+            SettingsTile(
+              title: 'Email Address',
+              subtitle: details.email,
+              // leading: Icon(Icons.language),
+              onPressed: (BuildContext context) {},
+            ),
+            // SettingsTile(
+            //   title: 'Phone Number',
+            //   subtitle: '9192223333',
+            //   // leading: Icon(Icons.language),
+            //   onPressed: (BuildContext context) {},
+            // ),
+          ],
+        ),
+        SettingsSection(
+          title: 'Account',
+          tiles: [
+            SettingsTile(
+              title: "Logout",
+              onPressed: (_) async {
+                user.active = false;
+                user.lastOnlineTimestamp = Timestamp.now();
+                await FireStoreUtils.updateCurrentUser(user);
+                await FirebaseAuth.instance.signOut();
+                await context.read<FlutterSecureStorage>().deleteAll();
+                context.read<AppUser>().copy(AppUser());
+                pushAndRemoveUntil(context, AuthScreen(), false);
+              },
+            ),
+          ],
+        ),
+      ],
     );
   }
 

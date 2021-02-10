@@ -12,6 +12,7 @@ class FormInput extends StatelessWidget {
   final TextInputAction textInputAction;
   final VoidCallback onTap;
   final bool readOnly;
+  final Widget suffix;
 
   const FormInput({
     Key key, 
@@ -23,6 +24,7 @@ class FormInput extends StatelessWidget {
     this.obscureText = false,
     this.textInputAction,
     this.readOnly = false,
+    this.suffix,
   }) : super(key: key);
   
   @override
@@ -48,8 +50,9 @@ class FormInput extends StatelessWidget {
             FilteringTextInputFormatter.digitsOnly,
           ],
           decoration: InputDecoration(
-            contentPadding:this.type == TextInputType.multiline ? EdgeInsets.symmetric(horizontal: 16, vertical: 14) : EdgeInsets.only(left: 16, right: 16),
+            contentPadding: this.type == TextInputType.multiline ? EdgeInsets.symmetric(horizontal: 16, vertical: 14) : EdgeInsets.only(left: 16, right: 16),
             hintText: label,
+            suffix: this.suffix,
             focusedBorder: OutlineInputBorder(
               borderRadius: BorderRadius.circular(25.0),
               borderSide: BorderSide(

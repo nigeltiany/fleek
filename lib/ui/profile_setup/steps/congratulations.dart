@@ -37,10 +37,10 @@ class Congrats extends StatelessWidget {
           children: [
             Text('Congratulations on getting verified',
               style: TextStyle(
-                  color: Color(COLOR_PRIMARY),
-                  fontSize: 25.0,
-                  fontWeight: FontWeight.bold,
-                  decoration: TextDecoration.none
+                color: Color(COLOR_PRIMARY),
+                fontSize: 25.0,
+                fontWeight: FontWeight.bold,
+                decoration: TextDecoration.none
               ),
             ),
           ],
@@ -50,7 +50,19 @@ class Congrats extends StatelessWidget {
   }
 
   Widget _niceImage () {
-    return FlutterLogo(size: 236,);
+    return Container(
+      width: 200,
+      height: 200,
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(200),
+      ),
+      child: Image.asset(
+        'assets/images/app_logo.png',
+        width: 200.0,
+        fit: BoxFit.contain,
+      ),
+    );
   }
 
   Widget _nextScreenButton () {

@@ -1,9 +1,11 @@
 import 'package:dating/components/GenderSelector.dart';
+import 'package:dating/components/InterestSelector.dart';
 import 'package:dating/components/OrientationSelector.dart';
 import 'package:dating/components/PrimaryButton.dart';
 import 'package:dating/constants.dart';
 import 'package:dating/model/Gender.dart';
 import 'package:dating/model/ProfileSettings.dart';
+import 'package:dating/model/SearchInterests.dart';
 import 'package:dating/model/User.dart';
 import 'package:dating/services/helper.dart';
 import 'package:flutter/material.dart';
@@ -29,6 +31,7 @@ class _PreferencesSetupState extends State<PreferencesSetup> with TickerProvider
   AppUser user;
   TabController _genderTabController;
   TabController _orientationTabController;
+  TabController _searchInterestController;
 
   _PreferencesSetupState(this.pageController);
 
@@ -51,14 +54,21 @@ class _PreferencesSetupState extends State<PreferencesSetup> with TickerProvider
     _orientationTabController.addListener(() {
       user.settings.genderPreference = GenderPreference.values[_orientationTabController.index];
     });
+
+    user.settings.searchInterest = SearchInterest.DATES;
+    _searchInterestController = TabController(
+      initialIndex: user.settings.searchInterest.index,
+      length: SearchInterest.values.length,
+      vsync: this,
+    );
+
   }
 
   @override
   Widget build(BuildContext context) {
-    return Material(
-      child: Container(
-        color: isDarkMode(context) ? Colors.black : Colors.white,
-        child: SafeArea(
+    return Scaffold(
+      body: SafeArea(
+        child: Container(
           child: Column(
             children: [
               _title(),
@@ -66,6 +76,8 @@ class _PreferencesSetupState extends State<PreferencesSetup> with TickerProvider
               _genderSelector(),
               SizedBox(height: 12),
               _orientationSelector(),
+              SizedBox(height: 12),
+              _searchInterestSelector(),
               Spacer(),
               _nextScreenButton(),
             ],
@@ -101,7 +113,7 @@ class _PreferencesSetupState extends State<PreferencesSetup> with TickerProvider
             SizedBox(height: 12),
             Text('let\'s get your preferences setup',
               style: TextStyle(
-                color: Colors.black,
+                color: isDarkMode(context) ? Colors.white : Colors.black,
                 fontSize: 16,
                 decoration: TextDecoration.none,
               ),
@@ -123,6 +135,13 @@ class _PreferencesSetupState extends State<PreferencesSetup> with TickerProvider
     return  Padding(
       padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
       child: OrientationSelector(tabController: _orientationTabController),
+    );
+  }
+
+  Widget _searchInterestSelector () {
+    return  Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
+      child: InterestSelector(tabController: _searchInterestController),
     );
   }
 

@@ -1,6 +1,7 @@
 import 'package:dating/components/PrimaryButton.dart';
 import 'package:dating/components/FormInput.dart';
 import 'package:cloud_functions/cloud_functions.dart';
+import 'package:dating/services/FirebaseHelper.dart';
 import 'package:dating/store/KeyPair.dart';
 import 'package:dating/model/User.dart';
 import 'package:dating/services/helper.dart';
@@ -28,7 +29,7 @@ class _SignUpState extends State<SignUpScreen> {
 
 
   String username, email, mobile, password;
-  String emailError;
+  String usernameError, emailError, passwordError;
   LocationData signUpLocation;
 
   @override
@@ -75,6 +76,7 @@ class _SignUpState extends State<SignUpScreen> {
           label: "Creative username",
           onSubmitted: (_) => FocusScope.of(context).nextFocus(),
         ),
+        _showError(usernameError),
         FormInput(
           type: TextInputType.emailAddress,
           textInputAction: TextInputAction.next,
@@ -82,7 +84,7 @@ class _SignUpState extends State<SignUpScreen> {
           label: "Personal Email",
           onSubmitted: (_) => FocusScope.of(context).nextFocus(),
         ),
-        _emailAddressError(),
+        _showError(emailError),
         FormInput(
           type: TextInputType.emailAddress,
           textInputAction: TextInputAction.done,
@@ -91,6 +93,7 @@ class _SignUpState extends State<SignUpScreen> {
           obscureText: true,
           onSubmitted: (password) => _signUp(),
         ),
+        _showError(passwordError),
         SizedBox(height: 32,),
         ConstrainedBox(
           constraints: BoxConstraints(minWidth: double.infinity),
@@ -106,12 +109,12 @@ class _SignUpState extends State<SignUpScreen> {
     );
   }
 
-  Widget _emailAddressError () {
-    if (emailError != null) {
+  Widget _showError (String errorString) {
+    if (errorString != null) {
       return Padding(
         padding: const EdgeInsets.all(8.0),
         child: Container(
-          child: Text(emailError, style: TextStyle(color: Colors.redAccent)),
+          child: Text(errorString, style: TextStyle(color: Colors.redAccent)),
         ),
       );
     }
@@ -119,20 +122,40 @@ class _SignUpState extends State<SignUpScreen> {
   }
 
   bool _hasValidityErrors() {
-    bool emailValid = RegExp(r"^[a-zA-Z0-9.a-zA-Z0-9.!#$%&'*+-/=?^_`{|}~]+@[a-zA-Z0-9]+\.[a-zA-Z]+").hasMatch(_emailController.value.text);
-    if (!emailValid) {
-      emailError = "Invalid Email Address";
-      setState(() {});
-      return true;
-    }
-    bool personalEmail = !_emailController.value.text.endsWith(".edu");
-    if (!personalEmail) {
-      emailError = "Please use your personal Email";
-      setState(() {});
-      return true;
+
+    bool validUsername = _usernameController.value.text.trim().isNotEmpty;
+    bool validUsernameLength = _usernameController.value.text.length >= 4;
+    if(!validUsername) {
+      usernameError = "Username cannot be empty";
+    } else if (!validUsernameLength) {
+      usernameError = "Username must be 4 or more characters long";
+    } else {
+      usernameError = null;
     }
 
-    return emailValid && personalEmail;
+    bool emailValid = RegExp(r"^[a-zA-Z0-9.a-zA-Z0-9.!#$%&'*+-/=?^_`{|}~]+@[a-zA-Z0-9]+\.[a-zA-Z]+").hasMatch(_emailController.value.text);
+    bool personalEmail = !_emailController.value.text.endsWith(".edu");
+    if (!emailValid) {
+      emailError = "Invalid Email Address";
+    } else if (!personalEmail) {
+      emailError = "Please use your personal Email";
+    } else {
+      emailError = null;
+    }
+
+    bool validPassword = _usernameController.value.text.trim().isNotEmpty;
+    bool validPasswordLength = _passwordController.value.text.trim().length > 4;
+    if(!validPassword) {
+      passwordError = "Password cannot be empty";
+    } else if (!validPasswordLength) {
+      passwordError = "Password must 5 or more characters long";
+    } else {
+      passwordError = null;
+    }
+
+    setState(() {});
+    return !validUsername || !validUsernameLength || !emailValid || !personalEmail || !validPassword || !validPasswordLength;
+
   }
 
   _signUp() async {
@@ -150,6 +173,8 @@ class _SignUpState extends State<SignUpScreen> {
         password: _passwordController.value.text.trim()
       );
 
+      var user = context.read<AppUser>();
+
       HttpsCallable createKeyPair = FirebaseFunctions.instance.httpsCallable('createKeyPair');
       createKeyPair.call<Map<String, dynamic>>().then((result) {
         if (!result.data.containsKey('PrivateKey') || !result.data.containsKey('PublicKey')) {
@@ -159,14 +184,18 @@ class _SignUpState extends State<SignUpScreen> {
         }
         context.read<KeyPair>().publicKeyBase64 = result.data['PublicKey'];
         context.read<KeyPair>().privateKeyBase64 = result.data['PrivateKey'];
-        context.read<AppUser>().publicKey = result.data['PublicKey'];
         context.read<EncrypterState>().encrypter = (String message) async {
           return await Gecies.encrypt(result.data['PublicKey'], message);
         };
+        user.publicKey = result.data['PublicKey'];
       }).catchError((e) {
         throw FirebaseFunctionsException(message: e);
       });
       await saveUserKeyPair(userID: result.user.uid, keyPair: context.read<KeyPair>());
+
+      user.userID = result.user.uid;
+      user.userName = _emailController.text.trim();
+      await FireStoreUtils.updateCurrentUser(user);
 
       Navigator.of(context).pop(); // Close Dialog
       await goToNextScreenAfterAuth(context, result.user.uid);
