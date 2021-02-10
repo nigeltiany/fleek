@@ -1,5 +1,6 @@
 import 'package:dating/model/Gender.dart';
 import 'package:dating/model/User.dart';
+import 'package:dating/services/FirebaseHelper.dart';
 import 'package:dating/services/helper.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
@@ -21,23 +22,10 @@ class _SettingsScreenState extends State<SettingsScreen> {
 
   _SettingsScreenState();
 
-  bool showMe, newMatches, messages, superLikes, topPicks;
-
-  num radius;
-  Gender gender;
-  GenderPreference prefGender;
 
   @override
   void initState() {
     user = context.read<AppUser>();
-    showMe = user.settings.showMe;
-    newMatches = user.settings.pushNewMatchesEnabled;
-    messages = user.settings.pushNewMessages;
-    superLikes = user.settings.pushSuperLikesEnabled;
-    topPicks = user.settings.pushTopPicksEnabled;
-    radius = user.settings.distanceRadius;
-    gender = user.settings.gender;
-    prefGender = user.settings.genderPreference;
     super.initState();
   }
 
@@ -67,15 +55,19 @@ class _SettingsScreenState extends State<SettingsScreen> {
                 SettingsTile.switchTile(
                   title: 'Show me on Fleek',
                   // leading: Icon(Icons.fingerprint),
-                  switchValue: true,
-                  onToggle: (bool value) {},
+                  switchValue: user.settings.showMe,
+                  onToggle: (bool value) async {
+                    user.settings.showMe = value;
+                    await FireStoreUtils.updateCurrentUser(user);
+                    setState(() {});
+                  },
                 ),
-                SettingsTile(
-                  title: 'Distance Radius',
-                  subtitle: '3 KM',
-                  // leading: Icon(Icons.language),
-                  onPressed: (BuildContext context) {},
-                ),
+                // SettingsTile(
+                //   title: 'Distance Radius',
+                //   subtitle: '3 KM',
+                //   // leading: Icon(Icons.language),
+                //   onPressed: (BuildContext context) {},
+                // ),
               ],
             ),
             SettingsSection(
@@ -84,20 +76,32 @@ class _SettingsScreenState extends State<SettingsScreen> {
                 SettingsTile.switchTile(
                   title: 'New matches',
                   // leading: Icon(Icons.fingerprint),
-                  switchValue: true,
-                  onToggle: (bool value) {},
+                  switchValue: user.settings.pushNewMatchesEnabled,
+                  onToggle: (bool value) async {
+                    user.settings.pushNewMatchesEnabled = value;
+                    await FireStoreUtils.updateCurrentUser(user);
+                    setState(() {});
+                  },
                 ),
                 SettingsTile.switchTile(
                   title: 'Super Likes',
                   // leading: Icon(Icons.fingerprint),
-                  switchValue: true,
-                  onToggle: (bool value) {},
+                  switchValue: user.settings.pushSuperLikesEnabled,
+                  onToggle: (bool value) async {
+                    user.settings.pushSuperLikesEnabled = value;
+                    await FireStoreUtils.updateCurrentUser(user);
+                    setState(() {});
+                  },
                 ),
                 SettingsTile.switchTile(
                   title: 'New Messages',
                   // leading: Icon(Icons.fingerprint),
-                  switchValue: true,
-                  onToggle: (bool value) {},
+                  switchValue: user.settings.pushNewMessages,
+                  onToggle: (bool value) async {
+                    user.settings.pushNewMessages = value;
+                    await FireStoreUtils.updateCurrentUser(user);
+                    setState(() {});
+                  },
                 ),
               ],
             ),

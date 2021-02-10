@@ -39,6 +39,7 @@ final geo = Geoflutterfire();
 
 
 class FireStoreUtils {
+
   static FirebaseMessaging firebaseMessaging = FirebaseMessaging();
   static FirebaseFirestore firestore = FirebaseFirestore.instance;
   Reference storage = FirebaseStorage.instance.ref();
@@ -298,16 +299,14 @@ class FireStoreUtils {
 
   Future<ConversationModel> getChannelByIdOrNull(String channelID) async {
     ConversationModel conversationModel;
-    await firestore.collection(CHANNELS).doc(channelID).get()
-      .then((channel) {
-          if (channel != null && channel.exists) {
-            conversationModel = ConversationModel.fromJson(channel.data());
-          }
-        },
-        onError: (e) {
-          print((e as PlatformException).message);
+    await firestore.collection(CHANNELS).doc(channelID).get().then((channel) {
+        if (channel != null && channel.exists) {
+          conversationModel = ConversationModel.fromJson(channel.data());
         }
-      );
+      },
+    ).catchError((e) {
+      print((e as PlatformException).message);
+    });
     return conversationModel;
   }
 
@@ -516,23 +515,6 @@ class FireStoreUtils {
 
     yield* fleekCardsStreamController.stream;
 
-  }
-
-  Future<bool> _userAlreadyViewed(AppUser user) async {
-    
-    List<String> viewedUsers = List<String>();
-    
-    QuerySnapshot result = await firestore.collection(SWIPES)
-      .where('swiperUserID', isEqualTo: FirebaseAuth.instance.currentUser.uid)
-      .where('forUserID', isEqualTo: user.userID).get().catchError((onError) {
-      print('${(onError as PlatformException).message}');
-    });
-    
-    result.docs.forEach((element) {
-     viewedUsers.add(Swipe.fromJson(element.data()).forUserID);
-    });
-    
-    return result.docs.isEmpty;
   }
 
   matchChecker(BuildContext context) async {
