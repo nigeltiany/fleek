@@ -3,6 +3,7 @@ import 'dart:io';
 
 import 'package:audio_recorder/audio_recorder.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:dating/components/Avatar.dart';
 import 'package:dating/constants.dart';
 import 'package:dating/store/KeyPair.dart';
 import 'package:dating/services/file_encryption.dart';
@@ -111,27 +112,21 @@ class _ChatScreenState extends State<ChatScreen> {
   }
 
   Widget get _title {
-    return Column(
-      mainAxisAlignment: MainAxisAlignment.center,
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.start,
       crossAxisAlignment: CrossAxisAlignment.center,
       children: <Widget>[
-        Text(
-          homeConversationModel.members.first.userName,
+        Avatar(homeConversationModel),
+        SizedBox(width: 12),
+        Text(homeConversationModel.members.first.userName,
+          overflow: TextOverflow.clip,
+          maxLines: 1,
+          softWrap: false,
           style: TextStyle(
             color: isDarkMode(context) ? Colors.grey.shade200 : Colors.white,
             fontWeight: FontWeight.bold,
           ),
         ),
-        homeConversationModel.members.first.lastOnlineTimestamp != null ?
-        Padding(
-          padding: const EdgeInsets.all(2.0),
-          child: buildSubTitle(
-            homeConversationModel.members.first,
-          ),
-        ) : Container(
-          width: 0,
-          height: 0,
-        )
       ],
     );
   }
