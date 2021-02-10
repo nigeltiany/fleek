@@ -1,7 +1,9 @@
 import 'dart:convert';
 import 'dart:io';
+import 'dart:typed_data';
 import 'package:cryptography/cryptography.dart';
 import 'package:file/file.dart' show FileSystem;
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:path/path.dart' show basename;
 import 'package:path_provider/path_provider.dart';
@@ -74,15 +76,22 @@ Future<EncryptionResult> encryptFile (FileSystem fs, File file) async {
 
 }
 
-Future<File> decryptFile(MemoryFileSystem memoryFileSystem, FileSecret secret, File file, String fileName) async {
+class _Work {
+  final File file;
+  final FileSecret fileSecret;
+  _Work(this.file, this.fileSecret);
+}
 
-  var fileBytes = await file.readAsBytes();
-  final decrypted = await _cipher.decrypt(
+Future<Uint8List> _decrypt(_Work w) async {
+  var fileBytes = await w.file.readAsBytes();
+  return await _cipher.decrypt(
     fileBytes,
-    secretKey: SecretKey(secret.secret.codeUnits),
-    nonce: Nonce(secret.nonce.codeUnits),
+    secretKey: SecretKey(w.fileSecret.secret.codeUnits),
+    nonce: Nonce(w.fileSecret.nonce.codeUnits),
   );
+}
 
+Future<File> decryptFile(MemoryFileSystem memoryFileSystem, FileSecret secret, File file, String fileName) async {
+  final decrypted = await compute<_Work, Uint8List>(_decrypt, _Work(file, secret));
   return memoryFileSystem.file(fileName).writeAsBytes(decrypted);
-
 }
