@@ -50,27 +50,32 @@ class EncryptionResult {
 
 }
 
+Future<Uint8List> _encrypt(_Work w) async {
+  var fileBytes = await w.file.readAsBytes();
+  return await _cipher.encrypt(
+    fileBytes,
+    secretKey: SecretKey(w.fileSecret.secret.codeUnits),
+    nonce: Nonce(w.fileSecret.nonce.codeUnits),
+  );
+}
+
 Future<EncryptionResult> encryptFile (FileSystem fs, File file) async {
 
   final secretKey = await _cipher.newSecretKey();
   final secret = await secretKey.extract();
   final nonce = _cipher.newNonce();
-
-  var plainText = await file.readAsBytes();
-  final encrypted = await _cipher.encrypt(
-    plainText,
-    secretKey: secretKey,
-    nonce: nonce,
+  var fileSecret = FileSecret(
+    secret: String.fromCharCodes(secret),
+    nonce: String.fromCharCodes(nonce.bytes),
   );
+
+  final encrypted = await compute<_Work, Uint8List>(_encrypt, _Work(file, fileSecret));
 
   String dir = (await getTemporaryDirectory()).path;
   File encryptedFile = await fs.file('$dir/${basename(file.path)}').writeAsBytes(encrypted);
 
   return EncryptionResult(
-    FileSecret(
-      secret: String.fromCharCodes(secret),
-      nonce: String.fromCharCodes(nonce.bytes),
-    ),
+    fileSecret,
     encryptedFile,
   );
 

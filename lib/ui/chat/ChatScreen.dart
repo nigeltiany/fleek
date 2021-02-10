@@ -799,9 +799,9 @@ class _ChatScreenState extends State<ChatScreen> {
     }
   }
 
-  Future<EncryptionResult> _encryptFileAtPath(String path, { bool localFile = false }) async {
+  Future<EncryptionResult> _encryptFileAtPath(String path) async {
     // showProgress(context, 'Securing image...', false);
-    var result = await encryptFile(localFile ? LocalFileSystem() : context.read<MemoryFileSystem>(), File(path));
+    var result = await encryptFile(LocalFileSystem(), File(path));
     // Navigator.of(context).pop();
     return result;
   }
@@ -975,7 +975,7 @@ class _ChatScreenState extends State<ChatScreen> {
       currentRecordingState = RecordingState.HIDDEN;
     });
 
-    var encryptionResult = await _encryptFileAtPath(_recording.path, localFile: true);
+    var encryptionResult = await _encryptFileAtPath(_recording.path);
     Url url = await _fireStoreUtils.uploadAudioFile(encryptionResult.file, context);
 
     await _sendMessage(encryptionResult.fileSecret.toString(), url, '');
