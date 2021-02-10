@@ -44,8 +44,12 @@ class _UserDetailsScreenState extends State<UserDetailsScreen> {
 
   @override
   Widget build(BuildContext context) {
-    SystemChrome.setSystemUIOverlayStyle(SystemUiOverlayStyle(
-        statusBarColor: isDarkMode(context) ? Colors.black : Colors.white));
+    SystemChrome.setSystemUIOverlayStyle(
+      SystemUiOverlayStyle(
+        statusBarColor: isDarkMode(context) ? Colors.black : Colors.white,
+      ),
+    );
+    num imageViewerHeight = (MediaQuery.of(context).size.height * 0.6) + 28;
     _gridPages = _buildGridView();
     return SafeArea(
         child: Scaffold(
@@ -55,54 +59,67 @@ class _UserDetailsScreenState extends State<UserDetailsScreen> {
                 mainAxisSize: MainAxisSize.max,
                 children: <Widget>[
                   Stack(
-                      alignment: Alignment.bottomRight,
-                      overflow: Overflow.visible,
-                      children: <Widget>[
-                        Container(
-                          height: MediaQuery.of(context).size.height * .6,
-                          child: PageView.builder(
-                            itemBuilder: (BuildContext context, int index) =>
-                                _buildImage(index),
-                            itemCount: images.length,
-                            controller: controller,
-                            scrollDirection: Axis.horizontal,
-                          ),
+                    alignment: Alignment.bottomRight,
+                    clipBehavior: Clip.none,
+                    children: <Widget>[
+                      Container(
+                        height: imageViewerHeight,
+                        child: Column(
+                          mainAxisSize: MainAxisSize.max,
+                          children: [
+                            Container(
+                              height: imageViewerHeight - 28,
+                              child: PageView.builder(
+                                itemBuilder: (BuildContext context, int index) => _buildImage(index),
+                                itemCount: images.length,
+                                controller: controller,
+                                scrollDirection: Axis.horizontal,
+                              ),
+                            ),
+                            Container(
+                              color: Colors.transparent,
+                              height: 28,
+                            )
+                          ],
                         ),
-                        Positioned(
-                          top: 5,
+                      ),
+                      Positioned(
+                        top: 0,
+                        child: Padding(
+                          padding: const EdgeInsets.all(4.0),
                           child: SmoothPageIndicator(
                             controller: controller, // PageController
                             count: images.length,
                             effect: SlideEffect(
-                                spacing: 4.0,
-                                radius: 4.0,
-                                dotWidth: (MediaQuery.of(context).size.width /
-                                    images.length) -
-                                    4,
-                                dotHeight: 4.0,
-                                paintStyle: PaintingStyle.fill,
-                                dotColor: Colors.grey,
-                                activeDotColor:
-                                Colors.white), // your preferred effect
+                              spacing: 4.0,
+                              radius: 4.0,
+                              dotWidth: (MediaQuery.of(context).size.width - 8) / images.length,
+                              dotHeight: 4.0,
+                              paintStyle: PaintingStyle.fill,
+                              dotColor: Colors.grey,
+                              activeDotColor: Colors.white,
+                            ), // your preferred effect
                           ),
                         ),
-                        Positioned(
-                          right: 16,
-                          bottom: -28,
-                          child: FloatingActionButton(
-                              mini: false,
-                              child: Icon(
-                                Icons.arrow_downward,
-                                size: 30,
-                                color: Colors.white,
-                              ),
-                              onPressed: () {
-                                Navigator.pop(context);
-                              }),
-                        )
-                      ]),
+                      ),
+                      Positioned(
+                        right: 16,
+                        bottom: 0,
+                        child: FloatingActionButton(
+                          backgroundColor: Color(COLOR_PRIMARY),
+                          child: Icon(Icons.arrow_downward,
+                            size: 30,
+                            color: Colors.white,
+                          ),
+                          onPressed: () {
+                            Navigator.of(context).pop();
+                          },
+                        ),
+                      ),
+                    ],
+                  ),
                   Padding(
-                    padding: const EdgeInsets.all(16.0),
+                    padding: const EdgeInsets.only(left: 16, right: 16, bottom: 16),
                     child: Row(
                       children: <Widget>[
                         Text('${user.userName}',
@@ -121,25 +138,25 @@ class _UserDetailsScreenState extends State<UserDetailsScreen> {
                       ],
                     ),
                   ),
-                  Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 16.0),
-                    child: Row(
-                      children: <Widget>[
-                        Icon(Icons.school),
-                        Text('   ${user.school}')
-                      ],
-                    ),
-                  ),
-                  Padding(
-                    padding: const EdgeInsets.only(left: 16.0, top: 8),
-                    child: Row(
-                      children: <Widget>[
-                        Icon(Icons.location_on),
-                        Text('   ${user.milesAway}')
-                      ],
-                    ),
-                  ),
-                  Divider(),
+                  // Padding(
+                  //   padding: const EdgeInsets.symmetric(horizontal: 16.0),
+                  //   child: Row(
+                  //     children: <Widget>[
+                  //       Icon(Icons.school),
+                  //       Text('   ${user.school}')
+                  //     ],
+                  //   ),
+                  // ),
+                  // Padding(
+                  //   padding: const EdgeInsets.only(left: 16.0, top: 8),
+                  //   child: Row(
+                  //     children: <Widget>[
+                  //       Icon(Icons.location_on),
+                  //       Text('   ${user.milesAway}')
+                  //     ],
+                  //   ),
+                  // ),
+                  // Divider(),
                   Padding(
                     padding: const EdgeInsets.only(left: 16.0, top: 8),
                     child: Text(
@@ -233,7 +250,7 @@ class _UserDetailsScreenState extends State<UserDetailsScreen> {
                     mini: true,
                     child: Icon(
                     Icons.star,
-                    color: Colors.blue,
+                    color: Color(COLOR_PRIMARY),
                       size: 30,
                     ),
                   ),
@@ -247,7 +264,7 @@ class _UserDetailsScreenState extends State<UserDetailsScreen> {
                     mini: false,
                     child: Icon(
                       Icons.favorite,
-                      color: Colors.green,
+                      color: Colors.redAccent,
                       size: 40,
                     ),
                   )

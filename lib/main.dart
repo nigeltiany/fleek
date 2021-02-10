@@ -1,7 +1,8 @@
 import 'dart:async';
 
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:dating/model/KeyPair.dart';
+import 'package:dating/store/Data.dart';
+import 'package:dating/store/KeyPair.dart';
 import 'package:dating/services/FirebaseHelper.dart';
 import 'package:dating/services/helper.dart';
 import 'package:dating/ui/auth/AuthScreen.dart';
@@ -63,6 +64,7 @@ class MyAppState extends State<MyApp> with WidgetsBindingObserver {
     return MultiProvider(
       providers: [
         ChangeNotifierProvider<AppUser>.value(value: user),
+        ChangeNotifierProvider<FleekData>.value(value: FleekData()),
         Provider<FlutterSecureStorage>.value(value: secureStorage),
         Provider<KeyPair>.value(value: KeyPair()),
         Provider<EncrypterState>.value(value: EncrypterState(null)),

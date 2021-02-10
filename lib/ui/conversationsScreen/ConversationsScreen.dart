@@ -2,7 +2,7 @@ import 'dart:io';
 
 import 'package:dating/model/ConversationModel.dart';
 import 'package:dating/model/HomeConversationModel.dart';
-import 'package:dating/model/KeyPair.dart';
+import 'package:dating/store/KeyPair.dart';
 import 'package:dating/model/MessageData.dart';
 import 'package:dating/model/User.dart';
 import 'package:dating/services/FirebaseHelper.dart';

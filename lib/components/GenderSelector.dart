@@ -12,22 +12,27 @@ class GenderSelector extends StatefulWidget {
   }) : assert(tabController.length == 2), super(key: key);
 
   @override
-  _GenderSelectorState createState() => _GenderSelectorState();
+  _GenderSelectorState createState() => _GenderSelectorState(this.tabController);
 
 }
 
 class _GenderSelectorState extends State<GenderSelector> {
 
   int activeTabIndex;
+  final TabController tabController;
+
+  _GenderSelectorState(this.tabController);
 
   @override
   void initState() {
     super.initState();
-    activeTabIndex = widget.tabController.index;
-    widget.tabController.addListener(() {
-      setState(() {
-        activeTabIndex = widget.tabController.index;
-      });
+    activeTabIndex = tabController.index;
+    tabController.addListener(() {
+      if (mounted) {
+        setState(() {
+          activeTabIndex = tabController.index;
+        });
+      }
     });
   }
 
@@ -44,7 +49,7 @@ class _GenderSelectorState extends State<GenderSelector> {
         ),
         SizedBox(height: 12,),
         TabBar(
-          controller: widget.tabController,
+          controller: tabController,
           unselectedLabelColor: Color(COLOR_PRIMARY),
           indicatorSize: TabBarIndicatorSize.tab,
           indicator: BoxDecoration(

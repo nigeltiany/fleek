@@ -12,21 +12,27 @@ class InterestSelector extends StatefulWidget {
   }) : assert(tabController.length == 3), super(key: key);
 
   @override
-  _InterestSelectorState createState() => _InterestSelectorState();
+  _InterestSelectorState createState() => _InterestSelectorState(this.tabController);
+  
 }
 
 class _InterestSelectorState extends State<InterestSelector> {
 
   int activeTabIndex;
+  final TabController tabController;
+
+  _InterestSelectorState(this.tabController);
 
   @override
   void initState() {
     super.initState();
-    activeTabIndex = widget.tabController.index;
-    widget.tabController.addListener(() {
-      setState(() {
-        activeTabIndex = widget.tabController.index;
-      });
+    activeTabIndex = tabController.index;
+    tabController.addListener(() {
+      if (mounted) {
+        setState(() {
+          activeTabIndex = tabController.index;
+        });
+      }
     });
   }
 
@@ -43,7 +49,7 @@ class _InterestSelectorState extends State<InterestSelector> {
         ),
         SizedBox(height: 12,),
         TabBar(
-          controller: widget.tabController,
+          controller: tabController,
           unselectedLabelColor: Color(COLOR_PRIMARY),
           indicatorSize: TabBarIndicatorSize.tab,
           indicator: BoxDecoration(

@@ -4,7 +4,7 @@ import 'dart:io';
 import 'package:audio_recorder/audio_recorder.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:dating/constants.dart';
-import 'package:dating/model/KeyPair.dart';
+import 'package:dating/store/KeyPair.dart';
 import 'package:dating/services/file_encryption.dart';
 import 'package:file/local.dart';
 import 'package:file/memory.dart';

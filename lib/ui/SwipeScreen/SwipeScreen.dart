@@ -4,6 +4,7 @@ import 'package:dating/constants.dart';
 import 'package:dating/model/User.dart';
 import 'package:dating/services/FirebaseHelper.dart';
 import 'package:dating/services/helper.dart';
+import 'package:dating/store/Data.dart';
 import 'package:dating/ui/matchScreen/MatchScreen.dart';
 import 'package:dating/ui/upgradeAccount/UpgradeAccount.dart';
 import 'package:dating/ui/userDetailsScreen/UserDetailsScreen.dart';
@@ -14,7 +15,9 @@ import 'package:provider/provider.dart';
 
 class SwipeScreen extends StatefulWidget {
 
-  const SwipeScreen({Key key}) : super(key: key);
+  const SwipeScreen({
+    Key key,
+  }) : super(key: key);
 
   @override
   _SwipeScreenState createState() => _SwipeScreenState();
@@ -22,8 +25,7 @@ class SwipeScreen extends StatefulWidget {
 
 class _SwipeScreenState extends State<SwipeScreen> {
 
-  FireStoreUtils _fireStoreUtils = FireStoreUtils();
-  Stream<List<AppUser>> fleekUsers;
+  final FireStoreUtils _fireStoreUtils = FireStoreUtils();
   List<AppUser> swipedUsers = [];
   List<AppUser> users = [];
   CardController cardController;
@@ -36,7 +38,7 @@ class _SwipeScreenState extends State<SwipeScreen> {
     super.initState();
     currentUser = context.read<AppUser>();
     // _fireStoreUtils.matchChecker(context);
-    fleekUsers = _fireStoreUtils.getFleekUsers(currentUser);
+    // fleekUsers = _fireStoreUtils.getFleekUsers(currentUser);
   }
 
   @override
@@ -47,25 +49,29 @@ class _SwipeScreenState extends State<SwipeScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return StreamBuilder<List<AppUser>>(
-      stream: fleekUsers,
-      initialData: [],
-      builder: (context, snapshot) {
-        if (snapshot.hasError) return Text('Error: ${snapshot.error}');
-        switch (snapshot.connectionState) {
-          case ConnectionState.none:
-          case ConnectionState.waiting:
-            return Center(
-              child: CircularProgressIndicator(
-                valueColor: AlwaysStoppedAnimation<Color>(Color(COLOR_ACCENT)),
-              ),
-            );
-          case ConnectionState.active:
-            return _asyncCards(context, snapshot.data);
-          case ConnectionState.done:
-        }
-        return null; // unreachable
-      },
+    return Consumer<FleekData>(
+      builder: (BuildContext context, FleekData data, _) {
+        return StreamBuilder<List<AppUser>>(
+          stream: data.users,
+          initialData: [],
+          builder: (context, snapshot) {
+            if (snapshot.hasError) return Text('Error: ${snapshot.error}');
+            switch (snapshot.connectionState) {
+              case ConnectionState.none:
+              case ConnectionState.waiting:
+                return Center(
+                  child: CircularProgressIndicator(
+                    valueColor: AlwaysStoppedAnimation<Color>(Color(COLOR_ACCENT)),
+                  ),
+                );
+              case ConnectionState.active:
+                return _asyncCards(context, snapshot.data);
+              case ConnectionState.done:
+            }
+            return null; // unreachable
+          },
+        );
+      }
     );
   }
 
@@ -85,23 +91,19 @@ class _SwipeScreenState extends State<SwipeScreen> {
                     width: double.infinity,
                     height: double.infinity,
                     fit: BoxFit.cover,
-                    imageUrl: fleekUser.profilePictureURL == DEFAULT_AVATAR_URL
-                        ? ''
-                        : fleekUser.profilePictureURL,
+                    imageUrl: fleekUser.profilePictureURL == DEFAULT_AVATAR_URL ? '' : fleekUser.profilePictureURL,
                     placeholder: (context, imageUrl) {
                       return Icon(
                         Icons.account_circle,
                         size: MediaQuery.of(context).size.height * .5,
-                        color:
-                            isDarkMode(context) ? Colors.black : Colors.white,
+                        color: isDarkMode(context) ? Colors.black : Colors.white,
                       );
                     },
                     errorWidget: (context, imageUrl, error) {
                       return Icon(
                         Icons.account_circle,
                         size: MediaQuery.of(context).size.height * .5,
-                        color:
-                            isDarkMode(context) ? Colors.black : Colors.white,
+                        color: isDarkMode(context) ? Colors.black : Colors.white,
                       );
                     },
                   ),
@@ -111,31 +113,30 @@ class _SwipeScreenState extends State<SwipeScreen> {
             Positioned(
               right: 5,
               child: IconButton(
-                icon: Icon(
-                  Icons.keyboard_arrow_down,
+                icon: Icon(Icons.keyboard_arrow_down,
                   color: Colors.white,
                 ),
                 iconSize: 30,
                 onPressed: () => _onCardSettingsClick(fleekUser),
               ),
             ),
-            Positioned(
-              bottom: 16,
-              right: 16,
-              child: Visibility(
-                visible: swipedUsers.isNotEmpty,
-                child: FloatingActionButton(
-                  heroTag: '${fleekUser.userID}',
-                  backgroundColor: Color(COLOR_PRIMARY),
-                  mini: true,
-                  child: Icon(
-                    Icons.undo,
-                    color: Colors.white,
-                  ),
-                  onPressed: () => _undo(),
-                ),
-              ),
-            ),
+            // Positioned(
+            //   bottom: 16,
+            //   right: 16,
+            //   child: Visibility(
+            //     visible: swipedUsers.isNotEmpty,
+            //     child: FloatingActionButton(
+            //       heroTag: '${fleekUser.userID}',
+            //       backgroundColor: Color(COLOR_PRIMARY),
+            //       mini: true,
+            //       child: Icon(
+            //         Icons.undo,
+            //         color: Colors.white,
+            //       ),
+            //       onPressed: () => _undo(),
+            //     ),
+            //   ),
+            // ),
             Padding(
               padding: const EdgeInsets.all(16.0),
               child: Column(
@@ -171,23 +172,23 @@ class _SwipeScreenState extends State<SwipeScreen> {
                   //     ),
                   //   ],
                   // ),
-                  Row(
-                    children: <Widget>[
-                      Icon(
-                        Icons.location_on,
-                        color: Colors.white,
-                      ),
-                      Padding(
-                        padding: const EdgeInsets.only(left: 8.0),
-                        child: Text(
-                          '${fleekUser.milesAway}',
-                          style: TextStyle(
-                            color: Colors.white,
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
+                  // Row(
+                  //   children: <Widget>[
+                  //     Icon(
+                  //       Icons.location_on,
+                  //       color: Colors.white,
+                  //     ),
+                  //     Padding(
+                  //       padding: const EdgeInsets.only(left: 8.0),
+                  //       child: Text(
+                  //         '${fleekUser.milesAway}',
+                  //         style: TextStyle(
+                  //           color: Colors.white,
+                  //         ),
+                  //       ),
+                  //     ),
+                  //   ],
+                  // ),
                 ],
               ),
             )
@@ -297,7 +298,7 @@ class _SwipeScreenState extends State<SwipeScreen> {
         child: Padding(
           padding: const EdgeInsets.all(16.0),
           child: Text(
-            'There’s no one around you. Try increasing the distance radius to get more recommendations.',
+            'Sorry, we didn\'t find anyone that matches your interests :-(',
             textAlign: TextAlign.center,
           ),
         ),
@@ -314,7 +315,7 @@ class _SwipeScreenState extends State<SwipeScreen> {
                   child: Padding(
                     padding: const EdgeInsets.all(16.0),
                     child: Text(
-                      'There’s no one around you. Try increasing the distance radius to get more recommendations.',
+                      'Sorry, we didn\'t find anyone that matches your interests :-(',
                       textAlign: TextAlign.center,
                     ),
                   ),
@@ -386,8 +387,7 @@ class _SwipeScreenState extends State<SwipeScreen> {
                 },
                 backgroundColor: Colors.white,
                 mini: false,
-                child: Icon(
-                  Icons.close,
+                child: Icon(Icons.close,
                   color: Colors.red,
                   size: 40,
                 ),

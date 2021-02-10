@@ -6,6 +6,7 @@ import 'package:dating/model/SearchInterests.dart';
 import 'package:dating/model/User.dart';
 import 'package:dating/services/FirebaseHelper.dart';
 import 'package:dating/services/helper.dart';
+import 'package:dating/store/Data.dart';
 import 'package:dating/ui/SwipeScreen/SwipeScreen.dart';
 import 'package:dating/ui/accountDetails/AccountDetailsScreen.dart';
 import 'package:dating/ui/conversationsScreen/ConversationsScreen.dart';
@@ -33,6 +34,8 @@ class HomeScreen extends StatefulWidget {
 class _HomeState extends State<HomeScreen> with TickerProviderStateMixin {
 
   AppUser user;
+  FireStoreUtils fireStoreUtils;
+
   int _currentIndex = 1;
 
   TabController _genderTabController;
@@ -43,6 +46,11 @@ class _HomeState extends State<HomeScreen> with TickerProviderStateMixin {
   void initState() {
     super.initState();
     user = context.read<AppUser>();
+
+    fireStoreUtils = FireStoreUtils();
+    WidgetsBinding.instance.addPostFrameCallback((_){
+      context.read<FleekData>().users = fireStoreUtils.getFleekUsers(user);
+    });
 
     _genderTabController = TabController(
       initialIndex: user.settings.gender.index,
@@ -71,6 +79,14 @@ class _HomeState extends State<HomeScreen> with TickerProviderStateMixin {
       });
     });
 
+  }
+
+  @override
+  void dispose() {
+    [_genderTabController, _orientationTabController, _searchInterestController].forEach((controller) {
+      controller.dispose();
+    });
+    super.dispose();
   }
 
   Widget _logo({ bool active = false }) {
@@ -183,8 +199,8 @@ class _HomeState extends State<HomeScreen> with TickerProviderStateMixin {
     );
   }
 
-  showFiltersBottomSheet() {
-    showModalBottomSheet<void>(
+  showFiltersBottomSheet() async {
+    await showModalBottomSheet(
       context: context,
       builder: (BuildContext context) {
         return Container(
@@ -205,6 +221,7 @@ class _HomeState extends State<HomeScreen> with TickerProviderStateMixin {
         );
       },
     );
+    context.read<FleekData>().users = fireStoreUtils.getFleekUsers(user);
   }
 
 }

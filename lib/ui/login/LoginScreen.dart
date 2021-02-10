@@ -1,7 +1,7 @@
 import 'package:cloud_functions/cloud_functions.dart';
 import 'package:dating/components/FormInput.dart';
 import 'package:dating/components/PrimaryButton.dart';
-import 'package:dating/model/KeyPair.dart';
+import 'package:dating/store/KeyPair.dart';
 import 'package:dating/services/helper.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/cupertino.dart';

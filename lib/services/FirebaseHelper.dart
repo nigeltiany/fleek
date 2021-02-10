@@ -492,19 +492,22 @@ class FireStoreUtils {
 
         print("fetched user count: ${value.docs.length}");
 
+        if (value.docs.isEmpty) {
+          fleekCardsStreamController.add(fleekUsers);
+        }
+
         value.docs.forEach((DocumentSnapshot fleekUser) async {
 
           if (fleekUser.id != FirebaseAuth.instance.currentUser.uid) {
             AppUser user = AppUser.fromJson(fleekUser.data());
-            int distance = getDistance(user.location, currentUser.location).ceil();
+            // int distance = getDistance(user.location, currentUser.location).ceil();
             if (viewedUsers.docs.where((element) => (element.data()["viewedUserIDs"] as List).contains(user.userID)).isEmpty) {
-              user.milesAway = '${distance < 3 ? '~2' : distance} Miles Away';
+              // user.milesAway = '${distance < 3 ? '~2' : distance} Miles Away';
               fleekUsers.insert(0, user);
               fleekCardsStreamController.add(fleekUsers);
             }
-            if (fleekUsers.isEmpty) {
-              fleekCardsStreamController.add(fleekUsers);
-            }
+          } else if (fleekUsers.isEmpty) {
+            fleekCardsStreamController.add(fleekUsers);
           }
 
         });

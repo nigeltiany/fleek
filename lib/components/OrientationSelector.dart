@@ -12,21 +12,26 @@ class OrientationSelector extends StatefulWidget {
   }) : assert(tabController.length == 3), super(key: key);
 
   @override
-  _OrientationSelectorState createState() => _OrientationSelectorState();
+  _OrientationSelectorState createState() => _OrientationSelectorState(this.tabController);
 }
 
 class _OrientationSelectorState extends State<OrientationSelector> {
 
   int activeTabIndex;
+  final TabController tabController;
+
+  _OrientationSelectorState(this.tabController);
 
   @override
   void initState() {
     super.initState();
-    activeTabIndex = widget.tabController.index;
-    widget.tabController.addListener(() {
-      setState(() {
-        activeTabIndex = widget.tabController.index;
-      });
+    activeTabIndex = tabController.index;
+    tabController.addListener(() {
+      if (mounted) {
+        setState(() {
+          activeTabIndex = tabController.index;
+        });
+      }
     });
   }
 
@@ -43,7 +48,7 @@ class _OrientationSelectorState extends State<OrientationSelector> {
         ),
         SizedBox(height: 12,),
         TabBar(
-          controller: widget.tabController,
+          controller: tabController,
           unselectedLabelColor: Color(COLOR_PRIMARY),
           indicatorSize: TabBarIndicatorSize.tab,
           indicator: BoxDecoration(
