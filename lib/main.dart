@@ -183,7 +183,7 @@ class OnBoardingState extends State<OnBoarding> {
 
   Future hasFinishedOnBoarding() async {
     SharedPreferences prefs = await SharedPreferences.getInstance();
-    bool finishedOnBoarding = (prefs.getBool(Constants.FINISHED_ON_BOARDING) ?? false);
+    bool finishedOnBoarding = false; //(prefs.getBool(Constants.FINISHED_ON_BOARDING) ?? false);
 
     if (finishedOnBoarding) {
       User firebaseUser = FirebaseAuth.instance.currentUser;

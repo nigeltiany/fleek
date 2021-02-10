@@ -34,15 +34,16 @@ class AuthScreen extends StatelessWidget {
                 'Fleek',
                 textAlign: TextAlign.center,
                 style: TextStyle(
-                    color: Color(Constants.COLOR_PRIMARY),
-                    fontSize: 24.0,
-                    fontWeight: FontWeight.bold),
+                  color: Color(Constants.COLOR_PRIMARY),
+                  fontSize: 24.0,
+                  fontWeight: FontWeight.bold,
+                ),
               ),
             ),
             Padding(
               padding: const EdgeInsets.all(16.0),
               child: Text(
-                'Match and chat with aggies',
+                'Match and chat with Aggies',
                 style: TextStyle(fontSize: 18),
                 textAlign: TextAlign.center,
               ),
