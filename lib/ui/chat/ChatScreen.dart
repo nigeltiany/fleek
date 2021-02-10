@@ -77,6 +77,13 @@ class _ChatScreenState extends State<ChatScreen> {
     setupStream();
   }
 
+  @override
+  void dispose() {
+    super.dispose();
+    _messageController.dispose();
+    _groupNameController.dispose();
+  }
+
   setupStream() {
     chatStream = _fireStoreUtils.getChatMessages(homeConversationModel).asBroadcastStream();
     chatStream.listen((chatModel) {
@@ -179,6 +186,7 @@ class _ChatScreenState extends State<ChatScreen> {
               } else {
                 return ListView.builder(
                   reverse: true,
+                  cacheExtent: ((MediaQuery.of(context).size.height * 3).toInt() | 1000).toDouble(),
                   itemCount: snapshot.data.message.length,
                   itemBuilder: (BuildContext context, int index) {
                     return buildMessage(snapshot.data.message[index], snapshot.data.members);
@@ -875,13 +883,6 @@ class _ChatScreenState extends State<ChatScreen> {
       showAlertDialog(context, 'An Error Occured', 'Couldn\'t send Message, please try again later');
     }
 
-  }
-
-  @override
-  void dispose() {
-    super.dispose();
-    _messageController.dispose();
-    _groupNameController.dispose();
   }
 
   _onPrivateChatSettingsClick() {
