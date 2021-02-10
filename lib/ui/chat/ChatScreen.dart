@@ -850,37 +850,42 @@ class _ChatScreenState extends State<ChatScreen> {
     message.content.content[message.recipientID] = otherUsersMessage;
 
     if (await _checkChannelNullability(homeConversationModel.conversationModel, message)) {
-      
-      await _fireStoreUtils.sendMessage(
-        context.read<AppUser>(),
-        homeConversationModel.members,
-        homeConversationModel.isGroupChat,
-        message,
-        homeConversationModel.conversationModel,
-      );
 
+      String notificationText = "";
       if (url == null) {
-        homeConversationModel.conversationModel.lastMessage = message.content; 
+        homeConversationModel.conversationModel.lastMessage = message.content;
+        notificationText = "${message.senderUsername} sent you a message";
       } else {
-        String text = "";
         if (url.mime.contains('image')) {
-          text = "${message.senderUsername} sent a photo";
+          notificationText = "${message.senderUsername} sent you a photo";
         } else if (url.mime.contains('video')) {
-          text = "${message.senderUsername} sent a video";
+          notificationText = "${message.senderUsername} sent you a video";
         } else if (url.mime.contains('audio')) {
-          text = "${message.senderUsername} sent a recording";
+          notificationText = "${message.senderUsername} sent you a recording";
         }
-        var myText = await currentUsersEncrypter(text);
-        var otherUsersText = await otherUsersEncrypter(text);
+        var myText = await currentUsersEncrypter(notificationText);
+        var otherUsersText = await otherUsersEncrypter(notificationText);
         homeConversationModel.conversationModel.lastMessage = Content(content: {
           "${currentUser.userID}" : myText,
           "${message.recipientID}" : otherUsersText
         });
       }
+
+      await _fireStoreUtils.sendMessage(
+        currentUser,
+        homeConversationModel.members,
+        message,
+        homeConversationModel.conversationModel,
+        notificationText: notificationText,
+      );
+
       homeConversationModel.conversationModel.lastMessageDate = Timestamp.now();
       await _fireStoreUtils.updateChannel(homeConversationModel.conversationModel);
+
     } else {
+
       showAlertDialog(context, 'An Error Occured', 'Couldn\'t send Message, please try again later');
+
     }
 
   }

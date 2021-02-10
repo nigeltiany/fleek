@@ -18,7 +18,6 @@ class AppUser with ChangeNotifier {
   String _userID;
   String _profilePictureURL;
   String _appIdentifier = 'Flutter Dating ${Platform.operatingSystem}';
-  String _fcmToken;
   String _publicKey;
 
   bool _active = false;
@@ -48,7 +47,6 @@ class AppUser with ChangeNotifier {
     _settings = cp.settings ?? _settings;
     _userID = cp.userID ?? _userID;
     _profilePictureURL = cp.profilePictureURL ?? _profilePictureURL;
-    _fcmToken = cp.fcmToken ?? _fcmToken;
     _isVip = cp.isVip ?? _isVip;
     _developerAccount = cp._developerAccount ?? _developerAccount;
 
@@ -73,7 +71,6 @@ class AppUser with ChangeNotifier {
       ..settings = Settings.fromJson(parsedJson['settings'] ?? Settings().toJson())
       ..userID = parsedJson['id'] ?? parsedJson['userID'] ?? ''
       ..profilePictureURL = parsedJson['profilePictureURL'] ?? ''
-      ..fcmToken = parsedJson['fcmToken'] ?? ''
       ..isVip = parsedJson['isVip' ?? false]
       ..developerAccount = parsedJson['developerAccount' ?? kDebugMode]
       ..publicKey = parsedJson['publicKey'] // allow null
@@ -100,7 +97,6 @@ class AppUser with ChangeNotifier {
       'lastOnlineTimestamp': this.lastOnlineTimestamp,
       "profilePictureURL": this.profilePictureURL,
       'appIdentifier': this.appIdentifier,
-      'fcmToken': this.fcmToken,
       'isVip': this.isVip,
       'developerAccount': this.developerAccount,
 
@@ -192,13 +188,6 @@ class AppUser with ChangeNotifier {
 
   set appIdentifier(String value) {
     _appIdentifier = value;
-    notifyListeners();
-  }
-
-  String get fcmToken => _fcmToken;
-
-  set fcmToken(String value) {
-    _fcmToken = value;
     notifyListeners();
   }
 

@@ -123,17 +123,22 @@ class _SignUpState extends State<SignUpScreen> {
 
   bool _hasValidityErrors() {
 
+    RegExp emailRegex = RegExp(r"^[a-zA-Z0-9.a-zA-Z0-9.!#$%&'*+-/=?^_`{|}~]+@[a-zA-Z0-9]+\.[a-zA-Z]+");
+
     bool validUsername = _usernameController.value.text.trim().isNotEmpty;
     bool validUsernameLength = _usernameController.value.text.length >= 4;
+    bool userNameNotEmail = !emailRegex.hasMatch(_usernameController.value.text);
     if(!validUsername) {
       usernameError = "Username cannot be empty";
     } else if (!validUsernameLength) {
       usernameError = "Username must be 4 or more characters long";
+    } else if (!userNameNotEmail) {
+      usernameError = "Username cannot be an email address";
     } else {
       usernameError = null;
     }
 
-    bool emailValid = RegExp(r"^[a-zA-Z0-9.a-zA-Z0-9.!#$%&'*+-/=?^_`{|}~]+@[a-zA-Z0-9]+\.[a-zA-Z]+").hasMatch(_emailController.value.text);
+    bool emailValid = emailRegex.hasMatch(_emailController.value.text);
     bool personalEmail = !_emailController.value.text.endsWith(".edu");
     if (!emailValid) {
       emailError = "Invalid Email Address";
@@ -154,7 +159,7 @@ class _SignUpState extends State<SignUpScreen> {
     }
 
     setState(() {});
-    return !validUsername || !validUsernameLength || !emailValid || !personalEmail || !validPassword || !validPasswordLength;
+    return !validUsername || !validUsernameLength || !userNameNotEmail || !emailValid || !personalEmail || !validPassword || !validPasswordLength;
 
   }
 
@@ -189,7 +194,7 @@ class _SignUpState extends State<SignUpScreen> {
         };
         user.publicKey = result.data['PublicKey'];
       }).catchError((e) {
-        throw FirebaseFunctionsException(message: e);
+        throw FirebaseFunctionsException(message: (e as FirebaseFunctionsException).message);
       });
       await saveUserKeyPair(userID: result.user.uid, keyPair: context.read<KeyPair>());
 

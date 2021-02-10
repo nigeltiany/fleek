@@ -1,20 +1,33 @@
 import 'package:dating/model/ChatModel.dart';
+import 'package:flutter/cupertino.dart';
 
-class KeyPair {
+class KeyPair with ChangeNotifier {
 
-  String privateKeyBase64;
-  String publicKeyBase64;
+  String _privateKeyBase64;
 
-  KeyPair({
-    this.privateKeyBase64,
-    this.publicKeyBase64
-  });
+  String get privateKeyBase64 => _privateKeyBase64;
+
+  set privateKeyBase64(String privateKeyBase64) {
+    notifyListeners();
+    _privateKeyBase64 = privateKeyBase64;
+  }
+
+  String _publicKeyBase64;
+
+  String get publicKeyBase64 => _publicKeyBase64;
+
+  set publicKeyBase64(String publicKeyBase64) {
+    notifyListeners();
+    _publicKeyBase64 = publicKeyBase64;
+  }
+
+  KeyPair();
 
   factory KeyPair.fromJson(Map<String, dynamic> parsedJson) {
-    return KeyPair(
-      privateKeyBase64: parsedJson["PrivateKey"],
-      publicKeyBase64: parsedJson["PublicKey"],
-    );
+    var key =  KeyPair();
+    key.privateKeyBase64 = parsedJson["PrivateKey"];
+    key.publicKeyBase64 = parsedJson["PublicKey"];
+    return key;
   }
 
   Map<String, dynamic> toJson() {
@@ -40,7 +53,17 @@ class KeyException implements Exception {
 
 }
 
-class EncrypterState {
-  Encrypter encrypter;
-  EncrypterState(this.encrypter);
+class EncrypterState with ChangeNotifier {
+
+  Encrypter _encrypter;
+
+  Encrypter get encrypter => _encrypter;
+
+  set encrypter(Encrypter encrypter) {
+    notifyListeners();
+    _encrypter = encrypter;
+  }
+
+  EncrypterState(this._encrypter);
+
 }

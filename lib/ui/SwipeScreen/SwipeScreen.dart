@@ -95,14 +95,14 @@ class _SwipeScreenState extends State<SwipeScreen> {
                     placeholder: (context, imageUrl) {
                       return Icon(
                         Icons.account_circle,
-                        size: MediaQuery.of(context).size.height * .5,
+                        size: MediaQuery.of(context).size.width * .8,
                         color: isDarkMode(context) ? Colors.black : Colors.white,
                       );
                     },
                     errorWidget: (context, imageUrl, error) {
                       return Icon(
                         Icons.account_circle,
-                        size: MediaQuery.of(context).size.height * .5,
+                        size: MediaQuery.of(context).size.width * .8,
                         color: isDarkMode(context) ? Colors.black : Colors.white,
                       );
                     },
@@ -147,7 +147,7 @@ class _SwipeScreenState extends State<SwipeScreen> {
                 children: <Widget>[
                   Padding(
                     padding: const EdgeInsets.only(bottom: 8.0),
-                    child: Text(currentUser.birthDate == null ? '${fleekUser.userName}' : '${fleekUser.userName}, ${getUserAge(fleekUser.birthDate)}',
+                    child: Text(fleekUser.birthDate == null ? '${fleekUser.userName}' : '${fleekUser.userName}, ${getUserAge(fleekUser.birthDate)}',
                       style: TextStyle(
                         color: Colors.white,
                         fontWeight: FontWeight.bold,
@@ -324,7 +324,7 @@ class _SwipeScreenState extends State<SwipeScreen> {
               Container(
                 height: MediaQuery.of(context).size.height * 0.9,
                 width: MediaQuery.of(context).size.width,
-                child: new TinderSwapCard(
+                child: TinderSwapCard(
                   animDuration: 500,
                   orientation: AmassOrientation.BOTTOM,
                   totalNum: data.length,

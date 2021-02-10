@@ -84,7 +84,7 @@ class EmailSent extends StatelessWidget {
 
   Widget _nextScreenButton () {
     var secondsAgo = DateTime.now().difference(DateTime.fromMillisecondsSinceEpoch(status.emailedAt.millisecondsSinceEpoch)).inSeconds;
-    print("seconds ago : $secondsAgo");
+
     return FutureBuilder<int>(
       future: secondsAgo < 60 ? Future<int>.delayed(Duration(seconds: 60 - secondsAgo), () => 0) : Future<int>.value(0),
       builder: (BuildContext context, AsyncSnapshot snapshot) {

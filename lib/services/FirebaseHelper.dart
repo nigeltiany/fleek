@@ -3,6 +3,7 @@ import 'dart:convert';
 import 'dart:io';
 
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:cloud_functions/cloud_functions.dart';
 import 'package:dating/model/BlockUserModel.dart';
 import 'package:dating/model/ChannelParticipation.dart';
 import 'package:dating/model/ChatModel.dart';
@@ -52,7 +53,7 @@ class FireStoreUtils {
   StreamController fleekCardsStreamController;
 
   static Future<UserPrivateDetails> getCurrentUserPrivateDetails() async {
-    DocumentSnapshot userDocument = await firestore.collection("users_private").doc(FirebaseAuth.instance.currentUser.uid).get();
+    DocumentSnapshot userDocument = await firestore.collection(USERS_PRIVATE).doc(FirebaseAuth.instance.currentUser.uid).get();
     if (userDocument != null && userDocument.exists) {
       return UserPrivateDetails.fromJson(userDocument.data());
     } else {
@@ -60,8 +61,8 @@ class FireStoreUtils {
     }
   }
 
-  Future<AppUser> getCurrentUser(String uid) async {
-    DocumentSnapshot userDocument = await firestore.collection(USERS).doc(uid).get();
+  static Future<AppUser> getCurrentUser() async {
+    DocumentSnapshot userDocument = await firestore.collection(USERS).doc(FirebaseAuth.instance.currentUser.uid).get();
     if (userDocument != null && userDocument.exists) {
       return AppUser.fromJson(userDocument.data());
     } else {
@@ -72,6 +73,16 @@ class FireStoreUtils {
   static Future<AppUser> updateCurrentUser(AppUser user) async {
     return await firestore
         .collection(USERS)
+        .doc(FirebaseAuth.instance.currentUser.uid)
+        .set(user.toJson(), SetOptions(merge: true))
+        .then((document) {
+      return user;
+    });
+  }
+
+  static Future<UserPrivateDetails> updateUserPrivateDetails(UserPrivateDetails user) async {
+    return await firestore
+        .collection(USERS_PRIVATE)
         .doc(FirebaseAuth.instance.currentUser.uid)
         .set(user.toJson(), SetOptions(merge: true))
         .then((document) {
@@ -259,44 +270,6 @@ class FireStoreUtils {
     yield* conversationsStream.stream;
   }
 
-  Stream<List<AppUser>> getGroupMembers(String channelID) async* {
-    StreamController<List<AppUser>> membersStreamController = StreamController();
-    getGroupMembersIDs(channelID).listen((memberIDs) {
-      if (memberIDs.isNotEmpty) {
-        List<AppUser> groupMembers = [];
-        for (String id in memberIDs) {
-          getUserByID(id).listen((user) {
-            groupMembers.add(user);
-            membersStreamController.sink.add(groupMembers);
-          });
-        }
-      } else {
-        membersStreamController.sink.add([]);
-      }
-    });
-    yield* membersStreamController.stream;
-  }
-
-  Stream<List<String>> getGroupMembersIDs(String channelID) async* {
-    StreamController<List<String>> membersIDsStreamController = StreamController();
-    firestore
-        .collection(CHANNEL_PARTICIPATION)
-        .where('channel', isEqualTo: channelID)
-        .snapshots()
-        .listen((participations) {
-      List<String> uids = [];
-      for (DocumentSnapshot document in participations.docs) {
-        uids.add(document.data()['user'] ?? '');
-      }
-      if (uids.contains(FirebaseAuth.instance.currentUser.uid)) {
-        membersIDsStreamController.sink.add(uids);
-      } else {
-        membersIDsStreamController.sink.add([]);
-      }
-    });
-    yield* membersIDsStreamController.stream;
-  }
-
   Stream<AppUser> getUserByID(String id) async* {
     StreamController<AppUser> userStreamController = StreamController();
     firestore.collection(USERS).doc(id).snapshots().listen((user) {
@@ -373,16 +346,15 @@ class FireStoreUtils {
     yield* chatModelStreamController.stream;
   }
 
-  Future<void> sendMessage(AppUser user, List<AppUser> members, bool isGroup, MessageData message, ConversationModel conversationModel) async {
+  Future<void> sendMessage(AppUser currentUser, List<AppUser> members, MessageData message, ConversationModel conversationModel, { String notificationText }) async {
     var ref = firestore.collection(CHANNELS).doc(conversationModel.id).collection(THREAD).doc();
     message.messageID = ref.id;
     ref.set(message.toJson(), SetOptions(merge: true));
     await Future.forEach(members, (AppUser element) async {
-      if (element.settings.pushNewMessages) {
+      if (element.userID != FirebaseAuth.instance.currentUser.uid && element.settings.pushNewMessages) {
         await sendNotification(
-          element.fcmToken,
-          isGroup ? conversationModel.name : user.userName,
-          message.content.content[user.userID],
+          recipientID: element.userID,
+          notificationText: notificationText ?? "${currentUser.userName} sent you a message"
         );
       }
     });
@@ -598,10 +570,8 @@ class FireStoreUtils {
       await document.set(swipe.toJson(), SetOptions(merge: true));
       if (likedUser.settings.pushNewMatchesEnabled) {
         await sendNotification(
-          likedUser.fcmToken,
-          'New match',
-          'You have got a new '
-          'match: ${likedUser.userName}.'
+          recipientID: likedUser.userID,
+          notificationText: "You matched with ${currentUser.userName}",
         );
       }
 
@@ -742,23 +712,13 @@ class FireStoreUtils {
 
 }
 
-sendNotification(String token, String title, String body) async {
-  await http.post('https://fcm.googleapis.com/fcm/send',
-    headers: <String, String>{
-      'Content-Type': 'application/json',
-      'Authorization': 'key=$SERVER_KEY',
-    },
-    body: jsonEncode(
-      <String, dynamic>{
-        'notification': <String, dynamic>{'body': body, 'title': title},
-        'priority': 'high',
-        'data': <String, dynamic>{
-          'click_action': 'FLUTTER_NOTIFICATION_CLICK',
-          'id': '1',
-          'status': 'done'
-        },
-        'to': token
-      },
-    ),
-  );
+sendNotification({ @required String recipientID, @required String notificationText, String notificationTitle = "Fleek" }) async {
+  HttpsCallable sendNotificationFunc = FirebaseFunctions.instance.httpsCallable('sendNotification');
+  sendNotificationFunc.call<Map<String, String>>({
+    "recipient_id": recipientID,
+    "notification_text": notificationText,
+    "notification_title": notificationText
+  }).catchError((e) {
+    throw e;
+  });
 }

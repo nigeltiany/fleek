@@ -343,7 +343,6 @@ _goToHomeScreen (BuildContext context, String userID) async {
   if (documentSnapshot != null && documentSnapshot.exists) {
     user = AppUser.fromJson(documentSnapshot.data());
     user.active = true;
-    user.fcmToken = await FireStoreUtils.firebaseMessaging.getToken();
     await FireStoreUtils.updateCurrentUser(user);
     Navigator.of(context).pop(); // Close Dialog
     context.read<AppUser>().copy(user);
@@ -378,6 +377,7 @@ String publicKeyLocation({@required String userID}) {
 
 Future<KeyPair> getUserKeyPair({ @required String userID }) async {
 
+  KeyPair keyPair = KeyPair();
   FlutterSecureStorage secureStorage = FlutterSecureStorage();
   String privateKey = await secureStorage.read(
     key: privateKeyLocation(userID: userID)
@@ -392,23 +392,25 @@ Future<KeyPair> getUserKeyPair({ @required String userID }) async {
 
     await getKeyPair.call().then((result) async {
 
-      print(result.data);
       if (result.data['PrivateKey'] == null || result.data['PrivateKey'] == null) {
         throw KeyException("Authentications keys response is deformed and unexpected");
       }
 
-      publicKey = result.data['PublicKey'];
-      privateKey = result.data['PrivateKey'];
+      keyPair.publicKeyBase64 = result.data['PublicKey'];
+      keyPair.privateKeyBase64 = result.data['PrivateKey'];
 
-      await saveUserKeyPair(userID: userID, keyPair: KeyPair(privateKeyBase64: privateKey, publicKeyBase64: publicKey));
+      await saveUserKeyPair(userID: userID, keyPair: keyPair);
 
     }).catchError((e) {
       throw FirebaseFunctionsException(message: e.toString());
     });
 
+  } else {
+    keyPair.privateKeyBase64 = privateKey;
+    keyPair.publicKeyBase64 = publicKey;
   }
 
-  return KeyPair(privateKeyBase64: privateKey, publicKeyBase64: publicKey);
+  return keyPair;
 }
 
 saveUserKeyPair ({ @required String userID, @required KeyPair keyPair }) async {

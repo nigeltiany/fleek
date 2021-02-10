@@ -234,7 +234,17 @@ class _StudentVerificationScreenState extends State<StudentVerificationScreen> {
       Navigator.of(context).pop();
       _listenToFirebaseChanges();
     }).catchError((e) {
-      print(e);
+      Navigator.of(context).pop();
+      var error = (e as FirebaseFunctionsException);
+      showDialog(
+        context: context,
+        builder: (BuildContext context) {
+          return AlertDialog(
+            title: Text("Email not sent"),
+            content: Text(error.message),
+          );
+        },
+      );
     });
 
   }

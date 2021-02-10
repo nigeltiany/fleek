@@ -1,6 +1,7 @@
 import 'dart:async';
 
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:dating/model/UserPrivateDetails.dart';
 import 'package:dating/store/Data.dart';
 import 'package:dating/store/KeyPair.dart';
 import 'package:dating/services/FirebaseHelper.dart';
@@ -66,8 +67,8 @@ class MyAppState extends State<MyApp> with WidgetsBindingObserver {
         ChangeNotifierProvider<AppUser>.value(value: user),
         ChangeNotifierProvider<FleekData>.value(value: FleekData()),
         Provider<FlutterSecureStorage>.value(value: secureStorage),
-        Provider<KeyPair>.value(value: KeyPair()),
-        Provider<EncrypterState>.value(value: EncrypterState(null)),
+        ChangeNotifierProvider<KeyPair>.value(value: KeyPair()),
+        ChangeNotifierProvider<EncrypterState>.value(value: EncrypterState(null)),
         Provider<MemoryFileSystem>.value(value: MemoryFileSystem()),
       ],
       child: MaterialApp(
@@ -124,19 +125,21 @@ class MyAppState extends State<MyApp> with WidgetsBindingObserver {
     });
 
     FirebaseAuth.instance.authStateChanges().firstWhere((User i) => i != null).then((User u) async {
-      AppUser dbUser = await FireStoreUtils().getCurrentUser(u.uid);
+      AppUser dbUser = await FireStoreUtils.getCurrentUser();
+      UserPrivateDetails userPrivateDetails = await FireStoreUtils.getCurrentUserPrivateDetails();
       if (dbUser == null) {
         user.userID = u.uid;
-        user.fcmToken = await FireStoreUtils.firebaseMessaging.getToken();
         user.settings.showMe = false;
-        FireStoreUtils.updateCurrentUser(user);
+        await FireStoreUtils.updateCurrentUser(user);
+        userPrivateDetails.fcmToken = await FireStoreUtils.firebaseMessaging.getToken();
+        await FireStoreUtils.updateUserPrivateDetails(userPrivateDetails);
         return;
       }
       user.copy(dbUser);
-      tokenStream = FireStoreUtils.firebaseMessaging.onTokenRefresh.listen((token) {
-        if (token != user.fcmToken) {
-          user.fcmToken = token;
-          FireStoreUtils.updateCurrentUser(user);
+      tokenStream = FireStoreUtils.firebaseMessaging.onTokenRefresh.listen((token) async {
+        if (token != userPrivateDetails.fcmToken) {
+          userPrivateDetails.fcmToken = token;
+          await FireStoreUtils.updateUserPrivateDetails(userPrivateDetails);
         }
       });
     });
