@@ -18,7 +18,7 @@ class AuthScreen extends StatelessWidget {
           children: <Widget>[
             Center(
               child: Padding(
-                padding: const EdgeInsets.only(top: 70.0, bottom: 20.0),
+                padding: const EdgeInsets.only(top: 70.0, bottom: 16.0),
                 child: Image.asset(
                   'assets/images/app_logo.png',
                   width: 150.0,
@@ -29,10 +29,9 @@ class AuthScreen extends StatelessWidget {
               ),
             ),
             Padding(
-              padding: const EdgeInsets.only(
-                  left: 32, top: 32, right: 32, bottom: 8),
+              padding: const EdgeInsets.only(left: 32, top: 0, right: 32, bottom: 8),
               child: Text(
-                'Find your soul mate',
+                'Fleek',
                 textAlign: TextAlign.center,
                 style: TextStyle(
                     color: Color(Constants.COLOR_PRIMARY),
@@ -43,7 +42,7 @@ class AuthScreen extends StatelessWidget {
             Padding(
               padding: const EdgeInsets.all(16.0),
               child: Text(
-                'Match and chat with people you like from your area',
+                'Match and chat with aggies',
                 style: TextStyle(fontSize: 18),
                 textAlign: TextAlign.center,
               ),

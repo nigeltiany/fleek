@@ -20,6 +20,7 @@ class SignUpScreen extends StatefulWidget {
 }
 
 class _SignUpState extends State<SignUpScreen> {
+
   TextEditingController _usernameController = new TextEditingController();
   TextEditingController _emailController = new TextEditingController();
   TextEditingController _passwordController = new TextEditingController();
@@ -27,6 +28,7 @@ class _SignUpState extends State<SignUpScreen> {
 
 
   String username, email, mobile, password;
+  String emailError;
   LocationData signUpLocation;
 
   @override
@@ -57,7 +59,7 @@ class _SignUpState extends State<SignUpScreen> {
           constraints: BoxConstraints(minWidth: double.infinity),
           child: Padding(
             padding: const EdgeInsets.only(top: 32.0, left: 24.0),
-            child: Text('Create New Account',
+            child: Text('Create an Account',
               style: TextStyle(
                 color: Color(COLOR_PRIMARY),
                 fontSize: 25.0,
@@ -70,16 +72,17 @@ class _SignUpState extends State<SignUpScreen> {
           type: TextInputType.name,
           textInputAction: TextInputAction.next,
           controller: _usernameController,
-          label: "Username",
+          label: "Creative username",
           onSubmitted: (_) => FocusScope.of(context).nextFocus(),
         ),
         FormInput(
           type: TextInputType.emailAddress,
           textInputAction: TextInputAction.next,
           controller: _emailController,
-          label: "Email",
+          label: "Personal Email",
           onSubmitted: (_) => FocusScope.of(context).nextFocus(),
         ),
+        _emailAddressError(),
         FormInput(
           type: TextInputType.emailAddress,
           textInputAction: TextInputAction.done,
@@ -103,7 +106,41 @@ class _SignUpState extends State<SignUpScreen> {
     );
   }
 
+  Widget _emailAddressError () {
+    if (emailError != null) {
+      return Padding(
+        padding: const EdgeInsets.all(8.0),
+        child: Container(
+          child: Text(emailError, style: TextStyle(color: Colors.redAccent)),
+        ),
+      );
+    }
+    return Container();
+  }
+
+  bool _hasValidityErrors() {
+    bool emailValid = RegExp(r"^[a-zA-Z0-9.a-zA-Z0-9.!#$%&'*+-/=?^_`{|}~]+@[a-zA-Z0-9]+\.[a-zA-Z]+").hasMatch(_emailController.value.text);
+    if (!emailValid) {
+      emailError = "Invalid Email Address";
+      setState(() {});
+      return true;
+    }
+    bool personalEmail = !_emailController.value.text.endsWith(".edu");
+    if (!personalEmail) {
+      emailError = "Please use your personal Email";
+      setState(() {});
+      return true;
+    }
+
+    return emailValid && personalEmail;
+  }
+
   _signUp() async {
+
+    if (_hasValidityErrors()) {
+      return;
+    }
+
     showProgress(context, 'Creating new account...', false);
 
     try {
