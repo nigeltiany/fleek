@@ -7,8 +7,6 @@ import 'package:flutter/foundation.dart';
 
 class AppUser with ChangeNotifier {
 
-  String _firstName;
-  String _lastName;
   String _userName;
   Firestore.Timestamp _birthDate;
 
@@ -39,9 +37,8 @@ class AppUser with ChangeNotifier {
   AppUser();
 
   copy(AppUser cp) {
-    _firstName = cp.firstName ?? _firstName;
-    _lastName = cp.lastName ?? _lastName;
     _userName = cp.userName ?? _userName;
+    _birthDate = cp.birthDate ?? _birthDate;
     _active = cp.active ?? false;
     _lastOnlineTimestamp = cp.lastOnlineTimestamp;
     _settings = cp.settings ?? _settings;
@@ -62,8 +59,6 @@ class AppUser with ChangeNotifier {
 
   factory AppUser.fromJson(Map<String, dynamic> parsedJson) {
     return AppUser()
-      ..firstName = parsedJson['firstName'] ?? ''
-      ..lastName = parsedJson['lastName'] ?? ''
       ..userName = parsedJson['userName'] ?? ''
       ..birthDate = parsedJson['birthDate']
       ..active = parsedJson['active'] ?? false
@@ -87,8 +82,6 @@ class AppUser with ChangeNotifier {
   Map<String, dynamic> toJson() {
     photos.toList().removeWhere((element) => element == null);
     return {
-      "firstName": this.firstName,
-      "lastName": this.lastName,
       "userName": this.userName,
       "birthDate": this.birthDate,
       "settings": this.settings != null ? this.settings.toJson() : Settings().toJson(),
@@ -112,20 +105,6 @@ class AppUser with ChangeNotifier {
       'schoolCode': this.schoolCode,
       'photos': this.photos,
     };
-  }
-
-  String get firstName => _firstName;
-
-  set firstName(String value) {
-    _firstName = value;
-    notifyListeners();
-  }
-
-  String get lastName => _lastName;
-
-  set lastName(String value) {
-    _lastName = value;
-    notifyListeners();
   }
 
   String get userName => _userName;

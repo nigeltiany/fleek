@@ -355,7 +355,6 @@ class _SwipeScreenState extends State<SwipeScreen> {
                           swipedUsers.add(data[index]);
                           await _fireStoreUtils.onSwipeLeft(currentUser: currentUser, dislikedUser: data[index]);
                           data.removeAt(index);
-                          _fireStoreUtils.updateCardStream(data);
                         }
                       } else {
                         AppUser returningUser = data.removeAt(index);

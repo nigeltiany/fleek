@@ -131,17 +131,20 @@ class MyAppState extends State<MyApp> with WidgetsBindingObserver {
         user.userID = u.uid;
         user.settings.showMe = false;
         await FireStoreUtils.updateCurrentUser(user);
+      } else {
+        user.copy(dbUser);
+      }
+      if (userPrivateDetails.fcmToken == null) {
         userPrivateDetails.fcmToken = await FireStoreUtils.firebaseMessaging.getToken();
         await FireStoreUtils.updateUserPrivateDetails(userPrivateDetails);
-        return;
+      } else {
+        tokenStream = FireStoreUtils.firebaseMessaging.onTokenRefresh.listen((token) async {
+          if (token != userPrivateDetails.fcmToken) {
+            userPrivateDetails.fcmToken = token;
+            await FireStoreUtils.updateUserPrivateDetails(userPrivateDetails);
+          }
+        });
       }
-      user.copy(dbUser);
-      tokenStream = FireStoreUtils.firebaseMessaging.onTokenRefresh.listen((token) async {
-        if (token != userPrivateDetails.fcmToken) {
-          userPrivateDetails.fcmToken = token;
-          await FireStoreUtils.updateUserPrivateDetails(userPrivateDetails);
-        }
-      });
     });
 
   }

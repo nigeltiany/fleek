@@ -128,7 +128,7 @@ class _ConversationsState extends State<ConversationsScreen> {
                                 padding: const EdgeInsets.only(
                                     top: 8.0, left: 8, right: 8),
                                 child: Text(
-                                  '${friend.firstName}',
+                                  '${friend.userName}',
                                   textAlign: TextAlign.center,
                                   maxLines: 1,
                                 ),

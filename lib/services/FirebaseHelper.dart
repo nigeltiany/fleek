@@ -488,6 +488,9 @@ class FireStoreUtils {
               fleekUsers.insert(0, user);
               fleekCardsStreamController.add(fleekUsers);
             }
+            if (fleekUsers.isEmpty) {
+              fleekCardsStreamController.add(fleekUsers);
+            }
           } else if (fleekUsers.isEmpty) {
             fleekCardsStreamController.add(fleekUsers);
           }

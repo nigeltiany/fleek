@@ -829,14 +829,11 @@ class _ChatScreenState extends State<ChatScreen> {
     message = MessageData(
       created: Timestamp.now(),
       content: Content(content: Map<String, String>()),
-      recipientFirstName: homeConversationModel.members.first.firstName,
       recipientID: homeConversationModel.members.first.userID,
-      recipientLastName: homeConversationModel.members.first.lastName,
       recipientProfilePictureURL:
       homeConversationModel.members.first.profilePictureURL,
       senderUsername: currentUser.userName,
       senderID: currentUser.userID,
-      senderLastName: currentUser.lastName,
       senderProfilePictureURL: currentUser.profilePictureURL,
       url: url,
       videoThumbnail: videoThumbnail,

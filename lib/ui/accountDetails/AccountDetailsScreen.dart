@@ -82,7 +82,7 @@ class _AccountDetailsScreenState extends State<AccountDetailsScreen> {
           tiles: [
             SettingsTile(
               title: 'Username',
-              subtitle: details.userName,
+              subtitle: user.userName,
               // leading: Icon(Icons.language),
               onPressed: (BuildContext context) {},
             ),
