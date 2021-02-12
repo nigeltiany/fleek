@@ -188,7 +188,7 @@ class _LoginScreen extends State<LoginScreen> {
     if (validityException == null) {
       await _loginWithUserNameAndPassword(email, password).then((String uid) {
         Navigator.of(context).pop();
-        goToNextScreenAfterAuth(context, uid);
+        goToNextScreenAfterAuth(context);
       }).catchError((Object e) {
         print(e.toString());
       });

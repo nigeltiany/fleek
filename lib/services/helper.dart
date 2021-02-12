@@ -4,6 +4,7 @@ import 'package:cached_network_image/cached_network_image.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:cloud_functions/cloud_functions.dart';
 import 'package:dating/store/KeyPair.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:gecies/gecies.dart';
 import 'package:provider/provider.dart';
@@ -304,11 +305,13 @@ String updateTime(Timer timer) {
   return "${twoDigitsHours(callDuration.inHours)}$twoDigitMinutes:$twoDigitSeconds";
 }
 
-Future<void> goToNextScreenAfterAuth (BuildContext context, String uid) async {
-  var verificationSnap = await FireStoreUtils.firestore
-      .collection(VERIFICATIONS)
-      .doc(uid)
-      .get();
+Future<void> goToNextScreenAfterAuth (BuildContext context) async {
+  var uid = FirebaseAuth.instance.currentUser.uid;
+  // Save a reference to context variables because of the many async functions
+  var contextUser = context.read<AppUser>();
+  var keyPair = context.read<KeyPair>();
+  var encrypterState = context.read<EncrypterState>();
+  var verificationSnap = await FireStoreUtils.firestore.collection(VERIFICATIONS).doc(uid).get();
 
   if (verificationSnap.exists) {
     if (StudentStatus.fromJson(verificationSnap.data()).verified) {
@@ -319,12 +322,12 @@ Future<void> goToNextScreenAfterAuth (BuildContext context, String uid) async {
         var onboardingStatus = ProfileSetupStatus.fromJson(profileSetupSnap.data());
         if (onboardingStatus.step == ProfileSetupStep.COMPLETE) {
           // GO TO HOME SCREEN
-          _goToHomeScreen(context, uid);
+          _goToHomeScreen(context, contextUser, keyPair, encrypterState);
         } else {
-          pushAndRemoveUntil(context, ProfileSetupScreen(userID: uid, step: onboardingStatus.step,), false);
+          pushAndRemoveUntil(context, ProfileSetupScreen(step: onboardingStatus.step,), false);
         }
       } else {
-        pushAndRemoveUntil(context, ProfileSetupScreen(userID: uid, step: ProfileSetupStep.NOT_STARTED,), false);
+        pushAndRemoveUntil(context, ProfileSetupScreen(step: ProfileSetupStep.NOT_STARTED,), false);
       }
     } else {
       pushAndRemoveUntil(context, StudentVerificationScreen(), false);
@@ -335,19 +338,13 @@ Future<void> goToNextScreenAfterAuth (BuildContext context, String uid) async {
 
 }
 
-_goToHomeScreen (BuildContext context, String userID) async {
+_goToHomeScreen (BuildContext context, AppUser contextUser, KeyPair keyPair, EncrypterState encrypterState) async {
 
-  DocumentSnapshot documentSnapshot = await FireStoreUtils.firestore.collection(USERS).doc(userID).get();
+  DocumentSnapshot documentSnapshot = await FireStoreUtils.firestore.collection(USERS).doc(FirebaseAuth.instance.currentUser.uid).get();
 
   AppUser user;
   if (documentSnapshot != null && documentSnapshot.exists) {
     user = AppUser.fromJson(documentSnapshot.data());
-    user.active = true;
-    await FireStoreUtils.updateCurrentUser(user);
-    Navigator.of(context).pop(); // Close Dialog
-    context.read<AppUser>().copy(user);
-
-    var keyPair = context.read<KeyPair>();
     if (keyPair.privateKeyBase64 == null || keyPair.publicKeyBase64 == null) {
       KeyPair key = await getUserKeyPair(userID: user.userID);
 
@@ -355,9 +352,12 @@ _goToHomeScreen (BuildContext context, String userID) async {
       keyPair.privateKeyBase64 = key.privateKeyBase64;
     }
 
-    context.read<EncrypterState>().encrypter = (String message) async {
+    encrypterState.encrypter = (String message) async {
       return await Gecies.encrypt(keyPair.publicKeyBase64, message);
     };
+    user.active = true;
+    await FireStoreUtils.updateCurrentUser(user);
+    contextUser.copy(user);
   }
 
   if (user == null) {

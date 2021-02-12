@@ -53,10 +53,7 @@ class _StudentVerificationScreenState extends State<StudentVerificationScreen> {
     _doc.snapshots().listen((querySnapshot) {
       var status = StudentStatus.fromJson(querySnapshot.data());
       if (status.verified) {
-        push(context, ProfileSetupScreen(
-          userID: FirebaseAuth.instance.currentUser.uid,
-          step: ProfileSetupStep.NOT_STARTED,
-        ));
+        push(context, ProfileSetupScreen(step: ProfileSetupStep.NOT_STARTED,));
       } else if (status.emailedAt != null) {
         showDialog(
           context: context,

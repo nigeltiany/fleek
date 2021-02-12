@@ -15,13 +15,11 @@ import 'package:flutter/material.dart';
 
 class ProfileSetupScreen extends StatefulWidget {
 
-  final String userID;
   final String phoneNumber;
   final ProfileSetupStep step;
 
   const ProfileSetupScreen({
     Key key,
-    this.userID,
     this.phoneNumber,
     this.step,
   }) : super(key: key);

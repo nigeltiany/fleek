@@ -1,5 +1,7 @@
 import 'package:dating/components/PrimaryButton.dart';
 import 'package:dating/constants.dart';
+import 'package:dating/model/UserPrivateDetails.dart';
+import 'package:dating/services/FirebaseHelper.dart';
 import 'package:dating/services/helper.dart';
 import 'package:dating/ui/home/HomeScreen.dart';
 import 'package:flutter/material.dart';
@@ -69,6 +71,9 @@ class AllSet extends StatelessWidget {
         child: PrimaryButton(
           label: "Continue",
           onTap: () async {
+            UserPrivateDetails userPrivateDetails = await FireStoreUtils.getCurrentUserPrivateDetails();
+            userPrivateDetails.fcmToken = await FireStoreUtils.firebaseMessaging.getToken();
+            await FireStoreUtils.updateUserPrivateDetails(userPrivateDetails);
             pushAndRemoveUntil(context, HomeScreen(), false);
           },
         ),

@@ -178,24 +178,29 @@ class _SignUpState extends State<SignUpScreen> {
         password: _passwordController.value.text.trim()
       );
 
+      // Save a reference to context variables because of the many async functions
       var user = context.read<AppUser>();
+      var keyPair = context.read<KeyPair>();
+      var encrypter = context.read<EncrypterState>();
 
       HttpsCallable createKeyPair = FirebaseFunctions.instance.httpsCallable('createKeyPair');
-      createKeyPair.call<Map<String, dynamic>>().then((result) {
-        if (!result.data.containsKey('PrivateKey') || !result.data.containsKey('PublicKey')) {
+      createKeyPair.call().then((result) {
+        var snapshot = Map<String, String>.from(result.data);
+        if (!snapshot.containsKey('PrivateKey') || !snapshot.containsKey('PublicKey')) {
           throw KeyException("Authentications keys response is deformed and unexpected");
         } else if (result.data['PublicKey'].toString().isEmpty || result.data['PrivateKey'].toString().isEmpty) {
           throw KeyException("Authentications keys received are deformed");
         }
-        context.read<KeyPair>().publicKeyBase64 = result.data['PublicKey'];
-        context.read<KeyPair>().privateKeyBase64 = result.data['PrivateKey'];
-        context.read<EncrypterState>().encrypter = (String message) async {
+        keyPair.publicKeyBase64 = result.data['PublicKey'];
+        keyPair.privateKeyBase64 = result.data['PrivateKey'];
+        encrypter.encrypter = (String message) async {
           return await Gecies.encrypt(result.data['PublicKey'], message);
         };
         user.publicKey = result.data['PublicKey'];
       }).catchError((e) {
-        throw FirebaseFunctionsException(message: (e as FirebaseFunctionsException).message);
+        throw e;
       });
+
       await saveUserKeyPair(userID: result.user.uid, keyPair: context.read<KeyPair>());
 
       user.userID = result.user.uid;
@@ -203,7 +208,7 @@ class _SignUpState extends State<SignUpScreen> {
       await FireStoreUtils.updateCurrentUser(user);
 
       Navigator.of(context).pop(); // Close Dialog
-      await goToNextScreenAfterAuth(context, result.user.uid);
+      await goToNextScreenAfterAuth(context);
 
     } catch (error) {
       Navigator.of(context).pop(); // Close Dialog
@@ -216,7 +221,7 @@ class _SignUpState extends State<SignUpScreen> {
         print(error.stackTrace);
         print(error.hashCode);
         print(error.toString());
-      } else if (error is FirebaseFunctionsException) {
+      } else if (error is FirebaseFunctionsException || error is KeyException) {
         showAlertDialog(context, 'Failed', 'An error occurred when creating your account');
         HttpsCallable panicDeleteUser = FirebaseFunctions.instance.httpsCallable('panicDeleteUser');
         await panicDeleteUser.call();

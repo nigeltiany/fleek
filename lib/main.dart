@@ -16,6 +16,8 @@ import 'package:flutter/rendering.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:in_app_purchase/in_app_purchase.dart';
+import 'package:native_updater/native_updater.dart';
+import 'package:new_version/new_version.dart';
 import 'package:provider/provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:firebase_core/firebase_core.dart';
@@ -57,11 +59,39 @@ class MyAppState extends State<MyApp> with WidgetsBindingObserver {
   final AppUser user;
   final FlutterSecureStorage secureStorage;
   StreamSubscription tokenStream;
+  NewVersion newVersion;
 
   MyAppState(this.user, this.secureStorage);
 
   @override
   Widget build(BuildContext context) {
+    return FutureBuilder<VersionStatus>(
+      future: newVersion.getVersionStatus(),
+      builder: (BuildContext context, AsyncSnapshot<VersionStatus> snapshot) {
+        if (snapshot.hasData) {
+          if (snapshot.data.canUpdate) {
+            NativeUpdater.displayUpdateAlert(context,
+              forceUpdate: true,
+              iOSUpdateButtonLabel: 'Upgrade',
+              iOSCloseButtonLabel: 'Exit',
+            );
+            return Container(color: Color(Constants.COLOR_PRIMARY_DARK));
+          } else {
+            return _app();
+          }
+        } else if (snapshot.connectionState == ConnectionState.waiting) {
+          return Container(
+            color: Color(Constants.COLOR_PRIMARY_DARK),
+            child: Center(child: CircularProgressIndicator()),
+          );
+        } else {
+          return _app();
+        }
+      },
+    );
+  }
+
+  Widget _app() {
     return MultiProvider(
       providers: [
         ChangeNotifierProvider<AppUser>.value(value: user),
@@ -79,17 +109,17 @@ class MyAppState extends State<MyApp> with WidgetsBindingObserver {
           primaryColor: Color(Constants.COLOR_PRIMARY),
           brightness: Brightness.light,
           bottomSheetTheme: BottomSheetThemeData(
-            backgroundColor: Colors.white.withOpacity(.9)
+              backgroundColor: Colors.white.withOpacity(.9)
           ),
         ),
         darkTheme: ThemeData(
-          colorScheme: ColorScheme.dark(primary: Color(Constants.COLOR_PRIMARY)),
-          accentColor: Color(Constants.COLOR_PRIMARY),
-          primaryColor: Color(Constants.COLOR_PRIMARY),
-          bottomSheetTheme: BottomSheetThemeData(
-            backgroundColor: Colors.black12.withOpacity(.3)
-          ),
-          brightness: Brightness.dark
+            colorScheme: ColorScheme.dark(primary: Color(Constants.COLOR_PRIMARY)),
+            accentColor: Color(Constants.COLOR_PRIMARY),
+            primaryColor: Color(Constants.COLOR_PRIMARY),
+            bottomSheetTheme: BottomSheetThemeData(
+                backgroundColor: Colors.black12.withOpacity(.3)
+            ),
+            brightness: Brightness.dark
         ),
         debugShowCheckedModeBanner: false,
         color: Color(Constants.COLOR_PRIMARY),
@@ -102,6 +132,8 @@ class MyAppState extends State<MyApp> with WidgetsBindingObserver {
   void initState() {
     WidgetsBinding.instance.addObserver(this);
     super.initState();
+
+    newVersion = NewVersion(context: context);
 
     FireStoreUtils.firebaseMessaging.configure(
       onBackgroundMessage: backgroundMessageHandler,
@@ -134,16 +166,18 @@ class MyAppState extends State<MyApp> with WidgetsBindingObserver {
       } else {
         user.copy(dbUser);
       }
-      if (userPrivateDetails.fcmToken == null) {
-        userPrivateDetails.fcmToken = await FireStoreUtils.firebaseMessaging.getToken();
-        await FireStoreUtils.updateUserPrivateDetails(userPrivateDetails);
-      } else {
-        tokenStream = FireStoreUtils.firebaseMessaging.onTokenRefresh.listen((token) async {
-          if (token != userPrivateDetails.fcmToken) {
-            userPrivateDetails.fcmToken = token;
-            await FireStoreUtils.updateUserPrivateDetails(userPrivateDetails);
-          }
-        });
+      if (userPrivateDetails != null) {
+        if (userPrivateDetails.fcmToken == null) {
+          userPrivateDetails.fcmToken = await FireStoreUtils.firebaseMessaging.getToken();
+          await FireStoreUtils.updateUserPrivateDetails(userPrivateDetails);
+        } else {
+          tokenStream = FireStoreUtils.firebaseMessaging.onTokenRefresh.listen((token) async {
+            if (token != userPrivateDetails.fcmToken) {
+              userPrivateDetails.fcmToken = token;
+              await FireStoreUtils.updateUserPrivateDetails(userPrivateDetails);
+            }
+          });
+        }
       }
     });
 
@@ -192,9 +226,8 @@ class OnBoardingState extends State<OnBoarding> {
     bool finishedOnBoarding = (prefs.getBool(Constants.FINISHED_ON_BOARDING) ?? false);
 
     if (finishedOnBoarding) {
-      User firebaseUser = FirebaseAuth.instance.currentUser;
-      if (firebaseUser != null) {
-        goToNextScreenAfterAuth(context, firebaseUser.uid);
+      if (FirebaseAuth.instance.currentUser != null) {
+        goToNextScreenAfterAuth(context);
       } else {
         pushReplacement(context, AuthScreen());
       }
@@ -206,17 +239,25 @@ class OnBoardingState extends State<OnBoarding> {
   @override
   void initState() {
     super.initState();
-    hasFinishedOnBoarding();
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: Color(Constants.COLOR_PRIMARY),
-      body: Center(
-        child: CircularProgressIndicator(
-          backgroundColor: isDarkMode(context) ? Colors.black : Colors.white,
-        ),
+      body: FutureBuilder<void>(
+        future: hasFinishedOnBoarding(),
+        builder: (BuildContext context, AsyncSnapshot snapshot) {
+          if (snapshot.connectionState == ConnectionState.waiting) {
+            return Center(
+              child: CircularProgressIndicator(
+                backgroundColor: isDarkMode(context) ? Colors.black : Colors.white,
+              ),
+            );
+          }
+          // Should never get to this point
+          return Container(color: Color(Constants.COLOR_PRIMARY_DARK),);
+        },
       ),
     );
   }
