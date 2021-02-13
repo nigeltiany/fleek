@@ -26,10 +26,9 @@ class SwipeScreen extends StatefulWidget {
 class _SwipeScreenState extends State<SwipeScreen> {
 
   final FireStoreUtils _fireStoreUtils = FireStoreUtils();
-  List<AppUser> swipedUsers = [];
-  List<AppUser> users = [];
   CardController cardController;
   AppUser currentUser;
+  FleekData fleekData;
 
   _SwipeScreenState();
 
@@ -37,13 +36,11 @@ class _SwipeScreenState extends State<SwipeScreen> {
   void initState() {
     super.initState();
     currentUser = context.read<AppUser>();
-    // _fireStoreUtils.matchChecker(context);
-    // fleekUsers = _fireStoreUtils.getFleekUsers(currentUser);
+    fleekData = context.read<FleekData>();
   }
 
   @override
   void dispose() {
-    _fireStoreUtils.closeFleekStream();
     super.dispose();
   }
 
@@ -51,26 +48,27 @@ class _SwipeScreenState extends State<SwipeScreen> {
   Widget build(BuildContext context) {
     return Consumer<FleekData>(
       builder: (BuildContext context, FleekData data, _) {
-        return StreamBuilder<List<AppUser>>(
-          stream: data.users,
-          initialData: [],
-          builder: (context, snapshot) {
-            if (snapshot.hasError) return Text('Error: ${snapshot.error}');
-            switch (snapshot.connectionState) {
-              case ConnectionState.none:
-              case ConnectionState.waiting:
-                return Center(
-                  child: CircularProgressIndicator(
-                    valueColor: AlwaysStoppedAnimation<Color>(Color(COLOR_ACCENT)),
-                  ),
-                );
-              case ConnectionState.active:
-                return _asyncCards(context, snapshot.data);
-              case ConnectionState.done:
-            }
-            return null; // unreachable
-          },
-        );
+        if (data.fetchingData && data.users.isEmpty) {
+          return Center(
+            child: CircularProgressIndicator(
+              valueColor: AlwaysStoppedAnimation<Color>(Color(COLOR_ACCENT)),
+            ),
+          );
+        } else if (!data.fetchingData && data.users.isEmpty) {
+          return Container(
+            child: Center(
+              child: Padding(
+                padding: const EdgeInsets.all(16.0),
+                child: Text(
+                  'Sorry, there is no one else to show you :-(',
+                  textAlign: TextAlign.center,
+                ),
+              ),
+            ),
+          );
+        } else {
+          return _asyncCards(context);
+        }
       }
     );
   }
@@ -120,23 +118,23 @@ class _SwipeScreenState extends State<SwipeScreen> {
                 onPressed: () => _onCardSettingsClick(fleekUser),
               ),
             ),
-            // Positioned(
-            //   bottom: 16,
-            //   right: 16,
-            //   child: Visibility(
-            //     visible: swipedUsers.isNotEmpty,
-            //     child: FloatingActionButton(
-            //       heroTag: '${fleekUser.userID}',
-            //       backgroundColor: Color(COLOR_PRIMARY),
-            //       mini: true,
-            //       child: Icon(
-            //         Icons.undo,
-            //         color: Colors.white,
-            //       ),
-            //       onPressed: () => _undo(),
-            //     ),
-            //   ),
-            // ),
+            Positioned(
+              bottom: 16,
+              right: 16,
+              child: Visibility(
+                visible: fleekData.previousLeftSwipedUser != null,
+                child: FloatingActionButton(
+                  heroTag: '${fleekUser.userID}',
+                  backgroundColor: Color(COLOR_PRIMARY),
+                  mini: true,
+                  child: Icon(
+                    Icons.undo,
+                    color: Colors.white,
+                  ),
+                  onPressed: () => _undo(),
+                ),
+              ),
+            ),
             Padding(
               padding: const EdgeInsets.all(16.0),
               child: Column(
@@ -237,8 +235,7 @@ class _SwipeScreenState extends State<SwipeScreen> {
             Navigator.of(context).pop(); // Close Dialog
             if (isSuccessful) {
               await _fireStoreUtils.onSwipeLeft(currentUser: currentUser, dislikedUser: user);
-              users.remove(user);
-              _fireStoreUtils.updateCardStream(users);
+              fleekData.removeUser(user);
               Scaffold.of(context).showSnackBar(SnackBar(content: Text
                 ('${user.userName} has been blocked.'),),);
             } else {
@@ -257,8 +254,7 @@ class _SwipeScreenState extends State<SwipeScreen> {
             Navigator.of(context).pop(); // Close Dialog
             if (isSuccessful) {
               await _fireStoreUtils.onSwipeLeft(currentUser: currentUser, dislikedUser: user);
-              users.removeWhere((element) => element.userID == user.userID);
-              _fireStoreUtils.updateCardStream(users);
+              fleekData.removeUser(user);
               Scaffold.of(context).showSnackBar(SnackBar(content: Text
                 ('${user.userName} has been reported and blocked.'),),);
             } else {
@@ -281,90 +277,62 @@ class _SwipeScreenState extends State<SwipeScreen> {
   }
 
   _undo() async {
-    if (currentUser.isVip != null && currentUser.isVip) {
-      AppUser undoUser = swipedUsers.removeLast();
-      users.insert(0, undoUser);
-      _fireStoreUtils.updateCardStream(users);
-      await _fireStoreUtils.undo(undoUser);
-    } else {
-      _showUpgradeAccountDialog();
-    }
+    //if (currentUser.isVip != null && currentUser.isVip) {
+    //   AppUser undoUser = swipedUsers.removeLast();
+    //   users.insert(0, undoUser);
+    //   _fireStoreUtils.updateCardStream(users);
+    //   await _fireStoreUtils.undo(undoUser);
+         fleekData.undoLeftSwipe(currentUser.settings.searchInterest);
+    // } else {
+    //   _showUpgradeAccountDialog();
+    // }
   }
 
-  Widget _asyncCards(BuildContext context, List<AppUser> data) {
-    users = data;
-    if (data == null || data.isEmpty)
-      return Center(
-        child: Padding(
-          padding: const EdgeInsets.all(16.0),
-          child: Text(
-            'Sorry, we didn\'t find anyone that matches your interests :-(',
-            textAlign: TextAlign.center,
-          ),
-        ),
-      );
+  Widget _asyncCards(BuildContext context) {
     return Column(
-        mainAxisSize: MainAxisSize.max,
-        mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-        crossAxisAlignment: CrossAxisAlignment.end,
-        children: <Widget>[
-          Flexible(
-            child: Stack(children: [
-              Container(
-                child: Center(
-                  child: Padding(
-                    padding: const EdgeInsets.all(16.0),
-                    child: Text(
-                      'Sorry, we didn\'t find anyone that matches your interests :-(',
-                      textAlign: TextAlign.center,
-                    ),
-                  ),
-                ),
-              ),
+      mainAxisSize: MainAxisSize.max,
+      mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+      crossAxisAlignment: CrossAxisAlignment.end,
+      children: [
+        Flexible(
+          child: Stack(
+            children: [
               Container(
                 height: MediaQuery.of(context).size.height * 0.9,
                 width: MediaQuery.of(context).size.width,
                 child: TinderSwapCard(
-                  animDuration: 500,
+                  animDuration: 300,
                   orientation: AmassOrientation.BOTTOM,
-                  totalNum: data.length,
+                  totalNum: fleekData.users.length,
                   stackNum: 3,
                   swipeEdge: 15,
                   maxWidth: MediaQuery.of(context).size.width,
                   maxHeight: MediaQuery.of(context).size.height,
                   minWidth: MediaQuery.of(context).size.width * 0.9,
                   minHeight: MediaQuery.of(context).size.height * 0.9,
-                  cardBuilder: (context, index) => _buildCard(data[index]),
+                  cardBuilder: (context, index) => _buildCard(fleekData.users[index]),
                   cardController: cardController = CardController(),
                   swipeCompleteCallback: (CardSwipeOrientation orientation, int index) async {
-                    if (orientation == CardSwipeOrientation.LEFT || orientation == CardSwipeOrientation.RIGHT) {
-                      bool isValidSwipe = currentUser.isVip != null && currentUser.isVip ? true : await _fireStoreUtils.incrementSwipe();
-                      if (isValidSwipe) {
-                        if (orientation == CardSwipeOrientation.RIGHT) {
-                          AppUser result = await _fireStoreUtils.onSwipeRight(currentUser: currentUser, likedUser: data[index]);
-                          if (result != null) {
-                            data.removeAt(index);
-                            _fireStoreUtils.updateCardStream(data);
-                            push(context, MatchScreen(matchedUser: result));
-                          } else {
-                            swipedUsers.add(data[index]);
-                            data.removeAt(index);
-                            _fireStoreUtils.updateCardStream(data);
-                          }
-                        } else if (orientation == CardSwipeOrientation.LEFT) {
-                          swipedUsers.add(data[index]);
-                          await _fireStoreUtils.onSwipeLeft(currentUser: currentUser, dislikedUser: data[index]);
-                          data.removeAt(index);
+                    // if (orientation == CardSwipeOrientation.LEFT || orientation == CardSwipeOrientation.RIGHT) {
+                      // bool isValidSwipe = currentUser.isVip != null && currentUser.isVip ? true :
+                      await _fireStoreUtils.incrementSwipe();
+                      if (orientation == CardSwipeOrientation.RIGHT) {
+                        AppUser result = await _fireStoreUtils.onSwipeRight(currentUser: currentUser, likedUser: fleekData.users[index]);
+                        if (result != null) {
+                          fleekData.removeUser(fleekData.users.elementAt(index));
+                          push(context, MatchScreen(matchedUser: result));
+                        } else {
+                          fleekData.removeUser(fleekData.users.elementAt(index));
                         }
-                      } else {
-                        AppUser returningUser = data.removeAt(index);
-                        _fireStoreUtils.updateCardStream(data);
-                        _showUpgradeAccountDialog();
-                        await Future.delayed(Duration(milliseconds: 200));
-                        data.insert(0, returningUser);
-                        _fireStoreUtils.updateCardStream(data);
+                      } else if (orientation == CardSwipeOrientation.LEFT) {
+                        fleekData.previousLeftSwipedUser = fleekData.users.elementAt(index);
+                        await _fireStoreUtils.onSwipeLeft(currentUser: currentUser, dislikedUser: fleekData.users.elementAt(index));
+                        fleekData.removeUser(fleekData.users.elementAt(index));
                       }
-                    }
+                      if (fleekData.users.length < 3 && fleekData.recentlyFetchedCount >= FleekData.MAX_FETCH_COUNT) {
+                        fleekData.loadData(currentUser);
+                      }
+                    // }
                   },
                 ),
               ),
@@ -377,7 +345,7 @@ class _SwipeScreenState extends State<SwipeScreen> {
             crossAxisAlignment: CrossAxisAlignment.center,
             mainAxisSize: MainAxisSize.max,
             mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-            children: <Widget>[
+            children: [
               FloatingActionButton(
                 elevation: 1,
                 heroTag: 'left',
@@ -421,7 +389,7 @@ class _SwipeScreenState extends State<SwipeScreen> {
               )
             ],
           ),
-        )
+        ),
       ],
     );
   }

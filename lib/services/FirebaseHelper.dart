@@ -19,6 +19,7 @@ import 'package:dating/model/UserLocation.dart';
 import 'package:dating/model/SearchInterests.dart';
 import 'package:dating/model/UserPrivateDetails.dart';
 import 'package:dating/services/helper.dart';
+import 'package:dating/store/Data.dart';
 import 'package:dating/ui/matchScreen/MatchScreen.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
@@ -298,34 +299,19 @@ class FireStoreUtils {
     ChatModel chatModel = ChatModel();
     List<MessageData> listOfMessages = [];
     List<AppUser> listOfMembers = homeConversationModel.members;
-    if (homeConversationModel.isGroupChat) {
-      homeConversationModel.members.forEach((groupMember) {
-        if (groupMember.userID != FirebaseAuth.instance.currentUser.uid) {
-          getUserByID(groupMember.userID).listen((updatedUser) {
-            for (int i = 0; i < listOfMembers.length; i++) {
-              if (listOfMembers[i].userID == updatedUser.userID) {
-                listOfMembers[i] = updatedUser;
-              }
-            }
-            chatModel.message = listOfMessages;
-            chatModel.members = listOfMembers;
-            chatModelStreamController.sink.add(chatModel);
-          });
-        }
-      });
-    } else {
-      AppUser friend = homeConversationModel.members.first;
-      getUserByID(friend.userID).listen((user) {
-        listOfMembers.clear();
-        listOfMembers.add(user);
-        chatModel.message = listOfMessages;
-        chatModel.members = listOfMembers;
-        chatModel.recipientEncrypter = (String message) async {
-          return await Gecies.encrypt(user.publicKey, message);
-        };
-        chatModelStreamController.sink.add(chatModel);
-      });
-    }
+
+    AppUser friend = homeConversationModel.members.first;
+    getUserByID(friend.userID).listen((user) {
+      listOfMembers.clear();
+      listOfMembers.add(user);
+      chatModel.message = listOfMessages;
+      chatModel.members = listOfMembers;
+      chatModel.recipientEncrypter = (String message) async {
+        return await Gecies.encrypt(user.publicKey, message);
+      };
+      chatModelStreamController.sink.add(chatModel);
+    });
+
     if (homeConversationModel.conversationModel != null) {
       firestore
           .collection(CHANNELS)
@@ -439,11 +425,10 @@ class FireStoreUtils {
     return false;
   }
 
-  Stream<List<AppUser>> getFleekUsers(AppUser currentUser) async* {
+  static getFleekUsers(AppUser currentUser, FleekData data) async {
 
-    fleekCardsStreamController = StreamController<List<AppUser>>();
-    List<AppUser> fleekUsers = [];
-    LocationData locationData = await getCurrentLocation();
+    //print("loading");
+    //LocationData locationData = await getCurrentLocation();
 
     // if (locationData != null) {
     //   currentUser.location = UserLocation(
@@ -451,7 +436,11 @@ class FireStoreUtils {
     //     longitude: locationData.longitude,
     //   );
 
-      var viewedUsers = await firestore.collectionGroup("${currentUser.settings.searchInterest.toFirebaseString()}::VIEWED_USERS_FOR::${currentUser.userID}").get();
+      var viewedUsersRef = await firestore.collectionGroup("${currentUser.settings.searchInterest.toFirebaseString()}::VIEWED_USERS_FOR::${currentUser.userID}").get();
+      var viewedUsers = List();
+      viewedUsersRef.docs.forEach((element) {
+        viewedUsers.addAll((element.data()["viewedUserIDs"] as List));
+      });
 
       var query = firestore.collection(USERS)
         .where('showMe', isEqualTo: true) // The person must want to be shown
@@ -470,12 +459,16 @@ class FireStoreUtils {
       //   field: 'location',
       // ).listen((value) {
 
-      query.snapshots().listen((value) {
+      int skippedUserCount = 0;
+      int resultSize = 0;
 
-        print("fetched user count: ${value.docs.length}");
+      StreamSubscription<QuerySnapshot> dataStream;
+      dataStream = query.snapshots().listen((value) {
 
         if (value.docs.isEmpty) {
-          fleekCardsStreamController.add(fleekUsers);
+          data.fetchingData = false;
+          dataStream.cancel();
+          return;
         }
 
         value.docs.forEach((DocumentSnapshot fleekUser) async {
@@ -483,16 +476,20 @@ class FireStoreUtils {
           if (fleekUser.id != FirebaseAuth.instance.currentUser.uid) {
             AppUser user = AppUser.fromJson(fleekUser.data());
             // int distance = getDistance(user.location, currentUser.location).ceil();
-            if (viewedUsers.docs.where((element) => (element.data()["viewedUserIDs"] as List).contains(user.userID)).isEmpty) {
+            if (!viewedUsers.contains(user.userID)) {
               // user.milesAway = '${distance < 3 ? '~2' : distance} Miles Away';
-              fleekUsers.insert(0, user);
-              fleekCardsStreamController.add(fleekUsers);
+              data.addUser(user);
+              resultSize += 1;
+            } else {
+              skippedUserCount += 1;
             }
-            if (fleekUsers.isEmpty) {
-              fleekCardsStreamController.add(fleekUsers);
-            }
-          } else if (fleekUsers.isEmpty) {
-            fleekCardsStreamController.add(fleekUsers);
+          } else {
+            skippedUserCount += 1;
+          }
+
+          if (resultSize >= FleekData.MAX_FETCH_COUNT || resultSize + skippedUserCount == value.docs.length) {
+            dataStream.cancel();
+            data.fetchingData = false;
           }
 
         });
@@ -500,9 +497,6 @@ class FireStoreUtils {
       });
 
     // }
-
-    yield* fleekCardsStreamController.stream;
-
   }
 
   matchChecker(BuildContext context) async {
@@ -574,7 +568,7 @@ class FireStoreUtils {
       if (likedUser.settings.pushNewMatchesEnabled) {
         await sendNotification(
           recipientID: likedUser.userID,
-          notificationText: "You matched with ${currentUser.userName}",
+          notificationText: "You have a new match",
         );
       }
 
@@ -619,11 +613,12 @@ class FireStoreUtils {
     await firebaseStorageRef.delete();
   }
 
-  undo(AppUser fleekUser) async {
+  static undo(String forUserID, SearchInterest searchInterest) async {
     await firestore
         .collection(SWIPES)
+        .where('searchInterest', isEqualTo: searchInterest.toFirebaseString())
         .where('swiperUserID', isEqualTo: FirebaseAuth.instance.currentUser.uid)
-        .where('forUserID', isEqualTo: fleekUser.userID)
+        .where('forUserID', isEqualTo: forUserID)
         .get()
         .then((value) async {
       if (value.docs.isNotEmpty) {

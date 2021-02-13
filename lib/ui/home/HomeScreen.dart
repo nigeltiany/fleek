@@ -34,7 +34,6 @@ class HomeScreen extends StatefulWidget {
 class _HomeState extends State<HomeScreen> with TickerProviderStateMixin {
 
   AppUser user;
-  FireStoreUtils fireStoreUtils;
 
   int _currentIndex = 1;
 
@@ -47,14 +46,13 @@ class _HomeState extends State<HomeScreen> with TickerProviderStateMixin {
     super.initState();
     user = context.read<AppUser>();
 
-    fireStoreUtils = FireStoreUtils();
     WidgetsBinding.instance.addPostFrameCallback((_){
-      context.read<FleekData>().users = fireStoreUtils.getFleekUsers(user);
+      context.read<FleekData>().loadData(user);
     });
 
     _genderTabController = TabController(
       initialIndex: user.settings.gender.index,
-      length: 2,
+      length: Gender.values.length,
       vsync: this,
     );
 
@@ -86,12 +84,12 @@ class _HomeState extends State<HomeScreen> with TickerProviderStateMixin {
     [_genderTabController, _orientationTabController, _searchInterestController].forEach((controller) {
       controller.dispose();
     });
+    context.read<FleekData>().clean();
     super.dispose();
   }
 
   Widget _logo({ bool active = false }) {
-    return Image.asset(
-      'assets/images/app_logo.png',
+    return Image.asset('assets/images/app_logo.png',
       width: active ? 40 : 24,
       height: active ? 40 : 24,
       color: active ? Color(COLOR_PRIMARY) : Colors.grey,
@@ -221,7 +219,7 @@ class _HomeState extends State<HomeScreen> with TickerProviderStateMixin {
         );
       },
     );
-    context.read<FleekData>().users = fireStoreUtils.getFleekUsers(user);
+    context.read<FleekData>().loadData(user);
   }
 
 }

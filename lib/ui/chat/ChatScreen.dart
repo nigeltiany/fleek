@@ -9,6 +9,7 @@ import 'package:dating/store/KeyPair.dart';
 import 'package:dating/services/file_encryption.dart';
 import 'package:file/local.dart';
 import 'package:file/memory.dart';
+import 'package:flutter_spinkit/flutter_spinkit.dart';
 import 'package:mime/mime.dart' show lookupMimeType;
 import 'package:gecies/gecies.dart';
 import 'package:provider/provider.dart';
@@ -562,7 +563,7 @@ class _ChatScreenState extends State<ChatScreen> {
               } else if (innerSnap.hasError) {
                 return _textBubble("", error: true, byCurrentUser:  messageData.senderID == currentUser.userID);
               } else {
-                return CircularProgressIndicator(); // TODO: Use flutter_spinkit to show Grid animation
+                return SpinKitCubeGrid(color: Color(COLOR_PRIMARY_DARK));
               }
             },
           );
@@ -657,7 +658,7 @@ class _ChatScreenState extends State<ChatScreen> {
               } else if (innerSnap.hasError) {
                 return _textBubble("", error: true, byCurrentUser:  messageData.senderID == currentUser.userID);
               } else {
-                return CircularProgressIndicator(); // TODO: Use flutter_spinkit to show Grid animation
+                return SpinKitCubeGrid(color: Color(COLOR_PRIMARY_DARK));
               }
             },
           );

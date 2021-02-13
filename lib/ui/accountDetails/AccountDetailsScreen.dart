@@ -8,10 +8,8 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/widgets.dart';
-import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:provider/provider.dart';
 import 'package:settings_ui/settings_ui.dart';
-import 'package:dating/services/FirebaseHelper.dart';
 
 class AccountDetailsScreen extends StatefulWidget {
   final AppUser user;
@@ -139,8 +137,7 @@ class _AccountDetailsScreenState extends State<AccountDetailsScreen> {
                 user.lastOnlineTimestamp = Timestamp.now();
                 await FireStoreUtils.updateCurrentUser(user);
                 await FirebaseAuth.instance.signOut();
-                await context.read<FlutterSecureStorage>().deleteAll();
-                context.read<AppUser>().copy(AppUser());
+                user.copy(AppUser());
                 pushAndRemoveUntil(context, AuthScreen(), false);
               },
             ),

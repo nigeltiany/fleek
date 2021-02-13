@@ -1,4 +1,5 @@
 import 'package:dating/constants.dart';
+import 'package:dating/model/Gender.dart';
 import 'package:dating/services/helper.dart';
 import 'package:flutter/material.dart';
 
@@ -9,7 +10,7 @@ class GenderSelector extends StatefulWidget {
   GenderSelector({
     Key key,
     @required this.tabController,
-  }) : assert(tabController.length == 2), super(key: key);
+  }) : assert(tabController.length == Gender.values.length), super(key: key);
 
   @override
   _GenderSelectorState createState() => _GenderSelectorState(this.tabController);

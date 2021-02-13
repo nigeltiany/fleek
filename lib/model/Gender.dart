@@ -1,7 +1,6 @@
 enum Gender {
   MALE,
-  FEMALE,
-  UNKNOWN
+  FEMALE
 }
 
 extension GenderToString on Gender {
@@ -16,7 +15,7 @@ Gender genderFromFirebaseString(String pref) {
       return option;
     }
   }
-  return Gender.UNKNOWN;
+  return Gender.MALE;
 }
 
 enum GenderPreference {
