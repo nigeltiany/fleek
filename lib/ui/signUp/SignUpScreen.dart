@@ -212,11 +212,10 @@ class _SignUpState extends State<SignUpScreen> {
 
     } catch (error) {
       Navigator.of(context).pop(); // Close Dialog
-      print(error.toString());
-      if (error is PlatformException) {
-        error.code != 'ERROR_EMAIL_ALREADY_IN_USE'
-          ? showAlertDialog(context, 'Failed', 'Couldn\'t sign up')
-          : showAlertDialog(context, 'Failed', 'Email already in use, Please pick another email!');
+      if (error is FirebaseAuthException) {
+        error.code != 'email-already-in-use'
+          ? showAlertDialog(context, 'Failed', 'Couldn\'t sign up. ${error.code}')
+          : showAlertDialog(context, 'Failed', 'Email already in use!');
       } else if (error is NoSuchMethodError) {
         print(error.stackTrace);
         print(error.hashCode);

@@ -58,8 +58,8 @@ class _AccountDetailsScreenState extends State<AccountDetailsScreen> {
         child: FutureBuilder<UserPrivateDetails>(
           future: FireStoreUtils.getCurrentUserPrivateDetails(),
           builder: (BuildContext context, AsyncSnapshot<UserPrivateDetails> snapshot) {
-            if (snapshot.hasData) {
-              return _sections(snapshot.data);
+            if (snapshot.hasData || snapshot.connectionState == ConnectionState.done) {
+              return _sections(snapshot.data ?? UserPrivateDetails());
             } else if (snapshot.hasError) {
               return Center(child: Icon(Icons.error, color: Colors.redAccent,));
             } else {
