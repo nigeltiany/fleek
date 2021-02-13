@@ -87,7 +87,7 @@ class _MatchScreenState extends State<MatchScreen> {
                       pushReplacement(context, ChatScreen(
                           homeConversationModel: HomeConversationModel(
                             isGroupChat: false,
-                            members: [widget.matchedUser],
+                            matchedUser: widget.matchedUser,
                             conversationModel: conversationModel,
                           ),
                         ),

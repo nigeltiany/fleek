@@ -6,13 +6,13 @@ import 'User.dart';
 class HomeConversationModel {
 
   bool isGroupChat = false;
-  List<AppUser> members = [];
+  AppUser matchedUser;
   Encrypter recipientEncrypter;
   ConversationModel conversationModel = ConversationModel();
 
   HomeConversationModel({
     this.isGroupChat,
-    this.members,
+    this.matchedUser,
     this.conversationModel,
     this.recipientEncrypter
   });

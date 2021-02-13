@@ -13,12 +13,12 @@ class Avatar extends StatelessWidget {
   Widget build(BuildContext context) {
     return GestureDetector(
       onTap: () {
-        push(context, UserDetailsScreen(user: homeConversationModel.members.first, isMatch: true,));
+        push(context, UserDetailsScreen(user: homeConversationModel.matchedUser, isMatch: true,));
       },
       child: Stack(
         alignment: Alignment.bottomRight,
         children: <Widget>[
-          displayCircleImage(homeConversationModel.members.first.profilePictureURL, 50, false),
+          displayCircleImage(homeConversationModel.matchedUser.profilePictureURL, 50, false),
           // Positioned(
           //   right: 2.4,
           //   bottom: 2.4,

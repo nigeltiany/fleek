@@ -235,15 +235,12 @@ class FireStoreUtils {
               if (channel != null && channel.exists) {
 
                 bool isGroupChat = !channel.id.contains(userID);
-                List<AppUser> users = [];
 
                 getUserByID(channel.id.replaceAll(userID, '').replaceAll(':', '')).listen((user) {
-                  users.clear();
-                  users.add(user);
                   newHomeConversation = HomeConversationModel(
                       conversationModel: ConversationModel.fromJson(channel.data()),
                       isGroupChat: isGroupChat,
-                      members: users,
+                      matchedUser: user,
                   );
 
                   if (newHomeConversation.conversationModel.id.isEmpty) {
@@ -298,14 +295,11 @@ class FireStoreUtils {
     StreamController<ChatModel> chatModelStreamController = StreamController();
     ChatModel chatModel = ChatModel();
     List<MessageData> listOfMessages = [];
-    List<AppUser> listOfMembers = homeConversationModel.members;
 
-    AppUser friend = homeConversationModel.members.first;
-    getUserByID(friend.userID).listen((user) {
-      listOfMembers.clear();
-      listOfMembers.add(user);
+    AppUser matchedUser = homeConversationModel.matchedUser;
+    getUserByID(matchedUser.userID).listen((user) {
       chatModel.message = listOfMessages;
-      chatModel.members = listOfMembers;
+      chatModel.matchedUser = user;
       chatModel.recipientEncrypter = (String message) async {
         return await Gecies.encrypt(user.publicKey, message);
       };
@@ -325,18 +319,18 @@ class FireStoreUtils {
           listOfMessages.add(MessageData.fromJson(document.data()));
         });
         chatModel.message = listOfMessages;
-        chatModel.members = listOfMembers;
+        chatModel.matchedUser = matchedUser;
         chatModelStreamController.sink.add(chatModel);
       });
     }
     yield* chatModelStreamController.stream;
   }
 
-  Future<void> sendMessage(AppUser currentUser, List<AppUser> members, MessageData message, ConversationModel conversationModel, { String notificationText }) async {
+  Future<void> sendMessage(AppUser currentUser, AppUser matchedUser, MessageData message, ConversationModel conversationModel, { String notificationText }) async {
     var ref = firestore.collection(CHANNELS).doc(conversationModel.id).collection(THREAD).doc();
     message.messageID = ref.id;
     ref.set(message.toJson(), SetOptions(merge: true));
-    await Future.forEach(members, (AppUser element) async {
+    await Future.forEach([matchedUser], (AppUser element) async {
       if (element.userID != FirebaseAuth.instance.currentUser.uid && element.settings.pushNewMessages) {
         await sendNotification(
           recipientID: element.userID,

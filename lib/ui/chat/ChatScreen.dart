@@ -89,7 +89,7 @@ class _ChatScreenState extends State<ChatScreen> {
     chatStream = _fireStoreUtils.getChatMessages(homeConversationModel).asBroadcastStream();
     chatStream.listen((chatModel) {
       if (mounted) {
-        homeConversationModel.members = chatModel.members;
+        homeConversationModel.matchedUser = chatModel.matchedUser;
         homeConversationModel.recipientEncrypter = chatModel.recipientEncrypter;
         setState(() {});
       }
@@ -126,7 +126,7 @@ class _ChatScreenState extends State<ChatScreen> {
       children: <Widget>[
         Avatar(homeConversationModel),
         SizedBox(width: 12),
-        Text(homeConversationModel.members.first.userName,
+        Text(homeConversationModel.matchedUser.userName,
           overflow: TextOverflow.clip,
           maxLines: 1,
           softWrap: false,
@@ -190,7 +190,7 @@ class _ChatScreenState extends State<ChatScreen> {
                   cacheExtent: ((MediaQuery.of(context).size.height * 3).toInt() | 1000).toDouble(),
                   itemCount: snapshot.data.message.length,
                   itemBuilder: (BuildContext context, int index) {
-                    return buildMessage(snapshot.data.message[index], snapshot.data.members);
+                    return buildMessage(snapshot.data.message[index], snapshot.data.matchedUser);
                   },
                 );
               }
@@ -465,13 +465,13 @@ class _ChatScreenState extends State<ChatScreen> {
     showCupertinoModalPopup(context: context, builder: (context) => action);
   }
 
-  Widget buildMessage(MessageData messageData, List<AppUser> members) {
+  Widget buildMessage(MessageData messageData, AppUser matchedUser) {
     if (messageData.senderID == currentUser.userID) {
       return messageView(messageData, currentUser, byCurrentUser: true);
     } else {
       return messageView(
         messageData,
-        members.firstWhere((user) => user.userID != currentUser.userID),
+        matchedUser,
       );
     }
   }
@@ -783,7 +783,7 @@ class _ChatScreenState extends State<ChatScreen> {
       return true;
     } else {
       String channelID;
-      AppUser friend = homeConversationModel.members.first;
+      AppUser friend = homeConversationModel.matchedUser;
       AppUser user = context.read<AppUser>();
       if (friend.userID.compareTo(user.userID) < 0) {
         channelID = "${friend.userID}:${user.userID}";
@@ -830,9 +830,9 @@ class _ChatScreenState extends State<ChatScreen> {
     message = MessageData(
       created: Timestamp.now(),
       content: Content(content: Map<String, String>()),
-      recipientID: homeConversationModel.members.first.userID,
+      recipientID: homeConversationModel.matchedUser.userID,
       recipientProfilePictureURL:
-      homeConversationModel.members.first.profilePictureURL,
+      homeConversationModel.matchedUser.profilePictureURL,
       senderUsername: currentUser.userName,
       senderID: currentUser.userID,
       senderProfilePictureURL: currentUser.profilePictureURL,
@@ -871,7 +871,7 @@ class _ChatScreenState extends State<ChatScreen> {
 
       await _fireStoreUtils.sendMessage(
         currentUser,
-        homeConversationModel.members,
+        homeConversationModel.matchedUser,
         message,
         homeConversationModel.conversationModel,
         notificationText: notificationText,
@@ -900,16 +900,16 @@ class _ChatScreenState extends State<ChatScreen> {
           onPressed: () async {
             Navigator.pop(context);
             showProgress(context, 'Blocking user...', false);
-            bool isSuccessful = await _fireStoreUtils.blockUser(homeConversationModel.members.first, 'block');
+            bool isSuccessful = await _fireStoreUtils.blockUser(homeConversationModel.matchedUser, 'block');
 
             Navigator.of(context).pop(); // Close Dialog
 
             if (isSuccessful) {
               Navigator.pop(context);
               _showAlertDialog(context, 'Block',
-                  '${homeConversationModel.members.first.userName} has been blocked.');
+                  '${homeConversationModel.matchedUser.userName} has been blocked.');
             } else {
-              _showAlertDialog(context, 'Block', 'Couldn''\'t block ${homeConversationModel.members.first.userName}, please try again later.');
+              _showAlertDialog(context, 'Block', 'Couldn''\'t block ${homeConversationModel.matchedUser.userName}, please try again later.');
             }
           },
         ),
@@ -919,14 +919,14 @@ class _ChatScreenState extends State<ChatScreen> {
             Navigator.pop(context);
 
             showProgress(context, 'Reporting user...', false);
-            bool isSuccessful = await _fireStoreUtils.blockUser(homeConversationModel.members.first, 'report');
+            bool isSuccessful = await _fireStoreUtils.blockUser(homeConversationModel.matchedUser, 'report');
             Navigator.of(context).pop(); // Close Dialog
 
             if (isSuccessful) {
               Navigator.pop(context);
-              _showAlertDialog(context, 'Report', '${homeConversationModel.members.first.userName} has been reported and blocked.');
+              _showAlertDialog(context, 'Report', '${homeConversationModel.matchedUser.userName} has been reported and blocked.');
             } else {
-              _showAlertDialog(context, 'Report', 'Couldn''\'t report ${homeConversationModel.members.first.userName}, please try again later.');
+              _showAlertDialog(context, 'Report', 'Couldn''\'t report ${homeConversationModel.matchedUser.userName}, please try again later.');
             }
           },
         ),

@@ -112,7 +112,7 @@ class _ConversationsState extends State<ConversationsScreen> {
                           ChatScreen(
                             homeConversationModel: HomeConversationModel(
                               isGroupChat: false,
-                              members: [friend],
+                              matchedUser: friend,
                               conversationModel: conversationModel,
                             ),
                           ),
@@ -177,7 +177,7 @@ class _ConversationsState extends State<ConversationsScreen> {
             itemBuilder: (context, index) {
               final homeConversationModel = snapshot.data[index];
 
-              if (fireStoreUtils.validateIfUserBlocked(homeConversationModel.members.first.userID)) {
+              if (fireStoreUtils.validateIfUserBlocked(homeConversationModel.matchedUser.userID)) {
                 return Container();
               } else {
                 return _buildConversationRow(homeConversationModel);
@@ -224,7 +224,7 @@ class _ConversationsState extends State<ConversationsScreen> {
       child: ListTile(
         leading: _avatarWithStatus(homeConversationModel),
         title: Text(
-          '${homeConversationModel.members.first.userName}',
+          '${homeConversationModel.matchedUser.userName}',
           style: TextStyle(
             fontSize: 17,
             color: isDarkMode(context) ? Colors.white : Colors.black,
