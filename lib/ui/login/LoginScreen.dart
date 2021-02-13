@@ -103,9 +103,9 @@ class _LoginScreen extends State<LoginScreen> {
     if (email.isEmpty) {
       showAlertDialog(context, 'E-mail address', 'E-mail address is required to login');
       return FormatException("email required");
-    } else if (!RegExp(r"^[a-zA-Z0-9.a-zA-Z0-9.!#$%&'*+-/=?^_`{|}~]+@[a-zA-Z0-9]+\.[a-zA-Z]+").hasMatch(email)) {
-      showAlertDialog(context, 'E-mail address', 'E-mail address is not valid');
-      return FormatException("invalid email");
+    // } else if (!RegExp(r"^[a-zA-Z0-9.a-zA-Z0-9.!#$%&'*+-/=?^_`{|}~]+@[a-zA-Z0-9]+\.[a-zA-Z]+").hasMatch(email)) {
+    //   showAlertDialog(context, 'E-mail address', 'E-mail address is not valid');
+    //   return FormatException("invalid email");
     } else if (password.isEmpty) {
       showAlertDialog(context, 'Password', 'Password is required to login');
       return FormatException("password required");
@@ -139,35 +139,34 @@ class _LoginScreen extends State<LoginScreen> {
       
       Navigator.of(context).pop(); // Close Dialog
 
-      if (exception is PlatformException) {
+      if (exception is FirebaseAuthException) {
+        print(exception.code);
         switch (exception.code) {
-          case 'ERROR_INVALID_EMAIL':
+          case 'invalid-email':
             showAlertDialog(context, 'Couldn\'t Authenticate', 'Email address is malformed.');
             break;
-          case 'ERROR_WRONG_PASSWORD':
+          case 'wrong-password':
             showAlertDialog(context, 'Couldn\'t Authenticate', 'Wrong password.');
             break;
-          case 'ERROR_USER_NOT_FOUND':
-            showAlertDialog(context, 'Couldn\'t Authenticate',
-                'No user corresponding to the given email address.');
+          case 'user-not-found':
+            showAlertDialog(context, 'Couldn\'t Authenticate', 'No user corresponding to the given email address.');
             break;
-          case 'ERROR_USER_DISABLED':
-            showAlertDialog(
-                context, 'Couldn\'t Authenticate', 'User has been disabled.');
+          case 'user-disabled':
+            showAlertDialog(context, 'Couldn\'t Authenticate', 'User has been disabled.');
             break;
-          case 'ERROR_TOO_MANY_REQUESTS':
-            showAlertDialog(context, 'Couldn\'t Authenticate',
-                'Too many attempts to sign in as this user.');
+          case 'too-many-requests':
+            showAlertDialog(context, 'Couldn\'t Authenticate', 'Too many attempts to sign in as this user.');
             break;
-          case 'ERROR_OPERATION_NOT_ALLOWED':
-            showAlertDialog(context, 'Couldn\'t Authenticate',
-                'Email & Password accounts are not enabled.');
+          case 'operation-not-allowed':
+            showAlertDialog(context, 'Couldn\'t Authenticate', 'Email & Password accounts are not enabled.');
             break;
         }
       } else if (exception is FirebaseFunctionsException) {
         showAlertDialog(context, 'We messed up :(', 'Something went wrong on our end.');
       } else if (exception is KeyException) {
         showAlertDialog(context, 'We messed up :(', 'Something unexpected happened.');
+      } else {
+        showAlertDialog(context, 'We messed up :(', 'Something went wrong while trying to sign you in.');
       }
 
       print(exception.toString());
