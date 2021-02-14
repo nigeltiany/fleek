@@ -92,7 +92,7 @@ class _FileBubbleState extends State<FileBubble> {
     return GestureDetector(
       onTap: () {
         if (messageData.videoThumbnail.isEmpty) {
-          push(context, FullScreenImageViewer(image: image.image, tag: mediaURL));
+          push(context, FullScreenImageViewer(image: image.image, tag: messageData.messageID));
         }
       },
       child: Hero(

@@ -42,25 +42,26 @@ class _TextBubbleState extends State<TextBubble> {
     return FutureBuilder<String>(
       future: Gecies.decrypt(keyPair.privateKeyBase64, messageData.content.content[currentUser.userID]),
       builder: (BuildContext context, AsyncSnapshot<String> snapshot) {
-        if (snapshot.hasData) {
-          return WidgetBubble(
-            byCurrentUser: messageData.senderID == currentUser.userID,
-            child: Text(snapshot.data ?? "",
-              textAlign: TextAlign.start,
-              textDirection: TextDirection.ltr,
-              style: TextStyle(
-                color: isDarkMode(context) ? Colors.white : Colors.black,
-                fontSize: 16,
-              ),
-            ),
-          );
-        } else if (snapshot.hasError) {
+        if (snapshot.hasError) {
           return WidgetBubble(
             byCurrentUser:  messageData.senderID == currentUser.userID,
             child: Icon(Icons.error, color: Colors.redAccent),
           );
         }
-        return Container();
+        if (snapshot.data == null) {
+          return Container();
+        }
+        return WidgetBubble(
+          byCurrentUser: messageData.senderID == currentUser.userID,
+          child: Text(snapshot.data,
+            textAlign: TextAlign.start,
+            textDirection: TextDirection.ltr,
+            style: TextStyle(
+              color: isDarkMode(context) ? Colors.white : Colors.black,
+              fontSize: 16,
+            ),
+          ),
+        );
       },
     );
 

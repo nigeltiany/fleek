@@ -10,20 +10,21 @@ class FullScreenImageViewer extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-        appBar: AppBar(
-          brightness: Brightness.dark,
-          elevation: 0.0,
-          backgroundColor: Colors.black,
-          iconTheme: IconThemeData(color: Colors.white),
-        ),
-        body: Container(
-          color: Colors.black,
-          child: Hero(
-            tag: tag,
-            child: PhotoView(
-              imageProvider: image,
-            ),
+      appBar: AppBar(
+        brightness: Brightness.dark,
+        elevation: 0.0,
+        backgroundColor: Colors.black,
+        iconTheme: IconThemeData(color: Colors.white),
+      ),
+      body: Container(
+        color: Colors.black,
+        child: Hero(
+          tag: tag,
+          child: PhotoView(
+            imageProvider: image,
           ),
-        ));
+        ),
+      ),
+    );
   }
 }

@@ -93,7 +93,7 @@ class _UserDetailsScreenState extends State<UserDetailsScreen> {
                             effect: SlideEffect(
                               spacing: 4.0,
                               radius: 4.0,
-                              dotWidth: (MediaQuery.of(context).size.width - 8) / images.length,
+                              dotWidth: (MediaQuery.of(context).size.width - (4 * images.length) - 4) / images.length,
                               dotHeight: 4.0,
                               paintStyle: PaintingStyle.fill,
                               dotColor: Colors.grey,
