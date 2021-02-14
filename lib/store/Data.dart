@@ -56,7 +56,6 @@ class FleekData with ChangeNotifier {
   }
 
   void loadData (AppUser currentUser) {
-    print("fetching");
     fetchingData = true;
     FireStoreUtils.getFleekUsers(currentUser, this);
   }
@@ -76,18 +75,14 @@ class FleekData with ChangeNotifier {
   }
 
   void addUser(AppUser user, SearchInterest searchInterest) {
-    print("trying: ${user.userID}");
-    if (_recentlyRemovedUserIDs[searchInterest] != null) {
-      if (_recentlyRemovedUserIDs[searchInterest].contains(user.userID)) {
-        return;
-      }
+    if (seenRecently(user, searchInterest)) {
+      return;
     }
     if (_users.isNotEmpty && _users.firstWhere((u) => u.userID == user.userID, orElse: () => null) != null) {
       return;
     }
     _streamController.add(user);
     _users.add(user);
-    print("user count: ${_users.length}");
     notifyListeners();
   }
 
