@@ -6,10 +6,10 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:dating/components/Avatar.dart';
 import 'package:dating/constants.dart';
 import 'package:dating/store/KeyPair.dart';
-import 'package:dating/services/file_encryption.dart';
-import 'package:file/local.dart';
-import 'package:file/memory.dart';
-import 'package:flutter_spinkit/flutter_spinkit.dart';
+import 'package:dating/ui/chat/AudioBubble.dart';
+import 'package:dating/ui/chat/FileBubble.dart';
+import 'package:dating/ui/chat/TextBubble.dart';
+import 'package:dating/ui/chat/helpers.dart';
 import 'package:mime/mime.dart' show lookupMimeType;
 import 'package:gecies/gecies.dart';
 import 'package:provider/provider.dart';
@@ -20,14 +20,10 @@ import 'package:dating/model/MessageData.dart';
 import 'package:dating/model/User.dart';
 import 'package:dating/services/FirebaseHelper.dart';
 import 'package:dating/services/helper.dart';
-import 'package:dating/ui/chat/PlayerWidget.dart';
-import 'package:dating/ui/fullScreenImageViewer/FullScreenImageViewer.dart';
-import 'package:dating/ui/fullScreenVideoViewer/FullScreenVideoViewer.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/widgets.dart';
-import 'package:http/http.dart' as http;
 import 'package:image_picker/image_picker.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:permission_handler/permission_handler.dart';
@@ -184,15 +180,15 @@ class _ChatScreenState extends State<ChatScreen> {
                 child: CircularProgressIndicator(),
               );
             } else {
-              if (snapshot.hasData && snapshot.data.message.isEmpty) {
+              if (snapshot.hasData && snapshot.data.messages.isEmpty) {
                 return Center(child: Text('No messages yet'));
               } else {
                 return ListView.builder(
                   reverse: true,
                   cacheExtent: ((MediaQuery.of(context).size.height * 3).toInt() | 1000).toDouble(),
-                  itemCount: snapshot.data.message.length,
+                  itemCount: snapshot.data.messages.length,
                   itemBuilder: (BuildContext context, int index) {
-                    return buildMessage(snapshot.data.message[index], snapshot.data.matchedUser);
+                    return buildMessage(snapshot.data.messages[index], snapshot.data.matchedUser);
                   },
                 );
               }
@@ -262,7 +258,7 @@ class _ChatScreenState extends State<ChatScreen> {
         onPressed: _onMicClicked,
       );
     }
-     return IconButton(
+    return IconButton(
       icon: Icon(Icons.send,
         color: Color(COLOR_PRIMARY),
       ),
@@ -392,7 +388,7 @@ class _ChatScreenState extends State<ChatScreen> {
 
   Widget buildSubTitle(AppUser friend) {
     String text = friend.active ? 'Active now' : 'Last seen on ${setLastSeen(friend.lastOnlineTimestamp?.seconds ?? 0)}';
-    return Text(text, style: TextStyle(fontSize: 15, color: Colors.grey.shade200));
+    return Text(text, style: TextStyle(fontSize: 9, color: Colors.grey.shade200));
   }
 
   _onCameraClick() {
@@ -409,7 +405,7 @@ class _ChatScreenState extends State<ChatScreen> {
             Navigator.pop(context);
             PickedFile image = await _imagePicker.getImage(source: ImageSource.gallery);
             if (image != null) {
-              var encryptionResult = await _encryptFileAtPath(image.path);
+              var encryptionResult = await encryptFileAtPath(image.path);
               String url = await _fireStoreUtils.uploadChatImageToFireStorage(encryptionResult.file, context);
               _sendMessage(encryptionResult.fileSecret.toString(), Url(url: url, mime: lookupMimeType(image.path)), '');
             }
@@ -435,7 +431,7 @@ class _ChatScreenState extends State<ChatScreen> {
             Navigator.pop(context);
             PickedFile image = await _imagePicker.getImage(source: ImageSource.camera);
             if (image != null) {
-              var encryptionResult = await _encryptFileAtPath(image.path);
+              var encryptionResult = await encryptFileAtPath(image.path);
               String url = await _fireStoreUtils.uploadChatImageToFireStorage(encryptionResult.file, context);
               await _sendMessage(encryptionResult.fileSecret.toString(), Url(url: url, mime: lookupMimeType(image.path)), '');
             }
@@ -471,10 +467,7 @@ class _ChatScreenState extends State<ChatScreen> {
     if (messageData.senderID == currentUser.userID) {
       return messageView(messageData, currentUser, byCurrentUser: true);
     } else {
-      return messageView(
-        messageData,
-        matchedUser,
-      );
+      return messageView(messageData, matchedUser);
     }
   }
 
@@ -489,7 +482,7 @@ class _ChatScreenState extends State<ChatScreen> {
           ),
           child: _messageContentWidget(messageData, byCurrentUser: byCurrentUser),
         ),
-        displayCircleImage(sender.profilePictureURL, 35, false)
+        // displayCircleImage(sender.profilePictureURL, 35, false)
       ];
       
       return Padding(
@@ -522,262 +515,13 @@ class _ChatScreenState extends State<ChatScreen> {
     }
 
     if (mediaUrl.contains('audio')) {
-      return _audioClipViewer(messageData, mediaUrl);
+      return AudioBubble(messageData: messageData, audioURL: mediaUrl);
     } else if (mediaUrl.isNotEmpty) {
-      return _fileViewer(messageData, mediaURL: mediaUrl, byCurrentUser: byCurrentUser, isVideo: isVideo);
+      return FileBubble(messageData: messageData, mediaURL: mediaUrl, isVideo: isVideo);
     } else {
-      return _textMessageViewer(messageData, byCurrentUser: byCurrentUser);
+      return TextBubble(messageData: messageData);
     }
 
-  }
-
-  Widget _audioClipViewer(MessageData messageData, String mediaURL) {
-
-    var fileName = Uri.parse(mediaURL).queryParameters["token"];
-    if (context.read<MemoryFileSystem>().file(fileName).existsSync()) {
-      return _widgetBubble(
-        byCurrentUser: messageData.senderID == currentUser.userID,
-        child: PlayerWidget(
-          bytes: context.read<MemoryFileSystem>().file(fileName).readAsBytesSync(),
-          color: isDarkMode(context) ? Colors.grey[800] : Colors.grey[200],
-        ),
-      );
-    }
-
-    return FutureBuilder<List<dynamic>>(
-      future: Future.wait([
-        Gecies.decrypt(context.read<KeyPair>().privateKeyBase64, messageData.content.content[currentUser.userID]),
-        getFile(mediaURL),
-      ]),
-      builder: (BuildContext innerContext, AsyncSnapshot<List<dynamic>> snapshot) {
-        if (snapshot.hasData) {
-          return FutureBuilder<File>(
-            future: _decryptFile((snapshot.data[0] as String), (snapshot.data[1] as File), fileName),
-            builder: (BuildContext deepContext, AsyncSnapshot<File> innerSnap) {
-              if (innerSnap.hasData) {
-                return _widgetBubble(
-                  byCurrentUser: messageData.senderID == currentUser.userID,
-                  child: PlayerWidget(
-                    bytes: context.read<MemoryFileSystem>().file(fileName).readAsBytesSync(),
-                    color: isDarkMode(context) ? Colors.grey[800] : Colors.grey[200],
-                  ),
-                );
-              } else if (innerSnap.hasError) {
-                return _textBubble("", error: true, byCurrentUser:  messageData.senderID == currentUser.userID);
-              } else {
-                return SpinKitCubeGrid(color: Color(COLOR_PRIMARY_DARK));
-              }
-            },
-          );
-        } else if (snapshot.hasError) {
-          return _textBubble("", error: true, byCurrentUser:  messageData.senderID == currentUser.userID);
-        } else {
-          return _textBubble("", loading: true, byCurrentUser:  messageData.senderID == currentUser.userID);
-        }
-      },
-    );
-
-  }
-
-  Widget _fileViewer(MessageData messageData, { @required String mediaURL, bool byCurrentUser = false, bool isVideo = false }) {
-    return ConstrainedBox(
-      constraints: BoxConstraints(
-        minWidth: 50,
-        maxWidth: 200,
-      ),
-      child: ClipRRect(
-        borderRadius: BorderRadius.circular(8),
-        child: Stack(
-          alignment: Alignment.center,
-          children: [
-            _decryptedImageFileContent(messageData, mediaURL),
-            messageData.videoThumbnail.isNotEmpty ?
-            FloatingActionButton(
-              mini: true,
-              heroTag: messageData.messageID,
-              backgroundColor: Color(COLOR_ACCENT),
-              onPressed: () {
-                push(context, FullScreenVideoViewer(heroTag: messageData.messageID, videoUrl: messageData.url.url));
-              },
-              child: Icon(
-                Icons.play_arrow,
-                color:
-                isDarkMode(context) ? Colors.black : Colors.white,
-              ),
-            )
-            :
-            Container(),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Future<File> getFile(String url) async {
-    var name = Uri.parse(url).queryParameters["token"];
-    if (await context.read<MemoryFileSystem>().file(name).exists()) {
-      return Future.value(context.read<MemoryFileSystem>().file(name));
-    }
-    var response = await http.get(url);
-    var bytes = response.bodyBytes;
-    return await context.read<MemoryFileSystem>().file(name).writeAsBytes(bytes); // Caller can do whatever it needs with these bytes without rereading the file
-  }
-
-  Widget _decryptedImageFileContent(MessageData messageData, String mediaURL) {
-
-    Widget imageRenderer (Image image) {
-      return GestureDetector(
-        onTap: () {
-          if (messageData.videoThumbnail.isEmpty) {
-            push(context, FullScreenImageViewer(image: image.image, tag: mediaURL));
-          }
-        },
-        child: Hero(
-          tag: mediaURL,
-          child: image,
-        ),
-      );
-    }
-
-    var fileName = Uri.parse(mediaURL).queryParameters["token"];
-    if (context.read<MemoryFileSystem>().file(fileName).existsSync()) {
-      var image = Image.memory(context.read<MemoryFileSystem>().file(fileName).readAsBytesSync());
-      return imageRenderer(image);
-    }
-
-    return FutureBuilder<List<dynamic>>(
-      future: Future.wait([
-        Gecies.decrypt(context.read<KeyPair>().privateKeyBase64, messageData.content.content[currentUser.userID]),
-        getFile(mediaURL),
-      ]),
-      builder: (BuildContext innerContext, AsyncSnapshot<List<dynamic>> snapshot) {
-        if (snapshot.hasData) {
-          return FutureBuilder<File>(
-            future: _decryptFile((snapshot.data[0] as String), (snapshot.data[1] as File), fileName),
-            builder: (BuildContext deepContext, AsyncSnapshot<File> innerSnap) {
-              if (innerSnap.hasData) {
-                return imageRenderer(Image.memory(innerSnap.data.readAsBytesSync()));
-              } else if (innerSnap.hasError) {
-                return _textBubble("", error: true, byCurrentUser:  messageData.senderID == currentUser.userID);
-              } else {
-                return SpinKitCubeGrid(color: Color(COLOR_PRIMARY_DARK));
-              }
-            },
-          );
-        } else if (snapshot.hasError) {
-          return _textBubble("", error: true, byCurrentUser:  messageData.senderID == currentUser.userID);
-        } else {
-          return _textBubble("", loading: true, byCurrentUser:  messageData.senderID == currentUser.userID);
-        }
-      },
-    );
-  }
-
-  Widget _textMessageViewer(MessageData messageData, { bool byCurrentUser = false }) {
-    return FutureBuilder<String>(
-      future: Gecies.decrypt(context.read<KeyPair>().privateKeyBase64, messageData.content.content[currentUser.userID]),
-      builder: (BuildContext context, AsyncSnapshot<String> snapshot) {
-        if (snapshot.hasData) {
-          return _textBubble(snapshot.data, byCurrentUser: byCurrentUser);
-        } else if (snapshot.hasError) {
-          return _textBubble(snapshot.data, error: true, byCurrentUser: byCurrentUser);
-        } else {
-          return _textBubble(snapshot.data, loading: true, byCurrentUser: byCurrentUser);
-        }
-      },
-    );
-  }
-
-  Widget _textBubble(String text, { bool loading = false, bool error = false, bool byCurrentUser = false }) {
-
-    Widget viewChild;
-    if (loading) {
-      viewChild = CircularProgressIndicator();
-    } else if (error) {
-      viewChild = Icon(Icons.error, color: Colors.red);
-    } else {
-      viewChild = Text(text,
-        textAlign: TextAlign.start,
-        textDirection: TextDirection.ltr,
-        style: TextStyle(
-          color: isDarkMode(context) ? Colors.white : Colors.black,
-          fontSize: 16,
-        ),
-      );
-    }
-
-    Color colorElement = byCurrentUser ? Color(COLOR_ACCENT) : (isDarkMode(context) ? Colors.grey[600] : Colors.grey[300]);
-
-    return Stack(
-      clipBehavior: Clip.none,
-      alignment: Alignment.bottomRight,
-      children: <Widget>[
-        Positioned(
-          right: byCurrentUser ? -8 : null,
-          left: byCurrentUser ? null : -8,
-          bottom: 0,
-          child: Image.asset(byCurrentUser ? 'assets/images/chat_arrow_right.png' : 'assets/images/chat_arrow_left.png',
-            color: colorElement,
-            height: 12,
-          ),
-        ),
-        ConstrainedBox(
-          constraints: BoxConstraints(
-            minWidth: 50,
-            maxWidth: 200,
-          ),
-          child: Container(
-            decoration: BoxDecoration(
-              color: colorElement,
-              shape: BoxShape.rectangle,
-              borderRadius: BorderRadius.all(Radius.circular(8)),
-            ),
-            child: Padding(
-              padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 12),
-              child: viewChild,
-            ),
-          ),
-        ),
-      ],
-    );
-  }
-
-  Widget _widgetBubble({ @required Widget child, bool byCurrentUser = false }) {
-
-    Color colorElement = byCurrentUser ? Color(COLOR_ACCENT) : (isDarkMode(context) ? Colors.grey[600] : Colors.grey[300]);
-
-    return Stack(
-      clipBehavior: Clip.none,
-      alignment: Alignment.bottomRight,
-      children: <Widget>[
-        Positioned(
-          right: byCurrentUser ? -8 : null,
-          left: byCurrentUser ? null : -8,
-          bottom: 0,
-          child: Image.asset(byCurrentUser ? 'assets/images/chat_arrow_right.png' : 'assets/images/chat_arrow_left.png',
-            color: colorElement,
-            height: 12,
-          ),
-        ),
-        ConstrainedBox(
-          constraints: BoxConstraints(
-            minWidth: 50,
-            maxWidth: 200,
-          ),
-          child: Container(
-            decoration: BoxDecoration(
-              color: colorElement,
-              shape: BoxShape.rectangle,
-              borderRadius: BorderRadius.all(Radius.circular(8)),
-            ),
-            child: Padding(
-              padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 12),
-              child: child,
-            ),
-          ),
-        ),
-      ],
-    );
   }
 
   Future<bool> _checkChannelNullability(ConversationModel conversationModel, MessageData messageData) async {
@@ -808,17 +552,6 @@ class _ChatScreenState extends State<ChatScreen> {
       }
       return isSuccessful;
     }
-  }
-
-  Future<EncryptionResult> _encryptFileAtPath(String path) async {
-    // showProgress(context, 'Securing image...', false);
-    var result = await encryptFile(LocalFileSystem(), File(path));
-    // Navigator.of(context).pop();
-    return result;
-  }
-
-  Future<File> _decryptFile(String secret, File file, String fileName) async {
-    return await decryptFile(context.read<MemoryFileSystem>(), FileSecret.fromString(secret), file, fileName);
   }
 
   _sendMessage(String content, Url url, String videoThumbnail) async {
@@ -981,7 +714,7 @@ class _ChatScreenState extends State<ChatScreen> {
       currentRecordingState = RecordingState.HIDDEN;
     });
 
-    var encryptionResult = await _encryptFileAtPath(_recording.path);
+    var encryptionResult = await encryptFileAtPath(_recording.path);
     Url url = await _fireStoreUtils.uploadAudioFile(encryptionResult.file, context);
 
     await _sendMessage(encryptionResult.fileSecret.toString(), url, '');

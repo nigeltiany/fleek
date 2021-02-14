@@ -292,13 +292,15 @@ class FireStoreUtils {
   }
 
   Stream<ChatModel> getChatMessages(HomeConversationModel homeConversationModel) async* {
+
+    // ignore: close_sinks
     StreamController<ChatModel> chatModelStreamController = StreamController();
     ChatModel chatModel = ChatModel();
     List<MessageData> listOfMessages = [];
 
     AppUser matchedUser = homeConversationModel.matchedUser;
     getUserByID(matchedUser.userID).listen((user) {
-      chatModel.message = listOfMessages;
+      chatModel.messages = listOfMessages;
       chatModel.matchedUser = user;
       chatModel.recipientEncrypter = (String message) async {
         return await Gecies.encrypt(user.publicKey, message);
@@ -306,24 +308,42 @@ class FireStoreUtils {
       chatModelStreamController.sink.add(chatModel);
     });
 
-    if (homeConversationModel.conversationModel != null) {
-      firestore
-          .collection(CHANNELS)
-          .doc(homeConversationModel.conversationModel.id)
-          .collection(THREAD)
-          .orderBy('createdAt', descending: true)
-          .snapshots()
-          .listen((onData) {
-        listOfMessages.clear();
-        onData.docs.forEach((document) {
-          listOfMessages.add(MessageData.fromJson(document.data()));
-        });
-        chatModel.message = listOfMessages;
-        chatModel.matchedUser = matchedUser;
-        chatModelStreamController.sink.add(chatModel);
-      });
+    if (homeConversationModel.conversationModel == null) {
+      print("home conversation model cannot be null");
+      return;
     }
+
+    var snapshot = await firestore
+      .collection(CHANNELS)
+      .doc(homeConversationModel.conversationModel.id)
+      .collection(THREAD)
+      .limit(50)
+      .orderBy('createdAt', descending: true).get();
+
+    snapshot.docs.forEach((doc) {
+      listOfMessages.add(MessageData.fromJson(doc.data()));
+    });
+    chatModel.messages = listOfMessages;
+    chatModel.matchedUser = matchedUser;
+    chatModelStreamController.sink.add(chatModel);
+
+    firestore
+      .collection(CHANNELS)
+        .doc(homeConversationModel.conversationModel.id)
+          .collection(THREAD)
+            .orderBy('createdAt', descending: true)
+              .snapshots()
+                .listen((onData) {
+      onData.docChanges.forEach((document) {
+        listOfMessages.add(MessageData.fromJson(document.doc.data()));
+      });
+      chatModel.messages = listOfMessages;
+      chatModel.matchedUser = matchedUser;
+      chatModelStreamController.sink.add(chatModel);
+    });
+
     yield* chatModelStreamController.stream;
+
   }
 
   Future<void> sendMessage(AppUser currentUser, AppUser matchedUser, MessageData message, ConversationModel conversationModel, { String notificationText }) async {
