@@ -235,7 +235,7 @@ class _SwipeScreenState extends State<SwipeScreen> {
             Navigator.of(context).pop(); // Close Dialog
             if (isSuccessful) {
               await _fireStoreUtils.onSwipeLeft(currentUser: currentUser, dislikedUser: user);
-              fleekData.removeUser(user);
+              fleekData.removeUser(user, currentUser.settings.searchInterest);
               Scaffold.of(context).showSnackBar(SnackBar(content: Text
                 ('${user.userName} has been blocked.'),),);
             } else {
@@ -254,7 +254,7 @@ class _SwipeScreenState extends State<SwipeScreen> {
             Navigator.of(context).pop(); // Close Dialog
             if (isSuccessful) {
               await _fireStoreUtils.onSwipeLeft(currentUser: currentUser, dislikedUser: user);
-              fleekData.removeUser(user);
+              fleekData.removeUser(user, currentUser.settings.searchInterest);
               Scaffold.of(context).showSnackBar(SnackBar(content: Text
                 ('${user.userName} has been reported and blocked.'),),);
             } else {
@@ -319,17 +319,17 @@ class _SwipeScreenState extends State<SwipeScreen> {
                       if (orientation == CardSwipeOrientation.RIGHT) {
                         AppUser result = await _fireStoreUtils.onSwipeRight(currentUser: currentUser, likedUser: fleekData.users[index]);
                         if (result != null) {
-                          fleekData.removeUser(fleekData.users.elementAt(index));
+                          fleekData.removeUser(fleekData.users.elementAt(index), currentUser.settings.searchInterest);
                           push(context, MatchScreen(matchedUser: result));
                         } else {
-                          fleekData.removeUser(fleekData.users.elementAt(index));
+                          fleekData.removeUser(fleekData.users.elementAt(index), currentUser.settings.searchInterest);
                         }
                       } else if (orientation == CardSwipeOrientation.LEFT) {
                         fleekData.previousLeftSwipedUser = fleekData.users.elementAt(index);
                         await _fireStoreUtils.onSwipeLeft(currentUser: currentUser, dislikedUser: fleekData.users.elementAt(index));
-                        fleekData.removeUser(fleekData.users.elementAt(index));
+                        fleekData.removeUser(fleekData.users.elementAt(index), currentUser.settings.searchInterest);
                       }
-                      if (fleekData.users.length < 3 && fleekData.recentlyFetchedCount >= FleekData.MAX_FETCH_COUNT) {
+                      if (fleekData.users.length < 5 && fleekData.recentlyFetchedCount >= FleekData.MAX_FETCH_COUNT) {
                         fleekData.loadData(currentUser);
                       }
                     // }

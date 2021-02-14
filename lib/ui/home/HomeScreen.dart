@@ -219,6 +219,7 @@ class _HomeState extends State<HomeScreen> with TickerProviderStateMixin {
         );
       },
     );
+    context.read<FleekData>().removeAllUsers();
     context.read<FleekData>().loadData(user);
   }
 

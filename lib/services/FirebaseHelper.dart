@@ -465,14 +465,14 @@ class FireStoreUtils {
           return;
         }
 
-        value.docs.forEach((DocumentSnapshot fleekUser) async {
+        for (var fleekUser in value.docs) {
 
           if (fleekUser.id != FirebaseAuth.instance.currentUser.uid) {
             AppUser user = AppUser.fromJson(fleekUser.data());
             // int distance = getDistance(user.location, currentUser.location).ceil();
-            if (!viewedUsers.contains(user.userID)) {
+            if (!viewedUsers.contains(user.userID) && !data.seenRecently(user, currentUser.settings.searchInterest)) {
               // user.milesAway = '${distance < 3 ? '~2' : distance} Miles Away';
-              data.addUser(user);
+              data.addUser(user, currentUser.settings.searchInterest);
               resultSize += 1;
             } else {
               skippedUserCount += 1;
@@ -484,9 +484,10 @@ class FireStoreUtils {
           if (resultSize >= FleekData.MAX_FETCH_COUNT || resultSize + skippedUserCount == value.docs.length) {
             dataStream.cancel();
             data.fetchingData = false;
+            break;
           }
 
-        });
+        }
 
       });
 

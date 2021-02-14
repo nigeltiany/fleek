@@ -7,9 +7,11 @@ import 'package:flutter/foundation.dart';
 
 class FleekData with ChangeNotifier {
 
-  static int MAX_FETCH_COUNT = 10;
+  static int MAX_FETCH_COUNT = 25;
 
   StreamController<AppUser> _streamController;
+
+  Map<SearchInterest, Set<String>> _recentlyRemovedUserIDs;
 
   Stream<AppUser> _stream;
   Stream<AppUser> get stream => _stream;
@@ -23,6 +25,7 @@ class FleekData with ChangeNotifier {
   }
   
   FleekData () {
+    _recentlyRemovedUserIDs = Map<SearchInterest, Set<String>>();
     _streamController = StreamController<AppUser>();
     _stream = _streamController.stream.asBroadcastStream();
   }
@@ -58,8 +61,28 @@ class FleekData with ChangeNotifier {
     FireStoreUtils.getFleekUsers(currentUser, this);
   }
 
-  void addUser(AppUser user) {
-    if (_users.where((u) => u.userID == user.userID).isNotEmpty) {
+  void _populateRecentlyViewed(SearchInterest searchInterest, String userID) {
+    if (!_recentlyRemovedUserIDs.containsKey(searchInterest)) {
+      _recentlyRemovedUserIDs[searchInterest] = Set<String>();
+    }
+    _recentlyRemovedUserIDs[searchInterest].add(userID);
+  }
+
+  bool seenRecently (AppUser user, SearchInterest searchInterest) {
+    if (!_recentlyRemovedUserIDs.containsKey(searchInterest)) {
+      return false;
+    }
+    return _recentlyRemovedUserIDs[searchInterest].contains(user.userID);
+  }
+
+  void addUser(AppUser user, SearchInterest searchInterest) {
+    print("trying: ${user.userID}");
+    if (_recentlyRemovedUserIDs[searchInterest] != null) {
+      if (_recentlyRemovedUserIDs[searchInterest].contains(user.userID)) {
+        return;
+      }
+    }
+    if (_users.isNotEmpty && _users.firstWhere((u) => u.userID == user.userID, orElse: () => null) != null) {
       return;
     }
     _streamController.add(user);
@@ -68,10 +91,16 @@ class FleekData with ChangeNotifier {
     notifyListeners();
   }
 
-  void removeUser(AppUser user) {
+  void removeAllUsers() {
+    _users.removeRange(0, _users.length);
+    notifyListeners();
+  }
+
+  void removeUser(AppUser user, SearchInterest searchInterest) {
     if (user == null || user.userID == null || user.userID.isEmpty) {
       return;
     }
+    _populateRecentlyViewed(searchInterest, user.userID);
     _users.removeWhere((a) => a.userID == user.userID);
     notifyListeners();
   }
