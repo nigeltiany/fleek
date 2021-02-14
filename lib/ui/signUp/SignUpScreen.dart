@@ -43,6 +43,13 @@ class _SignUpState extends State<SignUpScreen> {
         iconTheme: IconThemeData(
           color: isDarkMode(context) ? Colors.white : Colors.black
         ),
+        centerTitle: true,
+        title: Image.asset('assets/images/app_logo.png',
+          width: 42.0,
+          height: 42.0,
+          fit: BoxFit.cover,
+          color: isDarkMode(context) ? Colors.white : Colors.black,
+        ),
       ),
       body: SingleChildScrollView(
         child: Container(
@@ -102,7 +109,7 @@ class _SignUpState extends State<SignUpScreen> {
             child: PrimaryButton(
               label: "SIGN UP",
               onTap: _signUp,
-            )
+            ),
           ),
         ),
       ],
@@ -139,7 +146,7 @@ class _SignUpState extends State<SignUpScreen> {
     }
 
     bool emailValid = emailRegex.hasMatch(_emailController.value.text);
-    bool personalEmail = !_emailController.value.text.endsWith(".edu");
+    bool personalEmail = !_emailController.value.text.endsWith(".edu") && !_emailController.value.text.endsWith(".org");
     if (!emailValid) {
       emailError = "Invalid Email Address";
     } else if (!personalEmail) {

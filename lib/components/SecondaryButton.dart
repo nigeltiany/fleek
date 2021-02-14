@@ -1,4 +1,5 @@
 import 'package:dating/constants.dart';
+import 'package:dating/services/helper.dart';
 import 'package:flutter/material.dart';
 
 class SecondaryButton extends StatelessWidget {
@@ -26,7 +27,9 @@ class SecondaryButton extends StatelessWidget {
       padding: EdgeInsets.only(top: 12, bottom: 12),
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(25.0),
-        side: BorderSide(color: Colors.black54),
+        side: BorderSide(
+          color: isDarkMode(context) ? Colors.white : Colors.black54,
+        ),
       ),
     );
   }

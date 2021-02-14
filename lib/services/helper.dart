@@ -120,7 +120,11 @@ showAlertDialog(BuildContext context, String title, String content) {
     },
   );
   AlertDialog alert = AlertDialog(
-    title: Text(title),
+    title: Text(title,
+      style: TextStyle(
+        color: Color(COLOR_PRIMARY_DARK),
+      ),
+    ),
     content: Text(content),
     actions: [
       okButton,

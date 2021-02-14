@@ -3,6 +3,7 @@ import 'package:dating/components/FormInput.dart';
 import 'package:dating/components/PrimaryButton.dart';
 import 'package:dating/store/KeyPair.dart';
 import 'package:dating/services/helper.dart';
+import 'package:dating/ui/login/SendResetEmailScreen.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
@@ -31,8 +32,16 @@ class _LoginScreen extends State<LoginScreen> {
         brightness: isDarkMode(context) ? Brightness.dark : Brightness.light,
         backgroundColor: Colors.transparent,
         iconTheme: IconThemeData(
-            color: isDarkMode(context) ? Colors.white : Colors.black),
+          color: isDarkMode(context) ? Colors.white : Colors.black,
+        ),
         elevation: 0.0,
+        centerTitle: true,
+        title: Image.asset('assets/images/app_logo.png',
+          width: 42.0,
+          height: 42.0,
+          fit: BoxFit.cover,
+          color: isDarkMode(context) ? Colors.white : Colors.black,
+        ),
       ),
       body: SingleChildScrollView(
         child: Column(
@@ -75,23 +84,22 @@ class _LoginScreen extends State<LoginScreen> {
                   onTap: () {
                     _login(_emailController.text, _passwordController.text);
                   },
-                )
+                ),
               ),
             ),
-            // Padding(
-            //   padding: const EdgeInsets.all(32.0),
-            //   child: Center(
-            //     child: Text(
-            //       'OR',
-            //       style: TextStyle(
-            //           color: isDarkMode(context) ? Colors.white : Colors.black),
-            //     ),
-            //   ),
-            // ),
-            // Padding(
-            //   padding: const EdgeInsets.only(right: 40.0, left: 40.0, bottom: 20),
-            //   child: FacebookLoginButton(),
-            // ),
+            SizedBox(height: 32,),
+            ConstrainedBox(
+              constraints: BoxConstraints(minWidth: double.infinity),
+              child: Padding(
+                padding: const EdgeInsets.only(right: 24.0, left: 24.0),
+                child: FlatButton(
+                  child: Text("Reset password"),
+                  onPressed: () {
+                    push(context, SendResetEmailScreen());
+                  },
+                ),
+              ),
+            ),
           ],
         ),
       ),
@@ -103,9 +111,9 @@ class _LoginScreen extends State<LoginScreen> {
     if (email.isEmpty) {
       showAlertDialog(context, 'E-mail address', 'E-mail address is required to login');
       return FormatException("email required");
-    // } else if (!RegExp(r"^[a-zA-Z0-9.a-zA-Z0-9.!#$%&'*+-/=?^_`{|}~]+@[a-zA-Z0-9]+\.[a-zA-Z]+").hasMatch(email)) {
-    //   showAlertDialog(context, 'E-mail address', 'E-mail address is not valid');
-    //   return FormatException("invalid email");
+    } else if (!RegExp(r"^[a-zA-Z0-9.a-zA-Z0-9.!#$%&'*+-/=?^_`{|}~]+@[a-zA-Z0-9]+\.[a-zA-Z]+").hasMatch(email)) {
+      showAlertDialog(context, 'E-mail address', 'E-mail address is not valid');
+      return FormatException("invalid email");
     } else if (password.isEmpty) {
       showAlertDialog(context, 'Password', 'Password is required to login');
       return FormatException("password required");
@@ -140,7 +148,6 @@ class _LoginScreen extends State<LoginScreen> {
       Navigator.of(context).pop(); // Close Dialog
 
       if (exception is FirebaseAuthException) {
-        print(exception.code);
         switch (exception.code) {
           case 'invalid-email':
             showAlertDialog(context, 'Couldn\'t Authenticate', 'Email address is malformed.');
