@@ -6,8 +6,6 @@ class Settings with ChangeNotifier {
 
   bool _pushNewMessages = true;
   bool _pushNewMatchesEnabled = true;
-  bool _pushSuperLikesEnabled = true;
-  bool _pushTopPicksEnabled = true;
   GenderPreference _genderPreference;
   Gender _gender;
   SearchInterest _searchInterest;
@@ -20,8 +18,6 @@ class Settings with ChangeNotifier {
     return Settings()
       ..pushNewMessages = parsedJson['pushNewMessages'] ?? true
       ..pushNewMatchesEnabled = parsedJson['pushNewMatchesEnabled'] ?? true
-      ..pushSuperLikesEnabled = parsedJson['pushSuperLikesEnabled'] ?? true
-      ..pushTopPicksEnabled = parsedJson['pushTopPicksEnabled'] ?? true
       ..genderPreference = genderPreferenceFromFirebaseString(parsedJson['genderPreference']) ?? GenderPreference.FEMALE
       ..searchInterest = searchInterestFromFirebaseString(parsedJson['searchInterest']) ?? SearchInterest.DATES
       ..gender = genderFromFirebaseString(parsedJson['gender']) ?? Gender.MALE
@@ -33,8 +29,6 @@ class Settings with ChangeNotifier {
     return {
       'pushNewMessages': this.pushNewMessages,
       'pushNewMatchesEnabled': this.pushNewMatchesEnabled,
-      'pushSuperLikesEnabled': this.pushSuperLikesEnabled,
-      'pushTopPicksEnabled': this.pushTopPicksEnabled,
       'genderPreference': this.genderPreference.toFirebaseString(),
       'searchInterest': this.searchInterest.toFirebaseString(),
       'gender': this.gender.toFirebaseString(),
@@ -54,20 +48,6 @@ class Settings with ChangeNotifier {
 
   set pushNewMatchesEnabled(bool value) {
     _pushNewMatchesEnabled = value;
-    notifyListeners();
-  }
-
-  get pushSuperLikesEnabled => _pushSuperLikesEnabled;
-
-  set pushSuperLikesEnabled(bool value) {
-    _pushSuperLikesEnabled = value;
-    notifyListeners();
-  }
-
-  bool get pushTopPicksEnabled => _pushTopPicksEnabled;
-
-  set pushTopPicksEnabled(bool value) {
-    _pushTopPicksEnabled = value;
     notifyListeners();
   }
 

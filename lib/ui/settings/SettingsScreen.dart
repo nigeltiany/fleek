@@ -84,16 +84,6 @@ class _SettingsScreenState extends State<SettingsScreen> {
                   },
                 ),
                 SettingsTile.switchTile(
-                  title: 'Super Likes',
-                  // leading: Icon(Icons.fingerprint),
-                  switchValue: user.settings.pushSuperLikesEnabled,
-                  onToggle: (bool value) async {
-                    user.settings.pushSuperLikesEnabled = value;
-                    await FireStoreUtils.updateCurrentUser(user);
-                    setState(() {});
-                  },
-                ),
-                SettingsTile.switchTile(
                   title: 'New Messages',
                   // leading: Icon(Icons.fingerprint),
                   switchValue: user.settings.pushNewMessages,

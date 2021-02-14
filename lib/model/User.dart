@@ -64,7 +64,7 @@ class AppUser with ChangeNotifier {
       ..active = parsedJson['active'] ?? false
       ..lastOnlineTimestamp = parsedJson['lastOnlineTimestamp']
       ..settings = Settings.fromJson(parsedJson['settings'] ?? Settings().toJson())
-      ..userID = parsedJson['id'] ?? parsedJson['userID'] ?? ''
+      ..userID = parsedJson['id'] ?? ''
       ..profilePictureURL = parsedJson['profilePictureURL'] ?? ''
       ..isVip = parsedJson['isVip' ?? false]
       ..developerAccount = parsedJson['developerAccount' ?? kDebugMode]
@@ -93,7 +93,7 @@ class AppUser with ChangeNotifier {
       'isVip': this.isVip,
       'developerAccount': this.developerAccount,
 
-      // Do NOT write the public key
+      // Do NOT write the public key. NEVER WRITE THE PUBLIC KEY
       //'publicKey': this.publicKey,
 
       //fleek related fields

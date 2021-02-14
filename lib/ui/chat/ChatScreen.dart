@@ -94,22 +94,10 @@ class _ChatScreenState extends State<ChatScreen> {
 
   Iterable<Widget> get _actions {
     return <Widget>[
-      PopupMenuButton(
-        itemBuilder: (BuildContext context) {
-          return [
-            PopupMenuItem(
-              child: ListTile(
-                dense: true,
-                onTap: () {
-                  Navigator.pop(context);
-                  _onPrivateChatSettingsClick();
-                },
-                contentPadding: const EdgeInsets.all(0),
-                leading: Icon(Icons.settings, color: isDarkMode(context) ? Colors.grey.shade200 : Colors.black),
-                title: Text('Settings', style: TextStyle(fontSize: 18)),
-              ),
-            ),
-          ];
+      IconButton(
+        icon: Icon(Icons.more_vert),
+        onPressed: () {
+          _onPrivateChatSettingsClick();
         },
       ),
     ];
