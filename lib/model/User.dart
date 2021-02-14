@@ -97,7 +97,6 @@ class AppUser with ChangeNotifier {
       //'publicKey': this.publicKey,
 
       //fleek related fields
-      'showMe': this.settings != null ? this.settings.showMe : false,
       'location': this.location != null ? this.location.toJson() : UserLocation().toJson(),
       'signUpLocation': this.signUpLocation != null ? this.signUpLocation.toJson() : UserLocation().toJson(),
       'bio': this.bio,

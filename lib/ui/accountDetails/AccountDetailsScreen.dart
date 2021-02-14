@@ -134,6 +134,7 @@ class _AccountDetailsScreenState extends State<AccountDetailsScreen> {
               title: "Logout",
               onPressed: (_) async {
                 user.active = false;
+                user.settings.showMe = false;
                 user.lastOnlineTimestamp = Timestamp.now();
                 await FireStoreUtils.updateCurrentUser(user);
                 await FirebaseAuth.instance.signOut();

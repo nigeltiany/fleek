@@ -1,5 +1,6 @@
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:dating/CustomFlutterTinderCard.dart';
+import 'package:dating/components/SecondaryButton.dart';
 import 'package:dating/constants.dart';
 import 'package:dating/model/User.dart';
 import 'package:dating/services/FirebaseHelper.dart';
@@ -46,6 +47,35 @@ class _SwipeScreenState extends State<SwipeScreen> {
 
   @override
   Widget build(BuildContext context) {
+    if (!currentUser.settings.showMe) {
+      return Column(
+        mainAxisSize: MainAxisSize.max,
+        mainAxisAlignment: MainAxisAlignment.center,
+        crossAxisAlignment: CrossAxisAlignment.center,
+        children: [
+          Icon(Icons.public_off, size: 72,),
+          Padding(
+            padding: const EdgeInsets.symmetric(vertical: 24, horizontal: 40),
+            child: Text("Your profile is hidden. Turn on visibility to see other users"),
+          ),
+          SizedBox(height: 32,),
+          Padding(
+            padding: const EdgeInsets.only(right: 40.0, left: 40.0),
+            child: ConstrainedBox(
+              constraints: const BoxConstraints(minWidth: double.infinity),
+              child: SecondaryButton(
+                label: "Turn on",
+                onTap: () async {
+                  currentUser.settings.showMe = true;
+                  await FireStoreUtils.updateCurrentUser(currentUser);
+                  setState(() {});
+                },
+              ),
+            ),
+          ),
+        ],
+      );
+    }
     return Consumer<FleekData>(
       builder: (BuildContext context, FleekData data, _) {
         if (data.fetchingData && data.users.isEmpty) {
