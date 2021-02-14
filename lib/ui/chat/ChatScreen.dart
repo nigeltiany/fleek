@@ -126,13 +126,15 @@ class _ChatScreenState extends State<ChatScreen> {
       children: <Widget>[
         Avatar(homeConversationModel),
         SizedBox(width: 12),
-        Text(homeConversationModel.matchedUser.userName,
-          overflow: TextOverflow.clip,
-          maxLines: 1,
-          softWrap: false,
-          style: TextStyle(
-            color: isDarkMode(context) ? Colors.grey.shade200 : Colors.white,
-            fontWeight: FontWeight.bold,
+        Flexible(
+          child: Text(homeConversationModel.matchedUser.userName,
+            overflow: TextOverflow.fade,
+            maxLines: 1,
+            softWrap: false,
+            style: TextStyle(
+              color: isDarkMode(context) ? Colors.grey.shade200 : Colors.white,
+              fontWeight: FontWeight.bold,
+            ),
           ),
         ),
       ],
