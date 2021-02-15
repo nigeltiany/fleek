@@ -45,19 +45,22 @@ class ChatData with ChangeNotifier {
       return;
     }
     _conversations[conversationID][messageData.messageID] = messageData;
-    _activeConversationMessages.add(messageData);
+    _activeConversationMessages.insert(0, messageData);
     notifyListeners();
   }
 
   _getChatMessages(AppUser matchedUser) async {
-    _currentChatStream = FirebaseFirestore.instance
-        .collection(CHANNELS)
-        .doc(normalizedConversationID(FirebaseAuth.instance.currentUser.uid, matchedUser.userID))
-        .collection(THREAD)
-        .orderBy('createdAt', descending: true)
-        .limit(10)
-        .snapshots()
-        .listen((onData) {
+    var query = FirebaseFirestore.instance
+      .collection(CHANNELS)
+      .doc(normalizedConversationID(FirebaseAuth.instance.currentUser.uid, matchedUser.userID))
+      .collection(THREAD);
+
+    var data = await query.orderBy('createdAt', descending: false).limit(7).get();
+    data.docs.forEach((document) {
+      _addMessage(MessageData.fromJson(document.data()));
+    });
+
+    _currentChatStream = query.orderBy('createdAt', descending: true).limit(1).snapshots().listen((onData) {
       onData.docs.forEach((document) {
         _addMessage(MessageData.fromJson(document.data()));
       });

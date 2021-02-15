@@ -151,7 +151,7 @@ class _ChatScreenState extends State<ChatScreen> {
               return Center(child: Text('No messages yet'));
             }
             return ListView.builder(
-              padding: const EdgeInsets.only(bottom: 50),
+              padding: const EdgeInsets.only(top: 50, bottom: 50),
               reverse: true,
               cacheExtent: ((MediaQuery.of(context).size.height * 3).toInt() | 1000).toDouble(),
               itemCount: chatData.messages.length,
@@ -270,7 +270,7 @@ class _ChatScreenState extends State<ChatScreen> {
             Align(
               alignment: Alignment.bottomCenter,
               child: Padding(
-                padding: EdgeInsets.only(bottom: 16.0),
+                padding: EdgeInsets.only(bottom: 16.0, left: 24, right: 24),
                 child: Stack(
                   children: <Widget>[
                     Row(
@@ -329,10 +329,11 @@ class _ChatScreenState extends State<ChatScreen> {
                         currentRecordingState == RecordingState.VISIBLE,
                         child: RaisedButton(
                           color: Colors.red,
-                          child: Text(
-                            'Record',
+                          child: Text('Record',
                             style: TextStyle(
-                                fontSize: 20, fontWeight: FontWeight.bold),
+                              fontSize: 20,
+                              fontWeight: FontWeight.bold,
+                            ),
                           ),
                           textColor: Colors.white,
                           onPressed: () => _onStartRecording(innerContext),
@@ -479,11 +480,11 @@ class _ChatScreenState extends State<ChatScreen> {
     }
 
     if (mediaUrl.contains('audio')) {
-      return AudioBubble(messageData: messageData, audioURL: mediaUrl);
+      return AudioBubble(key: Key(messageData.messageID), messageData: messageData, audioURL: mediaUrl);
     } else if (mediaUrl.isNotEmpty) {
-      return FileBubble(messageData: messageData, mediaURL: mediaUrl, isVideo: isVideo);
+      return FileBubble(key: Key(messageData.messageID), messageData: messageData, mediaURL: mediaUrl, isVideo: isVideo);
     } else {
-      return TextBubble(messageData: messageData);
+      return TextBubble(key: Key(messageData.messageID), messageData: messageData);
     }
 
   }
