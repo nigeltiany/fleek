@@ -123,7 +123,7 @@ class _ChatScreenState extends State<ChatScreen> {
       ),
       body: Builder(builder: (BuildContext innerContext) {
         return Padding(
-          padding: const EdgeInsets.only(left: 8.0, right: 8, bottom: 8),
+          padding: const EdgeInsets.only(bottom: 8),
           child: Column(
             children: <Widget>[
               _messagesArea(context),
@@ -151,11 +151,15 @@ class _ChatScreenState extends State<ChatScreen> {
               return Center(child: Text('No messages yet'));
             }
             return ListView.builder(
+              padding: const EdgeInsets.only(bottom: 50),
               reverse: true,
               cacheExtent: ((MediaQuery.of(context).size.height * 3).toInt() | 1000).toDouble(),
               itemCount: chatData.messages.length,
               itemBuilder: (BuildContext context, int index) {
-                return buildMessage(chatData.messages[index], chatWithUser);
+                return Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 12),
+                  child: buildMessage(chatData.messages[index], chatWithUser),
+                );
               },
             );
           },
@@ -183,7 +187,7 @@ class _ChatScreenState extends State<ChatScreen> {
                 padding: EdgeInsets.all(2),
                 decoration: ShapeDecoration(
                   shape: OutlineInputBorder(
-                    borderRadius: BorderRadius.all(Radius.circular(360)),
+                    borderRadius: BorderRadius.all(Radius.circular(24)),
                     borderSide: BorderSide(style: BorderStyle.none),
                   ),
                   color: isDarkMode(context) ? Colors.grey[700] : Colors.grey.shade200,
