@@ -1,9 +1,11 @@
 import 'dart:io';
 
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:dating/components/Avatar.dart';
 import 'package:dating/constants.dart';
 import 'package:dating/model/ConversationModel.dart';
-import 'package:dating/model/HomeConversationModel.dart';
+import 'package:dating/model/Match.dart';
+import 'package:dating/store/ConversationData.dart';
 import 'package:dating/store/KeyPair.dart';
 import 'package:dating/model/MessageData.dart';
 import 'package:dating/model/User.dart';
@@ -16,36 +18,32 @@ import 'package:flutter/material.dart';
 import 'package:flutter/widgets.dart';
 import 'package:gecies/gecies.dart';
 import 'package:provider/provider.dart';
+import 'package:shimmer/shimmer.dart';
 
 class ConversationsScreen extends StatefulWidget {
-  final AppUser user;
 
-  const ConversationsScreen({Key key, @required this.user}) : super(key: key);
+  const ConversationsScreen({Key key}) : super(key: key);
 
   @override
   State createState() {
-    return _ConversationsState(user);
+    return _ConversationsState();
   }
+
 }
 
 class _ConversationsState extends State<ConversationsScreen> {
-  final AppUser user;
-  final fireStoreUtils = FireStoreUtils();
-  Future<List<AppUser>> _matchesFuture;
-  Stream<List<HomeConversationModel>> _conversationsStream;
 
-  _ConversationsState(this.user);
+  AppUser currentUser;
+  ConversationData conversationState;
+  final fireStoreUtils = FireStoreUtils();
+
+  _ConversationsState();
 
   @override
   void initState() {
     super.initState();
-    fireStoreUtils.getBlocks().listen((shouldRefresh) {
-      if (shouldRefresh) {
-        setState(() {});
-      }
-    });
-    _matchesFuture = fireStoreUtils.getMatchedUserObject(user.userID);
-    _conversationsStream = fireStoreUtils.getConversations(user.userID);
+    currentUser = context.read<AppUser>();
+    conversationState = context.read<ConversationData>();
   }
 
   @override
@@ -63,9 +61,8 @@ class _ConversationsState extends State<ConversationsScreen> {
   Widget get _matchesList {
     return SizedBox(
       height: 100,
-      child: FutureBuilder<List<AppUser>>(
-        future: _matchesFuture,
-        initialData: [],
+      child: StreamBuilder<QuerySnapshot>(
+        stream: FirebaseFirestore.instance.collection(MATCHES).doc(currentUser.userID).collection('matches').snapshots(),
         builder: (context, snap) {
           if (snap.connectionState == ConnectionState.waiting) {
             return Container(
@@ -75,71 +72,57 @@ class _ConversationsState extends State<ConversationsScreen> {
                 ),
               ),
             );
-          } else if (!snap.hasData || snap.data.isEmpty) {
+          } else if (!snap.hasData || snap.data.docs.isEmpty) {
             return Center(
-              child: Text(
-                'No Matches found.',
-                style: TextStyle(fontSize: 18),
-              ),
+              child: Text('No Matches found.', style: TextStyle(fontSize: 18),),
             );
           } else {
             return ListView.builder(
               scrollDirection: Axis.horizontal,
-              itemCount: snap.hasData ? snap.data.length : 0,
+              itemCount: snap.hasData ? snap.data.size : 0,
               // ignore: missing_return
               itemBuilder: (BuildContext context, int index) {
-                if (snap.hasData) {
-                  AppUser friend = snap.data[index];
-                  return fireStoreUtils.validateIfUserBlocked(friend.userID)
-                      ? Container(
-                    width: 0,
-                    height: 0,
-                  )
-                  :
-                  Padding(
-                    padding: const EdgeInsets.only(top: 8.0, left: 4, right: 4),
-                    child: InkWell(
-                      onLongPress: () => _onMatchLongPress(friend),
-                      onTap: () async {
-                        String channelID;
-                        if (friend.userID.compareTo(user.userID) < 0) {
-                          channelID = friend.userID + ':' + user.userID;
-                        } else {
-                          channelID = user.userID + ':' + friend.userID;
-                        }
-                        ConversationModel conversationModel = await fireStoreUtils.getChannelByIdOrNull(channelID);
-                        push(context,
-                          ChatScreen(
-                            homeConversationModel: HomeConversationModel(
-                              isGroupChat: false,
-                              matchedUser: friend,
-                              conversationModel: conversationModel,
-                            ),
-                          ),
-                        );
-                      },
-                      child: Column(
-                        children: <Widget>[
-                          displayCircleImage(friend.profilePictureURL, 50, false),
-                          Expanded(
-                            child: Container(
-                              width: 75,
-                              child: Padding(
-                                padding: const EdgeInsets.only(
-                                    top: 8.0, left: 8, right: 8),
-                                child: Text(
-                                  '${friend.userName}',
-                                  textAlign: TextAlign.center,
-                                  maxLines: 1,
+                FleekMatch match = FleekMatch.fromJson(snap.data.docs[index].data());
+                return FutureBuilder<AppUser>(
+                  future: FireStoreUtils.getUserByID(match.matchUserID),
+                  builder: (BuildContext context, AsyncSnapshot userSnapshot) {
+                    if (userSnapshot.connectionState == ConnectionState.waiting) {
+                      return Container(
+                        child: CircularProgressIndicator(),
+                      );
+                    } else if (userSnapshot.hasData && userSnapshot.data != null && userSnapshot.data is AppUser) {
+                      conversationState.addConversationUser(userSnapshot.data);
+                      return Padding(
+                        padding: const EdgeInsets.only(top: 8.0, left: 4, right: 4),
+                        child: InkWell(
+                          onLongPress: () => _onMatchLongPress(userSnapshot.data),
+                          onTap: () async {
+                            push(context, ChatScreen(chatWithUser: userSnapshot.data));
+                          },
+                          child: Column(
+                            children: <Widget>[
+                              displayCircleImage(userSnapshot.data.profilePictureURL, 50, false),
+                              Expanded(
+                                child: Container(
+                                  width: 75,
+                                  child: Padding(
+                                    padding: const EdgeInsets.only(top: 8.0, left: 8, right: 8),
+                                    child: Text('${userSnapshot.data.userName}',
+                                      textAlign: TextAlign.center,
+                                      maxLines: 1,
+                                    ),
+                                  ),
                                 ),
                               ),
-                            ),
+                            ],
                           ),
-                        ],
-                      ),
-                    ),
-                  );
-                }
+                        ),
+                      );
+                    } else {
+                      return Container();
+                    }
+                  },
+                );
               },
             );
           }
@@ -149,58 +132,36 @@ class _ConversationsState extends State<ConversationsScreen> {
   }
 
   Widget get _conversationsList {
-    return StreamBuilder<List<HomeConversationModel>>(
-      stream: _conversationsStream,
-      initialData: [],
-      builder: (context, snapshot) {
-        if (snapshot.connectionState == ConnectionState.waiting) {
-          return Container(
-            child: Center(
-              child: CircularProgressIndicator(
-                valueColor:
-                AlwaysStoppedAnimation<Color>(Color(COLOR_ACCENT)),
-              ),
-            ),
-          );
-        } else if (!snapshot.hasData || snapshot.data.isEmpty) {
+    return Consumer<ConversationData>(
+      builder: (context, conversationData, _) {
+        if (conversationData.conversations.isEmpty) {
           return Center(
             child: Text(
               'No Conversations found.',
               style: TextStyle(fontSize: 18),
             ),
           );
-        } else {
-          return ListView.builder(
-            physics: NeverScrollableScrollPhysics(),
-            shrinkWrap: true,
-            itemCount: snapshot.data.length,
-            itemBuilder: (context, index) {
-              final homeConversationModel = snapshot.data[index];
-
-              if (fireStoreUtils.validateIfUserBlocked(homeConversationModel.matchedUser.userID)) {
-                return Container();
-              } else {
-                return _buildConversationRow(homeConversationModel);
-              }
-            },
-          );
         }
+        return ListView.builder(
+          physics: NeverScrollableScrollPhysics(),
+          shrinkWrap: true,
+          itemCount: conversationData.conversations.length,
+          itemBuilder: (context, index) {
+            return _buildConversationRow(conversationData.conversations[index]);
+          },
+        );
       },
     );
   }
 
-  Widget _avatarWithStatus(HomeConversationModel homeConversationModel) {
-    return  Avatar(homeConversationModel);
-  }
-
-  Widget _lastMessage(HomeConversationModel homeConversationModel) {
-    Content messageData = homeConversationModel.conversationModel.lastMessage;
+  Widget _lastMessage(ConversationModel conversationModel) {
+    Content messageData = conversationModel.lastMessage;
     return FutureBuilder<String>(
-      future: Gecies.decrypt(context.read<KeyPair>().privateKeyBase64, messageData.content[user.userID]),
+      future: Gecies.decrypt(context.read<KeyPair>().privateKeyBase64, messageData.content[currentUser.userID]),
       builder: (BuildContext context, AsyncSnapshot<String> snapshot) {
         if (snapshot.hasData) {
           return Text(
-            '${snapshot.data} • ${formatTimestamp(homeConversationModel.conversationModel.lastMessageDate.seconds)}',
+            '${snapshot.data} • ${formatTimestamp(conversationModel.lastMessageDate.seconds)}',
             maxLines: 1,
             style: TextStyle(
               fontSize: 14,
@@ -216,26 +177,58 @@ class _ConversationsState extends State<ConversationsScreen> {
     );
   }
 
-  Widget _buildConversationRow(HomeConversationModel homeConversationModel) {
-    return InkWell(
-      onTap: () {
-        push(context, ChatScreen(homeConversationModel: homeConversationModel));
-      },
-      child: ListTile(
-        leading: _avatarWithStatus(homeConversationModel),
-        title: Text(
-          '${homeConversationModel.matchedUser.userName}',
-          style: TextStyle(
-            fontSize: 17,
-            color: isDarkMode(context) ? Colors.white : Colors.black,
-            fontFamily: Platform.isIOS ? 'sanFran' : 'Roboto',
+  Widget _buildConversationRow(ConversationModel conversationModel) {
+
+    List<dynamic> participants = ([]..addAll(conversationModel.participantIDs))..removeWhere((id) => id == currentUser.userID);
+
+    var listItem = (AppUser user) {
+      return InkWell(
+        onTap: () {
+          push(context, ChatScreen(chatWithUser: user,));
+        },
+        child: ListTile(
+          leading: Avatar(user),
+          title: Text(
+            '${user.userName}',
+            style: TextStyle(
+              fontSize: 17,
+              color: isDarkMode(context) ? Colors.white : Colors.black,
+              fontFamily: Platform.isIOS ? 'sanFran' : 'Roboto',
+            ),
+          ),
+          subtitle: Padding(
+            padding: const EdgeInsets.only(top: 8.0),
+            child: _lastMessage(conversationModel),
           ),
         ),
-        subtitle: Padding(
-          padding: const EdgeInsets.only(top: 8.0),
-          child: _lastMessage(homeConversationModel),
-        ),
-      ),
+      );
+    };
+
+    if (conversationState.hasUserID(participants[0])) {
+      return listItem(conversationState.getUser(participants[0]));
+    }
+
+    return FutureBuilder<AppUser>(
+      future: FireStoreUtils.getUserByID(participants[0]).then((user) {
+        Provider.of<ConversationData>(context, listen: false).addConversationUser(user);
+        return user;
+      }),
+      builder: (BuildContext context, AsyncSnapshot snapshot) {
+        if (snapshot.connectionState == ConnectionState.waiting) {
+          return Shimmer.fromColors(
+            baseColor: Colors.black12,
+            highlightColor: Colors.white,
+            child: ListTile(
+              leading: CircleAvatar(),
+              title: SizedBox(width: double.maxFinite, height: 16),
+              subtitle: SizedBox(width: double.maxFinite, height: 11),
+            ),
+          );
+        } else if (!snapshot.hasData || snapshot.data != null || snapshot.hasError) {
+          return Container();
+        }
+        return listItem(snapshot.data);
+      },
     );
   }
 

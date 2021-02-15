@@ -133,12 +133,12 @@ class _AccountDetailsScreenState extends State<AccountDetailsScreen> {
             SettingsTile(
               title: "Logout",
               onPressed: (_) async {
-                user.active = false;
+                user.signedIn = false;
                 user.settings.showMe = false;
                 user.lastOnlineTimestamp = Timestamp.now();
                 await FireStoreUtils.updateCurrentUser(user);
                 await FirebaseAuth.instance.signOut();
-                user.copy(AppUser());
+                user.reset();
                 pushAndRemoveUntil(context, AuthScreen(), false);
               },
             ),

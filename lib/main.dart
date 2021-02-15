@@ -2,6 +2,8 @@ import 'dart:async';
 
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:dating/model/UserPrivateDetails.dart';
+import 'package:dating/store/ChatData.dart';
+import 'package:dating/store/ConversationData.dart';
 import 'package:dating/store/Data.dart';
 import 'package:dating/store/KeyPair.dart';
 import 'package:dating/services/FirebaseHelper.dart';
@@ -57,6 +59,7 @@ class MyApp extends StatefulWidget {
 class MyAppState extends State<MyApp> with WidgetsBindingObserver {
 
   final AppUser user;
+  AppUser databaseAppUserState;
   final FlutterSecureStorage secureStorage;
   StreamSubscription tokenStream;
   NewVersion newVersion;
@@ -96,6 +99,8 @@ class MyAppState extends State<MyApp> with WidgetsBindingObserver {
       providers: [
         ChangeNotifierProvider<AppUser>.value(value: user),
         ChangeNotifierProvider<FleekData>.value(value: FleekData()),
+        ChangeNotifierProvider<ChatData>.value(value: ChatData()),
+        ChangeNotifierProvider<ConversationData>.value(value: ConversationData()),
         Provider<FlutterSecureStorage>.value(value: secureStorage),
         ChangeNotifierProvider<KeyPair>.value(value: KeyPair()),
         ChangeNotifierProvider<EncrypterState>.value(value: EncrypterState(null)),
@@ -109,17 +114,17 @@ class MyAppState extends State<MyApp> with WidgetsBindingObserver {
           primaryColor: Color(Constants.COLOR_PRIMARY),
           brightness: Brightness.light,
           bottomSheetTheme: BottomSheetThemeData(
-              backgroundColor: Colors.white.withOpacity(.9)
+            backgroundColor: Colors.white.withOpacity(0.9)
           ),
         ),
         darkTheme: ThemeData(
-            colorScheme: ColorScheme.dark(primary: Color(Constants.COLOR_PRIMARY)),
-            accentColor: Color(Constants.COLOR_PRIMARY),
-            primaryColor: Color(Constants.COLOR_PRIMARY),
-            bottomSheetTheme: BottomSheetThemeData(
-                backgroundColor: Colors.black12.withOpacity(.3)
-            ),
-            brightness: Brightness.dark
+          colorScheme: ColorScheme.dark(primary: Color(Constants.COLOR_PRIMARY)),
+          accentColor: Color(Constants.COLOR_PRIMARY),
+          primaryColor: Color(Constants.COLOR_PRIMARY),
+          bottomSheetTheme: BottomSheetThemeData(
+            backgroundColor: Colors.black12.withOpacity(0.3)
+          ),
+          brightness: Brightness.dark
         ),
         debugShowCheckedModeBanner: false,
         color: Color(Constants.COLOR_PRIMARY),
@@ -156,16 +161,20 @@ class MyAppState extends State<MyApp> with WidgetsBindingObserver {
       print("Settings registered: $settings");
     });
 
-    FirebaseAuth.instance.authStateChanges().firstWhere((User i) => i != null).then((User u) async {
-      AppUser dbUser = await FireStoreUtils.getCurrentUser();
+    FirebaseAuth.instance.authStateChanges().where((User i) => i != null).listen((User u) async {
+
+      databaseAppUserState = await FireStoreUtils.getCurrentUser();
       UserPrivateDetails userPrivateDetails = await FireStoreUtils.getCurrentUserPrivateDetails();
-      if (dbUser == null) {
+
+      if (databaseAppUserState == null) {
         user.userID = u.uid;
-        user.settings.showMe = false;
-        await FireStoreUtils.updateCurrentUser(user);
+        user.signedIn = true;
       } else {
-        user.copy(dbUser);
+        databaseAppUserState.signedIn = true;
+        user.copy(databaseAppUserState);
+        await FireStoreUtils.updateCurrentUser(user);
       }
+
       if (userPrivateDetails != null) {
         if (userPrivateDetails.fcmToken == null) {
           userPrivateDetails.fcmToken = await FireStoreUtils.firebaseMessaging.getToken();
@@ -179,6 +188,11 @@ class MyAppState extends State<MyApp> with WidgetsBindingObserver {
           });
         }
       }
+
+    });
+
+    FirebaseAuth.instance.authStateChanges().firstWhere((User i) => i == null).then((_) {
+      databaseAppUserState = null;
     });
 
   }
@@ -192,20 +206,15 @@ class MyAppState extends State<MyApp> with WidgetsBindingObserver {
 
   @override
   void didChangeAppLifecycleState(AppLifecycleState state) {
-    if (FirebaseAuth.instance.currentUser != null && user != null) {
+    if (FirebaseAuth.instance.currentUser != null && databaseAppUserState != null) {
       if (state == AppLifecycleState.paused) {
-        //user offline
-        user.userID = FirebaseAuth.instance.currentUser.uid;
         tokenStream?.pause();
-        user.active = false;
-        user.lastOnlineTimestamp = Timestamp.now();
-        FireStoreUtils.updateCurrentUser(user);
+        databaseAppUserState.lastOnlineTimestamp = Timestamp.now();
+        FireStoreUtils.updateCurrentUser(databaseAppUserState);
       } else if (state == AppLifecycleState.resumed) {
-        //user online
-        user.userID = FirebaseAuth.instance.currentUser.uid;
         tokenStream?.resume();
-        user.active = true;
-        FireStoreUtils.updateCurrentUser(user);
+        databaseAppUserState.lastOnlineTimestamp = Timestamp.now();
+        FireStoreUtils.updateCurrentUser(databaseAppUserState);
       }
     }
   }

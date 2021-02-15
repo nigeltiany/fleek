@@ -5,6 +5,7 @@ import 'package:audio_recorder/audio_recorder.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:dating/components/Avatar.dart';
 import 'package:dating/constants.dart';
+import 'package:dating/store/ChatData.dart';
 import 'package:dating/store/KeyPair.dart';
 import 'package:dating/ui/chat/AudioBubble.dart';
 import 'package:dating/ui/chat/FileBubble.dart';
@@ -13,9 +14,7 @@ import 'package:dating/ui/chat/helpers.dart';
 import 'package:mime/mime.dart' show lookupMimeType;
 import 'package:gecies/gecies.dart';
 import 'package:provider/provider.dart';
-import 'package:dating/model/ChatModel.dart';
 import 'package:dating/model/ConversationModel.dart';
-import 'package:dating/model/HomeConversationModel.dart';
 import 'package:dating/model/MessageData.dart';
 import 'package:dating/model/User.dart';
 import 'package:dating/services/FirebaseHelper.dart';
@@ -33,12 +32,15 @@ enum RecordingState { HIDDEN, VISIBLE, Recording }
 
 class ChatScreen extends StatefulWidget {
 
-  final HomeConversationModel homeConversationModel;
+  final AppUser chatWithUser;
 
-  const ChatScreen({Key key, @required this.homeConversationModel}) : super(key: key);
+  const ChatScreen({
+    Key key,
+    @required this.chatWithUser,
+  }) : super(key: key);
 
   @override
-  _ChatScreenState createState() => _ChatScreenState(homeConversationModel);
+  _ChatScreenState createState() => _ChatScreenState(chatWithUser);
 
 }
 
@@ -46,8 +48,8 @@ class _ChatScreenState extends State<ChatScreen> {
 
   AppUser currentUser;
   Encrypter currentUsersEncrypter;
+  final AppUser chatWithUser;
   final ImagePicker _imagePicker = ImagePicker();
-  final HomeConversationModel homeConversationModel;
   TextEditingController _messageController = new TextEditingController();
   final FireStoreUtils _fireStoreUtils = FireStoreUtils();
   TextEditingController _groupNameController = TextEditingController();
@@ -59,19 +61,14 @@ class _ChatScreenState extends State<ChatScreen> {
 
   Recording _recording;
 
-  _ChatScreenState(this.homeConversationModel);
-
-  Stream<ChatModel> chatStream;
+  _ChatScreenState(this.chatWithUser);
 
   @override
   void initState() {
     super.initState();
     currentUser = context.read<AppUser>();
+    context.read<ChatData>().chattingWith(chatWithUser);
     currentUsersEncrypter = context.read<EncrypterState>().encrypter;
-    if (homeConversationModel.isGroupChat) {
-      _groupNameController.text = homeConversationModel.conversationModel.name;
-    }
-    setupStream();
   }
 
   @override
@@ -79,17 +76,6 @@ class _ChatScreenState extends State<ChatScreen> {
     super.dispose();
     _messageController.dispose();
     _groupNameController.dispose();
-  }
-
-  setupStream() {
-    chatStream = _fireStoreUtils.getChatMessages(homeConversationModel).asBroadcastStream();
-    chatStream.listen((chatModel) {
-      if (mounted) {
-        homeConversationModel.matchedUser = chatModel.matchedUser;
-        homeConversationModel.recipientEncrypter = chatModel.recipientEncrypter;
-        setState(() {});
-      }
-    });
   }
 
   Iterable<Widget> get _actions {
@@ -108,10 +94,10 @@ class _ChatScreenState extends State<ChatScreen> {
       mainAxisAlignment: MainAxisAlignment.start,
       crossAxisAlignment: CrossAxisAlignment.center,
       children: <Widget>[
-        Avatar(homeConversationModel),
+        Avatar(chatWithUser),
         SizedBox(width: 12),
         Flexible(
-          child: Text(homeConversationModel.matchedUser.userName,
+          child: Text(chatWithUser.userName,
             overflow: TextOverflow.fade,
             maxLines: 1,
             softWrap: false,
@@ -159,28 +145,19 @@ class _ChatScreenState extends State<ChatScreen> {
             currentRecordingState = RecordingState.HIDDEN;
           });
         },
-        child: StreamBuilder<ChatModel>(
-          stream: homeConversationModel.conversationModel != null ? chatStream : null,
-          initialData: ChatModel(),
-          builder: (context, snapshot) {
-            if (snapshot.connectionState == ConnectionState.waiting) {
-              return Center(
-                child: CircularProgressIndicator(),
-              );
-            } else {
-              if (snapshot.hasData && snapshot.data.messages.isEmpty) {
-                return Center(child: Text('No messages yet'));
-              } else {
-                return ListView.builder(
-                  reverse: true,
-                  cacheExtent: ((MediaQuery.of(context).size.height * 3).toInt() | 1000).toDouble(),
-                  itemCount: snapshot.data.messages.length,
-                  itemBuilder: (BuildContext context, int index) {
-                    return buildMessage(snapshot.data.messages[index], snapshot.data.matchedUser);
-                  },
-                );
-              }
+        child: Consumer<ChatData>(
+          builder: (BuildContext context, ChatData chatData, _) {
+            if (chatData.messages.isEmpty) {
+              return Center(child: Text('No messages yet'));
             }
+            return ListView.builder(
+              reverse: true,
+              cacheExtent: ((MediaQuery.of(context).size.height * 3).toInt() | 1000).toDouble(),
+              itemCount: chatData.messages.length,
+              itemBuilder: (BuildContext context, int index) {
+                return buildMessage(chatData.messages[index], chatWithUser);
+              },
+            );
           },
         ),
       ),
@@ -374,11 +351,6 @@ class _ChatScreenState extends State<ChatScreen> {
     );
   }
 
-  Widget buildSubTitle(AppUser friend) {
-    String text = friend.active ? 'Active now' : 'Last seen on ${setLastSeen(friend.lastOnlineTimestamp?.seconds ?? 0)}';
-    return Text(text, style: TextStyle(fontSize: 9, color: Colors.grey.shade200));
-  }
-
   _onCameraClick() {
     final action = CupertinoActionSheet(
       message: Text(
@@ -512,50 +484,24 @@ class _ChatScreenState extends State<ChatScreen> {
 
   }
 
-  Future<bool> _checkChannelNullability(ConversationModel conversationModel, MessageData messageData) async {
-    if (conversationModel != null) {
-      return true;
-    } else {
-      String channelID;
-      AppUser friend = homeConversationModel.matchedUser;
-      AppUser user = context.read<AppUser>();
-      if (friend.userID.compareTo(user.userID) < 0) {
-        channelID = "${friend.userID}:${user.userID}";
-      } else {
-        channelID = "${user.userID}:${friend.userID}";
-      }
-
-      ConversationModel conversation = ConversationModel(
-        creatorId: user.userID,
-        id: channelID,
-        lastMessageDate: Timestamp.now(),
-        lastMessage: messageData.content
-      );
-      bool isSuccessful =
-      await _fireStoreUtils.createConversation(conversation);
-      if (isSuccessful) {
-        homeConversationModel.conversationModel = conversation;
-        setupStream();
-        setState(() {});
-      }
-      return isSuccessful;
-    }
-  }
-
   _sendMessage(String content, Url url, String videoThumbnail) async {
 
     if (content.isEmpty) {
       return;
     }
+    
+    ConversationModel conversationModel = ConversationModel(
+      lastSenderID: currentUser.userID,
+      id: normalizedConversationID(currentUser.userID, chatWithUser.userID),
+      participantIDs: List.unmodifiable([currentUser.userID, chatWithUser.userID]),
+      lastMessageDate: Timestamp.now(),
+    );
 
-    MessageData message;
-
-    message = MessageData(
+    MessageData message = MessageData(
       created: Timestamp.now(),
       content: Content(content: Map<String, String>()),
-      recipientID: homeConversationModel.matchedUser.userID,
-      recipientProfilePictureURL:
-      homeConversationModel.matchedUser.profilePictureURL,
+      recipientID: chatWithUser.userID,
+      recipientProfilePictureURL: chatWithUser.profilePictureURL,
       senderUsername: currentUser.userName,
       senderID: currentUser.userID,
       senderProfilePictureURL: currentUser.profilePictureURL,
@@ -563,51 +509,37 @@ class _ChatScreenState extends State<ChatScreen> {
       videoThumbnail: videoThumbnail,
     );
 
-    var otherUsersEncrypter = homeConversationModel.recipientEncrypter;
-
+    var otherUsersEncrypter = (String message) async {
+      return await Gecies.encrypt(chatWithUser.publicKey, message);
+    };
     var myMessage = await currentUsersEncrypter(content);
     var otherUsersMessage = await otherUsersEncrypter(content);
     message.content.content[currentUser.userID] = myMessage;
     message.content.content[message.recipientID] = otherUsersMessage;
 
-    if (await _checkChannelNullability(homeConversationModel.conversationModel, message)) {
-
-      String notificationText = "";
-      if (url == null) {
-        homeConversationModel.conversationModel.lastMessage = message.content;
-        notificationText = "${message.senderUsername} sent you a message";
-      } else {
-        if (url.mime.contains('image')) {
-          notificationText = "${message.senderUsername} sent you a photo";
-        } else if (url.mime.contains('video')) {
-          notificationText = "${message.senderUsername} sent you a video";
-        } else if (url.mime.contains('audio')) {
-          notificationText = "${message.senderUsername} sent you a recording";
-        }
-        var myText = await currentUsersEncrypter(notificationText);
-        var otherUsersText = await otherUsersEncrypter(notificationText);
-        homeConversationModel.conversationModel.lastMessage = Content(content: {
-          "${currentUser.userID}" : myText,
-          "${message.recipientID}" : otherUsersText
-        });
-      }
-
-      await _fireStoreUtils.sendMessage(
-        currentUser,
-        homeConversationModel.matchedUser,
-        message,
-        homeConversationModel.conversationModel,
-        notificationText: notificationText,
-      );
-
-      homeConversationModel.conversationModel.lastMessageDate = Timestamp.now();
-      await _fireStoreUtils.updateChannel(homeConversationModel.conversationModel);
-
+    String notificationText = "";
+    if (url == null) {
+      conversationModel.lastMessage = message.content;
+      notificationText = "${message.senderUsername} sent you a message";
     } else {
-
-      showAlertDialog(context, 'An Error Occured', 'Couldn\'t send Message, please try again later');
-
+      if (url.mime.contains('image')) {
+        notificationText = "${message.senderUsername} sent you a photo";
+      } else if (url.mime.contains('video')) {
+        notificationText = "${message.senderUsername} sent you a video";
+      } else if (url.mime.contains('audio')) {
+        notificationText = "${message.senderUsername} sent you a recording";
+      }
+      var myText = await currentUsersEncrypter(notificationText);
+      var otherUsersText = await otherUsersEncrypter(notificationText);
+      conversationModel.lastMessage = Content(content: {
+        "${currentUser.userID}" : myText,
+        "${message.recipientID}" : otherUsersText
+      });
     }
+
+    // update conversation model first
+    await FireStoreUtils.updateChannel(conversationModel);
+    await FireStoreUtils.sendMessage(currentUser, chatWithUser, message, notificationText: notificationText);
 
   }
 
@@ -623,16 +555,16 @@ class _ChatScreenState extends State<ChatScreen> {
           onPressed: () async {
             Navigator.pop(context);
             showProgress(context, 'Blocking user...', false);
-            bool isSuccessful = await _fireStoreUtils.blockUser(homeConversationModel.matchedUser, 'block');
+            bool isSuccessful = await _fireStoreUtils.blockUser(chatWithUser, 'block');
 
             Navigator.of(context).pop(); // Close Dialog
 
             if (isSuccessful) {
               Navigator.pop(context);
               _showAlertDialog(context, 'Block',
-                  '${homeConversationModel.matchedUser.userName} has been blocked.');
+                  '${chatWithUser.userName} has been blocked.');
             } else {
-              _showAlertDialog(context, 'Block', 'Couldn''\'t block ${homeConversationModel.matchedUser.userName}, please try again later.');
+              _showAlertDialog(context, 'Block', 'Couldn''\'t block ${chatWithUser.userName}, please try again later.');
             }
           },
         ),
@@ -642,14 +574,14 @@ class _ChatScreenState extends State<ChatScreen> {
             Navigator.pop(context);
 
             showProgress(context, 'Reporting user...', false);
-            bool isSuccessful = await _fireStoreUtils.blockUser(homeConversationModel.matchedUser, 'report');
+            bool isSuccessful = await _fireStoreUtils.blockUser(chatWithUser, 'report');
             Navigator.of(context).pop(); // Close Dialog
 
             if (isSuccessful) {
               Navigator.pop(context);
-              _showAlertDialog(context, 'Report', '${homeConversationModel.matchedUser.userName} has been reported and blocked.');
+              _showAlertDialog(context, 'Report', '${chatWithUser.userName} has been reported and blocked.');
             } else {
-              _showAlertDialog(context, 'Report', 'Couldn''\'t report ${homeConversationModel.matchedUser.userName}, please try again later.');
+              _showAlertDialog(context, 'Report', 'Couldn''\'t report ${chatWithUser.userName}, please try again later.');
             }
           },
         ),

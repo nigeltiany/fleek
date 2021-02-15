@@ -156,7 +156,7 @@ class _AllowLocationServicesState extends State<AllowLocationServices> {
             );
             user.location = loc;
             user.signUpLocation = loc;
-            user.active = true;
+            user.signedIn = true;
             user.settings.showMe = true;
             await pageController.nextPage(duration: Duration(milliseconds: 400), curve: Curves.easeIn);
           },

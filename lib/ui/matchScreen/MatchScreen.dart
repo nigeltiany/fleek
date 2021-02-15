@@ -1,8 +1,6 @@
 import 'package:cached_network_image/cached_network_image.dart';
+import 'package:dating/components/PrimaryButton.dart';
 import 'package:dating/constants.dart';
-import 'package:provider/provider.dart';
-import 'package:dating/model/ConversationModel.dart';
-import 'package:dating/model/HomeConversationModel.dart';
 import 'package:dating/model/User.dart';
 import 'package:dating/services/FirebaseHelper.dart';
 import 'package:dating/services/helper.dart';
@@ -21,12 +19,55 @@ class MatchScreen extends StatefulWidget {
 }
 
 class _MatchScreenState extends State<MatchScreen> {
+  bool checkingConversationState = false;
   final FireStoreUtils _fireStoreUtils = FireStoreUtils();
 
   @override
   void dispose() {
     SystemChrome.setEnabledSystemUIOverlays(SystemUiOverlay.values);
     super.dispose();
+  }
+
+  Widget getStateBaseButton() {
+
+    if (checkingConversationState) {
+      RaisedButton(
+        color: Color(COLOR_PRIMARY),
+        child: Center(
+          child: CircularProgressIndicator(),
+        ),
+        textColor: Colors.white,
+        splashColor: Color(COLOR_PRIMARY_DARK),
+        onPressed: () {
+
+        },
+        padding: EdgeInsets.only(top: 12, bottom: 12),
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(25.0),
+          side: BorderSide(
+            color: Color(COLOR_PRIMARY),
+          ),
+        ),
+      );
+    }
+
+    return PrimaryButton(
+      label: 'SEND A MESSAGE',
+      onTap: () async {
+        setState(() {
+          checkingConversationState = true;
+        });
+        setState(() {
+          checkingConversationState = true;
+        });
+        pushReplacement(context, 
+          ChatScreen(
+            chatWithUser: widget.matchedUser,
+          ),
+        );
+      },
+    );
+
   }
 
   @override
@@ -47,69 +88,35 @@ class _MatchScreenState extends State<MatchScreen> {
                 padding: const EdgeInsets.all(8.0),
                 child: GestureDetector(
                   onTap: () {
-                    SystemChrome.setEnabledSystemUIOverlays(
-                        [SystemUiOverlay.bottom, SystemUiOverlay.top]);
+                    SystemChrome.setEnabledSystemUIOverlays([SystemUiOverlay.bottom, SystemUiOverlay.top]);
                     Navigator.pop(context);
                   },
-                  child: Text(
-                    'KEEP SWIPING',
+                  child: Text('KEEP SWIPING',
                     style: TextStyle(
-                        fontSize: 16,
-                        color:
-                            isDarkMode(context) ? Colors.black : Colors.white),
+                      fontSize: 16,
+                      color: isDarkMode(context) ? Colors.white : Colors.black,
+                    ),
                   ),
                 ),
               ),
               SizedBox(
                 width: double.infinity,
                 child: Padding(
-                  padding:
-                      const EdgeInsets.symmetric(vertical: 8.0, horizontal: 24),
-                  child: RaisedButton(
-                    padding: EdgeInsets.symmetric(vertical: 15, horizontal: 24),
-                    child: Text('SEND A MESSAGE',
-                        style: TextStyle(
-                            fontSize: 17,
-                            color: isDarkMode(context)
-                                ? Colors.black
-                                : Colors.white)),
-                    shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(8.0),
-                        side: BorderSide.none),
-                    onPressed: () async {
-                      String channelID;
-                      if (widget.matchedUser.userID.compareTo(context.read<AppUser>().userID) < 0) {
-                        channelID = widget.matchedUser.userID + ':' + context.read<AppUser>().userID;
-                      } else {
-                        channelID = context.read<AppUser>().userID + ':' + widget.matchedUser.userID;
-                      }
-                      ConversationModel conversationModel = await _fireStoreUtils.getChannelByIdOrNull(channelID);
-                      pushReplacement(context, ChatScreen(
-                          homeConversationModel: HomeConversationModel(
-                            isGroupChat: false,
-                            matchedUser: widget.matchedUser,
-                            conversationModel: conversationModel,
-                          ),
-                        ),
-                      );
-                    },
-                    color: Color(COLOR_PRIMARY),
-                  ),
+                  padding: const EdgeInsets.symmetric(vertical: 8.0, horizontal: 24),
+                  child: getStateBaseButton(),
                 ),
               ),
               Padding(
-                padding:
-                    const EdgeInsets.symmetric(vertical: 60.0, horizontal: 16),
-                child: Text(
-                  'IT\'S A MATCH!',
+                padding: const EdgeInsets.symmetric(vertical: 60.0, horizontal: 16),
+                child: Text('IT\'S A MATCH!',
                   style: TextStyle(
                     letterSpacing: 4,
-                    color: Colors.greenAccent,
+                    color: Color(COLOR_PRIMARY_DARK),
                     fontWeight: FontWeight.bold,
                     fontSize: 30,
                   ),
                 ),
-              )
+              ),
             ],
           ),
         )

@@ -1,24 +1,24 @@
-import 'package:dating/model/HomeConversationModel.dart';
+import 'package:dating/model/User.dart';
 import 'package:dating/services/helper.dart';
 import 'package:dating/ui/userDetailsScreen/UserDetailsScreen.dart';
 import 'package:flutter/material.dart';
 
 class Avatar extends StatelessWidget {
 
-  final HomeConversationModel homeConversationModel;
+  final AppUser appUser;
 
-  Avatar(this.homeConversationModel);
+  Avatar(this.appUser);
 
   @override
   Widget build(BuildContext context) {
     return GestureDetector(
       onTap: () {
-        push(context, UserDetailsScreen(user: homeConversationModel.matchedUser, isMatch: true,));
+        push(context, UserDetailsScreen(user: appUser, isMatch: true,));
       },
       child: Stack(
         alignment: Alignment.bottomRight,
         children: <Widget>[
-          displayCircleImage(homeConversationModel.matchedUser.profilePictureURL, 50, false),
+          displayCircleImage(appUser.profilePictureURL, 50, false),
           // Positioned(
           //   right: 2.4,
           //   bottom: 2.4,

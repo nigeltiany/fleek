@@ -73,7 +73,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
             padding: const EdgeInsets.only(top: 16.0, right: 32, left: 32),
             child: SizedBox(
               width: double.infinity,
-              child: Text(user.userName,
+              child: Text(user.userName ?? "",
                 style: TextStyle(
                   color: isDarkMode(context) ? Colors.white : Colors.black,
                   fontSize: 20,
@@ -140,7 +140,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 contentPadding: EdgeInsets.zero,
               ),
               isThreeLine: true,
-              subtitle: Text(user.bio),
+              subtitle: Text(user.bio ?? ""),
               contentPadding: EdgeInsets.zero,
             ),
           ),

@@ -1,16 +1,13 @@
 import 'dart:async';
-import 'dart:convert';
 import 'dart:io';
 
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:cloud_functions/cloud_functions.dart';
 import 'package:dating/model/BlockUserModel.dart';
 import 'package:dating/model/ChannelParticipation.dart';
-import 'package:dating/model/ChatModel.dart';
 import 'package:dating/model/ChatVideoContainer.dart';
 import 'package:dating/model/ConversationModel.dart';
 import 'package:dating/model/Gender.dart';
-import 'package:dating/model/HomeConversationModel.dart';
 import 'package:dating/model/MessageData.dart';
 import 'package:dating/model/Swipe.dart';
 import 'package:dating/model/SwipeCounterModel.dart';
@@ -26,11 +23,7 @@ import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:firebase_storage/firebase_storage.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/foundation.dart';
-import 'package:flutter/services.dart';
-import 'package:gecies/gecies.dart';
 import 'package:geoflutterfire/geoflutterfire.dart';
-import 'package:http/http.dart' as http;
-import 'package:location/location.dart';
 import 'package:path/path.dart' as Path;
 import 'package:uuid/uuid.dart';
 import 'package:provider/provider.dart';
@@ -47,8 +40,6 @@ class FireStoreUtils {
   static FirebaseFirestore firestore = FirebaseFirestore.instance;
   Reference storage = FirebaseStorage.instance.ref();
   List<Swipe> matchedUsersList = [];
-  StreamController<List<HomeConversationModel>> conversationsStream;
-  List<HomeConversationModel> homeConversations = [];
   List<BlockUserModel> blockedList = [];
   List<AppUser> matches = [];
   StreamController fleekCardsStreamController;
@@ -209,66 +200,7 @@ class FireStoreUtils {
     return matches;
   }
 
-  Stream<List<HomeConversationModel>> getConversations(String userID) async* {
-
-    conversationsStream = StreamController<List<HomeConversationModel>>();
-    HomeConversationModel newHomeConversation;
-
-    firestore
-        .collection(CHANNEL_PARTICIPATION)
-        .where('user', isEqualTo: userID)
-        .snapshots()
-        .listen((querySnapshot) {
-      if (querySnapshot.docs.isEmpty) {
-        conversationsStream.sink.add(homeConversations);
-      } else {
-        homeConversations.clear();
-        Future.forEach(querySnapshot.docs, (DocumentSnapshot document) {
-          if (document != null && document.exists) {
-            ChannelParticipation participation =
-            ChannelParticipation.fromJson(document.data());
-            firestore
-                .collection(CHANNELS)
-                .doc(participation.channel)
-                .snapshots()
-                .listen((channel) async {
-              if (channel != null && channel.exists) {
-
-                bool isGroupChat = !channel.id.contains(userID);
-
-                getUserByID(channel.id.replaceAll(userID, '').replaceAll(':', '')).listen((user) {
-                  newHomeConversation = HomeConversationModel(
-                      conversationModel: ConversationModel.fromJson(channel.data()),
-                      isGroupChat: isGroupChat,
-                      matchedUser: user,
-                  );
-
-                  if (newHomeConversation.conversationModel.id.isEmpty) {
-                    newHomeConversation.conversationModel.id = channel.id;
-                  }
-
-                  homeConversations.removeWhere((conversationModelToDelete) {
-                    return newHomeConversation.conversationModel.id == conversationModelToDelete.conversationModel.id;
-                  });
-
-                  homeConversations.add(newHomeConversation);
-                  homeConversations.sort((a, b) => a
-                    .conversationModel.lastMessageDate
-                    .compareTo(b.conversationModel.lastMessageDate));
-                  conversationsStream.sink.add(homeConversations.reversed.toList());
-
-                });
-
-              }
-            });
-          }
-        });
-      }
-    });
-    yield* conversationsStream.stream;
-  }
-
-  Stream<AppUser> getUserByID(String id) async* {
+  static Stream<AppUser> getUserByIDStream(String id) async* {
     StreamController<AppUser> userStreamController = StreamController();
     firestore.collection(USERS).doc(id).snapshots().listen((user) {
       if (user.data != null) {
@@ -278,76 +210,16 @@ class FireStoreUtils {
     yield* userStreamController.stream;
   }
 
-  Future<ConversationModel> getChannelByIdOrNull(String channelID) async {
-    ConversationModel conversationModel;
-    await firestore.collection(CHANNELS).doc(channelID).get().then((channel) {
-        if (channel != null && channel.exists) {
-          conversationModel = ConversationModel.fromJson(channel.data());
-        }
-      },
-    ).catchError((e) {
-      print((e as PlatformException).message);
-    });
-    return conversationModel;
-  }
-
-  Stream<ChatModel> getChatMessages(HomeConversationModel homeConversationModel) async* {
-
-    // ignore: close_sinks
-    StreamController<ChatModel> chatModelStreamController = StreamController();
-    ChatModel chatModel = ChatModel();
-    List<MessageData> listOfMessages = [];
-
-    AppUser matchedUser = homeConversationModel.matchedUser;
-    getUserByID(matchedUser.userID).listen((user) {
-      chatModel.messages = listOfMessages;
-      chatModel.matchedUser = user;
-      chatModel.recipientEncrypter = (String message) async {
-        return await Gecies.encrypt(user.publicKey, message);
-      };
-      chatModelStreamController.sink.add(chatModel);
-    });
-
-    if (homeConversationModel.conversationModel == null) {
-      print("home conversation model cannot be null");
-      return;
+  static Future<AppUser> getUserByID(String id) async {
+    var userSnapshot = await firestore.collection(USERS).doc(id).get();
+    if (!userSnapshot.exists) {
+      return null;
     }
-
-    var snapshot = await firestore
-      .collection(CHANNELS)
-      .doc(homeConversationModel.conversationModel.id)
-      .collection(THREAD)
-      .limit(50)
-      .orderBy('createdAt', descending: true).get();
-
-    snapshot.docs.forEach((doc) {
-      listOfMessages.add(MessageData.fromJson(doc.data()));
-    });
-    chatModel.messages = listOfMessages;
-    chatModel.matchedUser = matchedUser;
-    chatModelStreamController.sink.add(chatModel);
-
-    firestore
-      .collection(CHANNELS)
-        .doc(homeConversationModel.conversationModel.id)
-          .collection(THREAD)
-            .orderBy('createdAt', descending: true)
-              .snapshots()
-                .listen((onData) {
-      onData.docChanges.forEach((document) {
-        listOfMessages.add(MessageData.fromJson(document.doc.data()));
-      });
-      chatModel.messages = listOfMessages;
-      chatModel.matchedUser = matchedUser;
-      chatModelStreamController.sink.add(chatModel);
-    });
-
-    yield* chatModelStreamController.stream;
-
+    return AppUser.fromJson(userSnapshot.data());
   }
 
-  Future<void> sendMessage(AppUser currentUser, AppUser matchedUser, MessageData message, ConversationModel conversationModel, { String notificationText }) async {
-    var ref = firestore.collection(CHANNELS).doc(conversationModel.id).collection(THREAD).doc();
+  static Future<void> sendMessage(AppUser currentUser, AppUser matchedUser, MessageData message, { String notificationText }) async {
+    var ref = firestore.collection(CHANNELS).doc(normalizedConversationID(currentUser.userID, matchedUser.userID)).collection(THREAD).doc();
     message.messageID = ref.id;
     ref.set(message.toJson(), SetOptions(merge: true));
     await Future.forEach([matchedUser], (AppUser element) async {
@@ -360,33 +232,19 @@ class FireStoreUtils {
     });
   }
 
-  Future<bool> createConversation(ConversationModel conversation) async {
-    bool isSuccessful;
-    await firestore
-        .collection(CHANNELS)
-        .doc(conversation.id)
-        .set(conversation.toJson())
-        .then((onValue) async {
-      ChannelParticipation myChannelParticipation = ChannelParticipation(
-        user: FirebaseAuth.instance.currentUser.uid, channel: conversation.id);
-      ChannelParticipation myFriendParticipation = ChannelParticipation(
-        user: conversation.id.replaceAll(FirebaseAuth.instance.currentUser.uid, '').replaceAll(':', ''),
-        channel: conversation.id);
-      await createChannelParticipation(myChannelParticipation);
-      await createChannelParticipation(myFriendParticipation);
-      isSuccessful = true;
-    }, onError: (e) {
-      print(e);
-      isSuccessful = false;
-    });
-    return isSuccessful;
+  Future<ConversationModel> getOrCreateChannel(String channelID) async {
+    ConversationModel conversationModel;
+    var channel = await firestore.collection(CHANNELS).doc(channelID).get();
+    if (channel != null && channel.exists) {
+      conversationModel = ConversationModel.fromJson(channel.data());
+    } else {
+      
+    }
+    return conversationModel;
   }
 
-  Future<void> updateChannel(ConversationModel conversationModel) async {
-    await firestore
-      .collection(CHANNELS)
-      .doc(conversationModel.id)
-      .update(conversationModel.toJson());
+  static Future<void> updateChannel(ConversationModel conversationModel) async {
+    await firestore.collection(CHANNELS).doc(conversationModel.id).set(conversationModel.toJson(), SetOptions(merge: true));
   }
 
   Future<void> createChannelParticipation(ChannelParticipation channelParticipation) async {
@@ -398,11 +256,11 @@ class FireStoreUtils {
     BlockUserModel blockUserModel = BlockUserModel(
       type: type,
       source: FirebaseAuth.instance.currentUser.uid,
-      dest: blockedUser.userID,
+      blocker: blockedUser.userID,
       createdAt: Timestamp.now(),
     );
     await firestore
-      .collection(REPORTS)
+      .collection(BLOCKS)
       .add(blockUserModel.toJson())
       .then((onValue) {
         isSuccessful = true;
@@ -410,29 +268,29 @@ class FireStoreUtils {
     return isSuccessful;
   }
 
-  Stream<bool> getBlocks() async* {
-    StreamController<bool> refreshStreamController = StreamController();
-
-    firestore.collection(REPORTS)
-      .where('source', isEqualTo: FirebaseAuth.instance.currentUser.uid,).
-    snapshots().listen((onData) {
-      List<BlockUserModel> list = [];
-      for (DocumentSnapshot block in onData.docs) {
-        list.add(BlockUserModel.fromJson(block.data()));
-      }
-      blockedList = list;
-
-      if (homeConversations.isNotEmpty || matches.isNotEmpty) {
-        refreshStreamController.sink.add(true);
-      }
-    });
-
-    yield* refreshStreamController.stream;
-  }
+  // Stream<bool> getBlocks() async* {
+  //   StreamController<bool> refreshStreamController = StreamController();
+  //
+  //   firestore.collection(BLOCKS)
+  //     .where('blocker', isEqualTo: FirebaseAuth.instance.currentUser.uid,)
+  //       .snapshots().listen((onData) {
+  //     List<BlockUserModel> list = [];
+  //     for (DocumentSnapshot block in onData.docs) {
+  //       list.add(BlockUserModel.fromJson(block.data()));
+  //     }
+  //     blockedList = list;
+  //
+  //     if (homeConversations.isNotEmpty || matches.isNotEmpty) {
+  //       refreshStreamController.sink.add(true);
+  //     }
+  //   });
+  //
+  //   yield* refreshStreamController.stream;
+  // }
 
   bool validateIfUserBlocked(String userID) {
     for (BlockUserModel blockedUser in blockedList) {
-      if (userID == blockedUser.dest) {
+      if (userID == blockedUser.blocker) {
         return true;
       }
     }
@@ -457,7 +315,7 @@ class FireStoreUtils {
       });
 
       var query = firestore.collection(USERS)
-        .where('showMe', isEqualTo: true) // The person must want to be shown
+        .where('settings.showMe', isEqualTo: true) // The person must want to be shown
         .where('developerAccount', isEqualTo: kDebugMode) // and is not a developer account
         .where('settings.genderPreference', whereIn: [currentUser.settings.gender.toFirebaseString(), GenderPreference.ALL.toFirebaseString()]) // and likes people of my gender or all people
         .where('settings.searchInterest', isEqualTo: currentUser.settings.searchInterest.toFirebaseString());

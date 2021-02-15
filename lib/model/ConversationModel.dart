@@ -4,21 +4,20 @@ import 'MessageData.dart';
 
 class ConversationModel {
   String id = '';
-  String creatorId = '';
-  String name = '';
+  String lastSenderID = '';
   Timestamp lastMessageDate = Timestamp.now();
   Content lastMessage = Content(content: {});
+  List<dynamic> participantIDs = [];
 
   ConversationModel({
     this.id,
-    this.creatorId,
+    this.lastSenderID,
     this.lastMessage,
-    this.name,
-    this.lastMessageDate
+    this.lastMessageDate,
+    this.participantIDs
   });
 
   factory ConversationModel.fromJson(Map<String, dynamic> parsedJson) {
-
     Map<String, String> content = Map<String, String>();
     if (parsedJson.containsKey('lastMessage')) {
       content = Map<String, dynamic>.from(parsedJson["lastMessage"]).map((key, value) => MapEntry(key, value?.toString()));
@@ -26,20 +25,20 @@ class ConversationModel {
 
     return ConversationModel(
       id: parsedJson['id'] ?? '',
-      creatorId: parsedJson['creatorID'] ?? parsedJson['creator_id'] ?? '',
+      lastSenderID: parsedJson['creatorID'] ?? parsedJson['creator_id'] ?? '',
       lastMessage: Content(content: content),
-      name: parsedJson['name'] ?? '',
       lastMessageDate: parsedJson['lastMessageDate'] ?? Timestamp.now(),
+      participantIDs: parsedJson['participantIDs']
     );
   }
 
   Map<String, dynamic> toJson() {
     return {
       "id": this.id,
-      "creatorID": this.creatorId,
+      "creatorID": this.lastSenderID,
       "lastMessage": this.lastMessage.toJson(),
-      "name": this.name,
       "lastMessageDate": this.lastMessageDate,
+      "participantIDs": this.participantIDs
     };
   }
 }

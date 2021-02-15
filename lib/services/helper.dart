@@ -309,6 +309,14 @@ String updateTime(Timer timer) {
   return "${twoDigitsHours(callDuration.inHours)}$twoDigitMinutes:$twoDigitSeconds";
 }
 
+String normalizedConversationID(String userID, String userID2) {
+  if (userID.compareTo(userID2) < 0) {
+    return "$userID:$userID2";
+  } else {
+    return "$userID2:$userID";
+  }
+}
+
 Future<void> goToNextScreenAfterAuth (BuildContext context) async {
   var uid = FirebaseAuth.instance.currentUser.uid;
   // Save a reference to context variables because of the many async functions
@@ -359,7 +367,7 @@ _goToHomeScreen (BuildContext context, AppUser contextUser, KeyPair keyPair, Enc
     encrypterState.encrypter = (String message) async {
       return await Gecies.encrypt(keyPair.publicKeyBase64, message);
     };
-    user.active = true;
+    user.signedIn = true;
     await FireStoreUtils.updateCurrentUser(user);
     contextUser.copy(user);
   }

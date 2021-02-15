@@ -39,7 +39,7 @@ class _StudentVerificationScreenState extends State<StudentVerificationScreen> {
     super.initState();
     _schoolController.text = "North Carolina A&T University";
 
-    reference = FirebaseFirestore.instance.collection('student-verification');
+    reference = FirebaseFirestore.instance.collection(VERIFICATIONS);
     _listenToFirebaseChanges();
 
   }

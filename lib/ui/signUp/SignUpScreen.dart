@@ -211,7 +211,7 @@ class _SignUpState extends State<SignUpScreen> {
       await saveUserKeyPair(userID: result.user.uid, keyPair: context.read<KeyPair>());
 
       user.userID = result.user.uid;
-      user.userName = _emailController.text.trim();
+      user.userName = _usernameController.text.trim();
       await FireStoreUtils.updateCurrentUser(user);
 
       Navigator.of(context).pop(); // Close Dialog

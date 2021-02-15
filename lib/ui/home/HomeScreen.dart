@@ -159,7 +159,7 @@ class _HomeState extends State<HomeScreen> with TickerProviderStateMixin {
               children: [
                 ProfileScreen(),
                 SwipeScreen(),
-                ConversationsScreen(user: user),
+                ConversationsScreen(),
               ],
             ),
             bottomNavigationBar: BottomNavigationBar(

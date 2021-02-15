@@ -15,10 +15,10 @@ class AppUser with ChangeNotifier {
   Firestore.Timestamp _lastOnlineTimestamp = Firestore.Timestamp.now();
   String _userID;
   String _profilePictureURL;
-  String _appIdentifier = 'Flutter Dating ${Platform.operatingSystem}';
+  String _platform = '${Platform.operatingSystem}';
   String _publicKey;
 
-  bool _active = false;
+  bool _signedIn = false;
   bool _isVip = false;
   bool _developerAccount = kDebugMode;
 
@@ -39,8 +39,8 @@ class AppUser with ChangeNotifier {
   copy(AppUser cp) {
     _userName = cp.userName ?? _userName;
     _birthDate = cp.birthDate ?? _birthDate;
-    _active = cp.active ?? false;
-    _lastOnlineTimestamp = cp.lastOnlineTimestamp;
+    _signedIn = cp.signedIn ?? false;
+    _lastOnlineTimestamp= cp.lastOnlineTimestamp;
     _settings = cp.settings ?? _settings;
     _userID = cp.userID ?? _userID;
     _profilePictureURL = cp.profilePictureURL ?? _profilePictureURL;
@@ -57,11 +57,30 @@ class AppUser with ChangeNotifier {
     notifyListeners();
   }
 
+  reset () {
+    _userName = null;
+    _birthDate = null;
+    _signedIn = false;
+    _settings = Settings();
+    _userID = null;
+    _profilePictureURL = null;
+    _isVip = false;
+
+    //dating app related fields
+    _location = null;
+    _signUpLocation = null;
+    _school = null;
+    _schoolCode = "002905"; // A&T
+    _bio = null;
+    _photos = [];
+    notifyListeners();
+  }
+
   factory AppUser.fromJson(Map<String, dynamic> parsedJson) {
     return AppUser()
       ..userName = parsedJson['userName'] ?? ''
       ..birthDate = parsedJson['birthDate']
-      ..active = parsedJson['active'] ?? false
+      ..signedIn = parsedJson['signedIn'] ?? false
       ..lastOnlineTimestamp = parsedJson['lastOnlineTimestamp']
       ..settings = Settings.fromJson(parsedJson['settings'] ?? Settings().toJson())
       ..userID = parsedJson['id'] ?? ''
@@ -86,10 +105,10 @@ class AppUser with ChangeNotifier {
       "birthDate": this.birthDate,
       "settings": this.settings != null ? this.settings.toJson() : Settings().toJson(),
       "id": this.userID,
-      'active': this.active,
+      'signedIn': this.signedIn,
       'lastOnlineTimestamp': this.lastOnlineTimestamp,
       "profilePictureURL": this.profilePictureURL,
-      'appIdentifier': this.appIdentifier,
+      'platform': this.platform,
       'isVip': this.isVip,
       'developerAccount': this.developerAccount,
 
@@ -134,10 +153,10 @@ class AppUser with ChangeNotifier {
     notifyListeners();
   }
 
-  bool get active => _active;
+  bool get signedIn => _signedIn;
 
-  set active(bool value) {
-    _active = value;
+  set signedIn(bool value) {
+    _signedIn = value;
     notifyListeners();
   }
 
@@ -162,10 +181,10 @@ class AppUser with ChangeNotifier {
     notifyListeners();
   }
 
-  String get appIdentifier => _appIdentifier;
+  String get platform => _platform;
 
-  set appIdentifier(String value) {
-    _appIdentifier = value;
+  set platform(String value) {
+    _platform = value;
     notifyListeners();
   }
 

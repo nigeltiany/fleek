@@ -1,5 +1,6 @@
-import 'package:dating/model/ChatModel.dart';
 import 'package:flutter/cupertino.dart';
+
+typedef Encrypter = Future<String> Function(String message);
 
 class KeyPair with ChangeNotifier {
 
