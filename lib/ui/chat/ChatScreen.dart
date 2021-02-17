@@ -56,6 +56,9 @@ class _ChatScreenState extends State<ChatScreen> {
   RecordingState currentRecordingState = RecordingState.HIDDEN;
   Timer audioMessageTimer;
   String audioMessageTime = 'Start Recording';
+  bool _fetchingMessages = false;
+  bool _hasMoreMessages = true;
+  ScrollController _chatScrollController = ScrollController();
 
   String tempPathForAudioMessages;
 
@@ -69,6 +72,18 @@ class _ChatScreenState extends State<ChatScreen> {
     currentUser = context.read<AppUser>();
     context.read<ChatData>().chattingWith(chatWithUser);
     currentUsersEncrypter = context.read<EncrypterState>().encrypter;
+
+    context.read<ChatData>().fetchStateStream.listen((fetching) {
+      _fetchingMessages = fetching;
+    });
+    context.read<ChatData>().chatHasMoreStateStream.listen((hasMore) {
+      _hasMoreMessages = hasMore;
+    });
+    _chatScrollController.addListener(() {
+      if (_chatScrollController.position.extentBefore + 80 >= _chatScrollController.position.maxScrollExtent && !_fetchingMessages && _hasMoreMessages) {
+        context.read<ChatData>().scrollFetch(chatWithUser);
+      }
+    });
   }
 
   @override
@@ -122,15 +137,12 @@ class _ChatScreenState extends State<ChatScreen> {
         title: _title
       ),
       body: Builder(builder: (BuildContext innerContext) {
-        return Padding(
-          padding: const EdgeInsets.only(bottom: 8),
-          child: Column(
-            children: <Widget>[
-              _messagesArea(context),
-              _inputArea(context),
-              _buildAudioMessageRecorder(innerContext)
-            ],
-          ),
+        return Column(
+          children: <Widget>[
+            _messagesArea(context),
+            _inputArea(context),
+            _buildAudioMessageRecorder(innerContext)
+          ],
         );
       }),
     );
@@ -153,6 +165,7 @@ class _ChatScreenState extends State<ChatScreen> {
             return ListView.builder(
               padding: const EdgeInsets.only(top: 50, bottom: 50),
               reverse: true,
+              controller: _chatScrollController,
               cacheExtent: ((MediaQuery.of(context).size.height * 3).toInt() | 1000).toDouble(),
               itemCount: chatData.messages.length,
               itemBuilder: (BuildContext context, int index) {
@@ -170,7 +183,7 @@ class _ChatScreenState extends State<ChatScreen> {
 
   Widget _inputArea(BuildContext context) {
     return Padding(
-      padding: const EdgeInsets.only(top: 8.0),
+      padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 10),
       child: Row(
         children: <Widget>[
           IconButton(
@@ -182,7 +195,7 @@ class _ChatScreenState extends State<ChatScreen> {
           ),
           Expanded(
             child: Padding(
-              padding: const EdgeInsets.only(left: 2.0, right: 2),
+              padding: const EdgeInsets.symmetric(horizontal: 12),
               child: Container(
                 padding: EdgeInsets.all(2),
                 decoration: ShapeDecoration(
