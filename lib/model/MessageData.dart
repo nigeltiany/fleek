@@ -1,5 +1,3 @@
-import 'dart:convert';
-
 import 'package:cloud_firestore/cloud_firestore.dart';
 
 class MessageData {
@@ -8,15 +6,12 @@ class MessageData {
   Url url = Url(url: '', mime: '');
   Content content = Content(content: {});
   Timestamp created = Timestamp.now();
-  String recipientFirstName = '';
-  String recipientLastName = '';
   String recipientProfilePictureURL = '';
   String recipientID = '';
   String senderUsername = '';
-  String senderLastName = '';
   String senderProfilePictureURL = '';
   String senderID = '';
-  String videoThumbnail = '';
+  Url videoThumbnail = Url(url: '', mime: '');
 
   MessageData({
     this.messageID,
@@ -45,7 +40,7 @@ class MessageData {
       created: parsedJson['createdAt'] ?? parsedJson['created'] ?? Timestamp.now(),
       recipientProfilePictureURL: parsedJson['recipientProfilePictureURL'] ?? '',
       recipientID: parsedJson['recipientID'] ?? '',
-      senderUsername: parsedJson['senderFirstName'] ?? '',
+      senderUsername: parsedJson['senderUsername'] ?? '',
       senderProfilePictureURL: parsedJson['senderProfilePictureURL'] ?? '',
       senderID: parsedJson['senderID'] ?? '',
       videoThumbnail: parsedJson['videoThumbnail'] ?? '',
@@ -58,15 +53,12 @@ class MessageData {
       "url": this.url?.toJson(),
       "content": this.content.toJson(),
       "createdAt": this.created,
-      "recipientFirstName": this.recipientFirstName,
-      'recipientLastName': this.recipientLastName,
       'recipientProfilePictureURL': this.recipientProfilePictureURL,
       "recipientID": this.recipientID,
-      "senderFirstName": this.senderUsername,
-      "senderLastName": this.senderLastName,
+      "senderUsername": this.senderUsername,
       "senderProfilePictureURL": this.senderProfilePictureURL,
       "senderID": this.senderID,
-      "videoThumbnail": this.videoThumbnail
+      "videoThumbnail": this.videoThumbnail?.toJson()
     };
   }
 }

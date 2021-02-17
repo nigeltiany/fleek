@@ -8,6 +8,8 @@ import 'package:dating/store/Data.dart';
 import 'package:dating/store/KeyPair.dart';
 import 'package:dating/services/FirebaseHelper.dart';
 import 'package:dating/services/helper.dart';
+import 'package:dating/store/MatchData.dart';
+import 'package:dating/store/Store.dart';
 import 'package:dating/ui/auth/AuthScreen.dart';
 import 'package:dating/ui/onBoarding/OnBoardingScreen.dart';
 import 'package:file/memory.dart';
@@ -31,10 +33,9 @@ void main() async {
   InAppPurchaseConnection.enablePendingPurchases();
   WidgetsFlutterBinding.ensureInitialized();
   await Firebase.initializeApp();
-  AppUser user = AppUser();
   runApp(
     MyApp(
-      user: user,
+      store: Store(),
       secureStorage: FlutterSecureStorage(),
     )
   );
@@ -42,29 +43,29 @@ void main() async {
 
 class MyApp extends StatefulWidget {
 
-  final AppUser user;
+  final Store store;
   final FlutterSecureStorage secureStorage;
 
   const MyApp({
     Key key,
-    @required this.user,
+    @required this.store,
     @required this.secureStorage,
   }) : super(key: key);
 
   @override
-  MyAppState createState() => MyAppState(user, secureStorage);
+  MyAppState createState() => MyAppState(store, secureStorage);
 
 }
 
 class MyAppState extends State<MyApp> with WidgetsBindingObserver {
 
-  final AppUser user;
+  final Store store;
   AppUser databaseAppUserState;
   final FlutterSecureStorage secureStorage;
   StreamSubscription tokenStream;
   NewVersion newVersion;
 
-  MyAppState(this.user, this.secureStorage);
+  MyAppState(this.store, this.secureStorage);
 
   @override
   Widget build(BuildContext context) {
@@ -97,10 +98,11 @@ class MyAppState extends State<MyApp> with WidgetsBindingObserver {
   Widget _app() {
     return MultiProvider(
       providers: [
-        ChangeNotifierProvider<AppUser>.value(value: user),
-        ChangeNotifierProvider<FleekData>.value(value: FleekData()),
-        ChangeNotifierProvider<ChatData>.value(value: ChatData()),
-        ChangeNotifierProvider<ConversationData>.value(value: ConversationData()),
+        ChangeNotifierProvider<AppUser>.value(value: store.appUser),
+        ChangeNotifierProvider<FleekData>.value(value: store.fleekData),
+        ChangeNotifierProvider<ChatData>.value(value: store.chatData),
+        ChangeNotifierProvider<ConversationData>.value(value: store.conversationData),
+        ChangeNotifierProvider<MatchData>.value(value: store.matchData),
         Provider<FlutterSecureStorage>.value(value: secureStorage),
         ChangeNotifierProvider<KeyPair>.value(value: KeyPair()),
         ChangeNotifierProvider<EncrypterState>.value(value: EncrypterState(null)),
@@ -167,12 +169,12 @@ class MyAppState extends State<MyApp> with WidgetsBindingObserver {
       UserPrivateDetails userPrivateDetails = await FireStoreUtils.getCurrentUserPrivateDetails();
 
       if (databaseAppUserState == null) {
-        user.userID = u.uid;
-        user.signedIn = true;
+        store.appUser.userID = u.uid;
+        store.appUser.signedIn = true;
       } else {
         databaseAppUserState.signedIn = true;
-        user.copy(databaseAppUserState);
-        await FireStoreUtils.updateCurrentUser(user);
+        store.appUser.copy(databaseAppUserState);
+        await FireStoreUtils.updateCurrentUser(store.appUser);
       }
 
       if (userPrivateDetails != null) {

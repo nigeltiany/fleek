@@ -221,15 +221,7 @@ class FireStoreUtils {
   static Future<void> sendMessage(AppUser currentUser, AppUser matchedUser, MessageData message, { String notificationText }) async {
     var ref = firestore.collection(CHANNELS).doc(normalizedConversationID(currentUser.userID, matchedUser.userID)).collection(THREAD).doc();
     message.messageID = ref.id;
-    ref.set(message.toJson(), SetOptions(merge: true));
-    await Future.forEach([matchedUser], (AppUser element) async {
-      if (element.userID != FirebaseAuth.instance.currentUser.uid && element.settings.pushNewMessages) {
-        await sendNotification(
-          recipientID: element.userID,
-          notificationText: notificationText ?? "${currentUser.userName} sent you a message"
-        );
-      }
-    });
+    await ref.set(message.toJson(), SetOptions(merge: true));
   }
 
   Future<ConversationModel> getOrCreateChannel(String channelID) async {
@@ -372,34 +364,34 @@ class FireStoreUtils {
     // }
   }
 
-  matchChecker(BuildContext context) async {
-    String myID = FirebaseAuth.instance.currentUser.uid;
-    QuerySnapshot result = await firestore
-      .collection(SWIPES)
-      .where('forUserID', isEqualTo: myID)
-      .where('type', isEqualTo: 'like')
-      .get();
-    if (result.docs.isNotEmpty) {
-      await Future.forEach(result.docs, (DocumentSnapshot document) async {
-        Swipe match = Swipe.fromJson(document.data());
-        QuerySnapshot unSeenMatches = await firestore
-          .collection(SWIPES)
-          .where('swiperUserID', isEqualTo: myID)
-          .where('type', isEqualTo: 'like')
-          .where('forUserID', isEqualTo: match.swiperUserID)
-          .where('hasBeenSeen', isEqualTo: false)
-          .get();
-        if (unSeenMatches.docs.isNotEmpty) {
-          unSeenMatches.docs.forEach((DocumentSnapshot unSeenMatch) async {
-            DocumentSnapshot matchedUserDocSnapshot = await firestore.collection(USERS).doc(match.swiperUserID).get();
-            AppUser matchedUser = AppUser.fromJson(matchedUserDocSnapshot.data());
-            push(context, MatchScreen(matchedUser: matchedUser));
-            updateHasBeenSeen(unSeenMatch.data());
-          });
-        }
-      });
-    }
-  }
+  // matchChecker(BuildContext context) async {
+  //   String myID = FirebaseAuth.instance.currentUser.uid;
+  //   QuerySnapshot result = await firestore
+  //     .collection(SWIPES)
+  //     .where('forUserID', isEqualTo: myID)
+  //     .where('type', isEqualTo: 'like')
+  //     .get();
+  //   if (result.docs.isNotEmpty) {
+  //     await Future.forEach(result.docs, (DocumentSnapshot document) async {
+  //       Swipe match = Swipe.fromJson(document.data());
+  //       QuerySnapshot unSeenMatches = await firestore
+  //         .collection(SWIPES)
+  //         .where('swiperUserID', isEqualTo: myID)
+  //         .where('type', isEqualTo: 'like')
+  //         .where('forUserID', isEqualTo: match.swiperUserID)
+  //         .where('hasBeenSeen', isEqualTo: false)
+  //         .get();
+  //       if (unSeenMatches.docs.isNotEmpty) {
+  //         unSeenMatches.docs.forEach((DocumentSnapshot unSeenMatch) async {
+  //           DocumentSnapshot matchedUserDocSnapshot = await firestore.collection(USERS).doc(match.swiperUserID).get();
+  //           AppUser matchedUser = AppUser.fromJson(matchedUserDocSnapshot.data());
+  //           push(context, MatchScreen(matchedUser: matchedUser));
+  //           updateHasBeenSeen(unSeenMatch.data());
+  //         });
+  //       }
+  //     });
+  //   }
+  // }
 
   onSwipeLeft({ @required AppUser currentUser, @required AppUser dislikedUser }) async {
     DocumentReference documentReference = firestore.collection(SWIPES).doc();
@@ -415,46 +407,7 @@ class FireStoreUtils {
     await documentReference.set(leftSwipe.toJson());
   }
 
-  Future<AppUser> onSwipeRight({ @required AppUser currentUser, @required AppUser likedUser }) async {
-    // check if this user sent a match request before ? if yes, it's a match,
-    // if not, send him match request
-    QuerySnapshot querySnapshot = await firestore
-      .collection(SWIPES)
-      .where('swiperUserID', isEqualTo: likedUser.userID)
-      .where('forUserID', isEqualTo: FirebaseAuth.instance.currentUser.uid)
-      .where('type', isEqualTo: 'like')
-      .get();
-
-    if (querySnapshot.docs.isNotEmpty) {
-      //this user sent me a match request, let's talk
-      DocumentReference document = firestore.collection(SWIPES).doc();
-      var swipe = Swipe(
-        id: document.id,
-        type: 'like',
-        hasBeenSeen: true,
-        createdAt: Timestamp.now(),
-        swiperUserID: FirebaseAuth.instance.currentUser.uid,
-        forUserID: likedUser.userID,
-        searchInterest: currentUser.settings.searchInterest
-      );
-      await document.set(swipe.toJson(), SetOptions(merge: true));
-      if (likedUser.settings.pushNewMatchesEnabled) {
-        await sendNotification(
-          recipientID: likedUser.userID,
-          notificationText: "You have a new match",
-        );
-      }
-
-      return likedUser;
-    } else {
-      //this user didn't send me a match request, let's send match request
-      // and keep swippeing
-      await sendSwipeRequest(currentUser: currentUser, likedUser: likedUser);
-      return null;
-    }
-  }
-
-  Future<bool> sendSwipeRequest({ @required AppUser currentUser, @required AppUser likedUser }) async {
+  static Future<bool> onSwipeRight({ @required AppUser currentUser, @required AppUser likedUser }) async {
     bool isSuccessful;
     DocumentReference documentReference = firestore.collection(SWIPES).doc();
     Swipe swipe = Swipe(

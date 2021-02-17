@@ -66,7 +66,7 @@ class _FileBubbleState extends State<FileBubble> {
           alignment: Alignment.center,
           children: [
             _decryptedImageFileContent(messageData, mediaURL),
-            messageData.videoThumbnail.isNotEmpty ?
+            messageData.videoThumbnail != null ?
             FloatingActionButton(
               mini: true,
               heroTag: messageData.messageID,
@@ -91,7 +91,7 @@ class _FileBubbleState extends State<FileBubble> {
   Widget imageRenderer (Image image) {
     return GestureDetector(
       onTap: () {
-        if (messageData.videoThumbnail.isEmpty) {
+        if (messageData.videoThumbnail == null) {
           push(context, FullScreenImageViewer(image: image.image, tag: messageData.messageID));
         }
       },

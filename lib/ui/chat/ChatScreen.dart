@@ -246,7 +246,7 @@ class _ChatScreenState extends State<ChatScreen> {
       ),
       onPressed: () async {
         if (_messageController.text.isNotEmpty) {
-          await _sendMessage(_messageController.text, null, '');
+          await _sendMessage(_messageController.text, null);
           _messageController.clear();
           setState(() {});
         }
@@ -385,7 +385,7 @@ class _ChatScreenState extends State<ChatScreen> {
             if (image != null) {
               var encryptionResult = await encryptFileAtPath(image.path);
               String url = await _fireStoreUtils.uploadChatImageToFireStorage(encryptionResult.file, context);
-              _sendMessage(encryptionResult.fileSecret.toString(), Url(url: url, mime: lookupMimeType(image.path)), '');
+              _sendMessage(encryptionResult.fileSecret.toString(), Url(url: url, mime: lookupMimeType(image.path)));
             }
           },
         ),
@@ -411,7 +411,7 @@ class _ChatScreenState extends State<ChatScreen> {
             if (image != null) {
               var encryptionResult = await encryptFileAtPath(image.path);
               String url = await _fireStoreUtils.uploadChatImageToFireStorage(encryptionResult.file, context);
-              await _sendMessage(encryptionResult.fileSecret.toString(), Url(url: url, mime: lookupMimeType(image.path)), '');
+              await _sendMessage(encryptionResult.fileSecret.toString(), Url(url: url, mime: lookupMimeType(image.path)));
             }
           },
         ),
@@ -484,9 +484,9 @@ class _ChatScreenState extends State<ChatScreen> {
     if (messageData.url != null && messageData.url.url.isNotEmpty) {
       if (messageData.url.mime.contains('image')) {
         mediaUrl = messageData.url.url;
-      } else if (messageData.url.mime.contains('video')) {
-        mediaUrl = messageData.videoThumbnail;
-        isVideo = true;
+      // } else if (messageData.url.mime.contains('video')) {
+      //   mediaUrl = messageData.videoThumbnail;
+      //   isVideo = true;
       } else if (messageData.url.mime.contains('audio')) {
         mediaUrl = messageData.url.url;
       }
@@ -502,7 +502,7 @@ class _ChatScreenState extends State<ChatScreen> {
 
   }
 
-  _sendMessage(String content, Url url, String videoThumbnail) async {
+  _sendMessage(String content, Url url) async {
 
     if (content.isEmpty) {
       return;
@@ -524,7 +524,6 @@ class _ChatScreenState extends State<ChatScreen> {
       senderID: currentUser.userID,
       senderProfilePictureURL: currentUser.profilePictureURL,
       url: url,
-      videoThumbnail: videoThumbnail,
     );
 
     var otherUsersEncrypter = (String message) async {
@@ -655,7 +654,7 @@ class _ChatScreenState extends State<ChatScreen> {
     var encryptionResult = await encryptFileAtPath(_recording.path);
     Url url = await _fireStoreUtils.uploadAudioFile(encryptionResult.file, context);
 
-    await _sendMessage(encryptionResult.fileSecret.toString(), url, '');
+    await _sendMessage(encryptionResult.fileSecret.toString(), url);
     Directory(_recording.path).deleteSync(recursive: true);
 
   }

@@ -345,18 +345,14 @@ class _SwipeScreenState extends State<SwipeScreen> {
                   swipeCompleteCallback: (CardSwipeOrientation orientation, int index) async {
                     // if (orientation == CardSwipeOrientation.LEFT || orientation == CardSwipeOrientation.RIGHT) {
                       // bool isValidSwipe = currentUser.isVip != null && currentUser.isVip ? true :
+                      AppUser swipedUser = fleekData.users.elementAt(index);
                       await _fireStoreUtils.incrementSwipe();
                       if (orientation == CardSwipeOrientation.RIGHT) {
-                        AppUser result = await _fireStoreUtils.onSwipeRight(currentUser: currentUser, likedUser: fleekData.users[index]);
-                        if (result != null) {
-                          fleekData.removeUser(fleekData.users.elementAt(index), currentUser.settings.searchInterest);
-                          push(context, MatchScreen(matchedUser: result));
-                        } else {
-                          fleekData.removeUser(fleekData.users.elementAt(index), currentUser.settings.searchInterest);
-                        }
+                        await FireStoreUtils.onSwipeRight(currentUser: currentUser, likedUser: swipedUser);
+                        fleekData.removeUser(fleekData.users.elementAt(index), currentUser.settings.searchInterest);
                       } else if (orientation == CardSwipeOrientation.LEFT) {
                         fleekData.previousLeftSwipedUser = fleekData.users.elementAt(index);
-                        await _fireStoreUtils.onSwipeLeft(currentUser: currentUser, dislikedUser: fleekData.users.elementAt(index));
+                        await _fireStoreUtils.onSwipeLeft(currentUser: currentUser, dislikedUser: swipedUser);
                         fleekData.removeUser(fleekData.users.elementAt(index), currentUser.settings.searchInterest);
                       }
                       if (fleekData.users.length < 5 && fleekData.recentlyFetchedCount >= FleekData.MAX_FETCH_COUNT) {

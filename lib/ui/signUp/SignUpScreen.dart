@@ -133,14 +133,17 @@ class _SignUpState extends State<SignUpScreen> {
     RegExp emailRegex = RegExp(r"^[a-zA-Z0-9.a-zA-Z0-9.!#$%&'*+-/=?^_`{|}~]+@[a-zA-Z0-9]+\.[a-zA-Z]+");
 
     bool validUsername = _usernameController.value.text.trim().isNotEmpty;
-    bool validUsernameLength = _usernameController.value.text.length >= 4;
+    bool userNameLongEnough = _usernameController.value.text.length >= 4;
+    bool userNameShortEnough = _usernameController.value.text.length <= 12;
     bool userNameNotEmail = !emailRegex.hasMatch(_usernameController.value.text);
     if(!validUsername) {
       usernameError = "Username cannot be empty";
-    } else if (!validUsernameLength) {
+    } else if (!userNameLongEnough) {
       usernameError = "Username must be 4 or more characters long";
     } else if (!userNameNotEmail) {
       usernameError = "Username cannot be an email address";
+    } else if (!userNameShortEnough) {
+      usernameError = "Username must less than 12 characters long";
     } else {
       usernameError = null;
     }
@@ -166,7 +169,7 @@ class _SignUpState extends State<SignUpScreen> {
     }
 
     setState(() {});
-    return !validUsername || !validUsernameLength || !userNameNotEmail || !emailValid || !personalEmail || !validPassword || !validPasswordLength;
+    return !validUsername || !userNameLongEnough || !userNameShortEnough || !userNameNotEmail || !emailValid || !personalEmail || !validPassword || !validPasswordLength;
 
   }
 
