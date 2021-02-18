@@ -235,7 +235,7 @@ class _SwipeScreenState extends State<SwipeScreen> {
     CardSwipeOrientation result = await Navigator.of(context).push(
       MaterialPageRoute(
         builder: (context) => UserDetailsScreen(
-          user: fleekUser,
+          identifiableUser: fleekUser,
           isMatch: false,
         ),
       ),

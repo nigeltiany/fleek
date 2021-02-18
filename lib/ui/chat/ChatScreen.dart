@@ -5,7 +5,9 @@ import 'package:audio_recorder/audio_recorder.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:dating/components/Avatar.dart';
 import 'package:dating/constants.dart';
+import 'package:dating/model/Swipe.dart';
 import 'package:dating/store/ChatData.dart';
+import 'package:dating/store/ConversationData.dart';
 import 'package:dating/store/KeyPair.dart';
 import 'package:dating/ui/chat/AudioBubble.dart';
 import 'package:dating/ui/chat/FileBubble.dart';
@@ -32,7 +34,7 @@ enum RecordingState { HIDDEN, VISIBLE, Recording }
 
 class ChatScreen extends StatefulWidget {
 
-  final AppUser chatWithUser;
+  final IdentifiableUser chatWithUser;
 
   const ChatScreen({
     Key key,
@@ -48,7 +50,7 @@ class _ChatScreenState extends State<ChatScreen> {
 
   AppUser currentUser;
   Encrypter currentUsersEncrypter;
-  final AppUser chatWithUser;
+  final IdentifiableUser identifiableUser;
   final ImagePicker _imagePicker = ImagePicker();
   TextEditingController _messageController = new TextEditingController();
   final FireStoreUtils _fireStoreUtils = FireStoreUtils();
@@ -61,16 +63,16 @@ class _ChatScreenState extends State<ChatScreen> {
   ScrollController _chatScrollController = ScrollController();
 
   String tempPathForAudioMessages;
-
+  AppUser chatWithUser;
   Recording _recording;
 
-  _ChatScreenState(this.chatWithUser);
+  _ChatScreenState(this.identifiableUser);
 
   @override
   void initState() {
     super.initState();
     currentUser = context.read<AppUser>();
-    context.read<ChatData>().chattingWith(chatWithUser);
+    context.read<ChatData>().chattingWith(identifiableUser);
     currentUsersEncrypter = context.read<EncrypterState>().encrypter;
 
     context.read<ChatData>().fetchStateStream.listen((fetching) {
@@ -81,7 +83,7 @@ class _ChatScreenState extends State<ChatScreen> {
     });
     _chatScrollController.addListener(() {
       if (_chatScrollController.position.extentBefore + 80 >= _chatScrollController.position.maxScrollExtent && !_fetchingMessages && _hasMoreMessages) {
-        context.read<ChatData>().scrollFetch(chatWithUser);
+        context.read<ChatData>().scrollFetch(identifiableUser);
       }
     });
   }
@@ -109,10 +111,10 @@ class _ChatScreenState extends State<ChatScreen> {
       mainAxisAlignment: MainAxisAlignment.start,
       crossAxisAlignment: CrossAxisAlignment.center,
       children: <Widget>[
-        Avatar(chatWithUser),
+        Avatar(identifiableUser),
         SizedBox(width: 12),
         Flexible(
-          child: Text(chatWithUser.userName,
+          child: Text((identifiableUser is AppUser) ? (identifiableUser as AppUser).userName : (identifiableUser as SwipeSubject).userName,
             overflow: TextOverflow.fade,
             maxLines: 1,
             softWrap: false,
@@ -122,6 +124,17 @@ class _ChatScreenState extends State<ChatScreen> {
             ),
           ),
         ),
+      ],
+    );
+  }
+
+
+  Widget _body(BuildContext context) {
+    return Column(
+      children: <Widget>[
+        _messagesArea(context),
+        _inputArea(context),
+        _buildAudioMessageRecorder(context)
       ],
     );
   }
@@ -137,13 +150,31 @@ class _ChatScreenState extends State<ChatScreen> {
         title: _title
       ),
       body: Builder(builder: (BuildContext innerContext) {
-        return Column(
-          children: <Widget>[
-            _messagesArea(context),
-            _inputArea(context),
-            _buildAudioMessageRecorder(innerContext)
-          ],
-        );
+
+        chatWithUser = Provider.of<ConversationData>(context, listen: false).getUser(identifiableUser.userID);
+
+        if (chatWithUser == null) {
+          return FutureBuilder<AppUser>(
+            future: FireStoreUtils.getUserByID(identifiableUser.userID).then((user) {
+              Provider.of<ConversationData>(context, listen: false).addConversationUser(user);
+              chatWithUser = user;
+              return user;
+            }),
+            builder: (BuildContext context, AsyncSnapshot snapshot) {
+              if (snapshot.hasData) {
+                return _body(context);
+              }
+              return Container(
+                child: Center(
+                  child: snapshot.hasError ? Icon(Icons.error, color: Colors.redAccent) : CircularProgressIndicator(),
+                ),
+              );
+            },
+          );
+        }
+
+        return _body(context);
+
       }),
     );
   }
@@ -171,7 +202,7 @@ class _ChatScreenState extends State<ChatScreen> {
               itemBuilder: (BuildContext context, int index) {
                 return Padding(
                   padding: const EdgeInsets.symmetric(horizontal: 12),
-                  child: buildMessage(chatData.messages[index], chatWithUser),
+                  child: buildMessage(chatData.messages[index], identifiableUser),
                 );
               },
             );
@@ -384,7 +415,7 @@ class _ChatScreenState extends State<ChatScreen> {
             PickedFile image = await _imagePicker.getImage(source: ImageSource.gallery);
             if (image != null) {
               var encryptionResult = await encryptFileAtPath(image.path);
-              String url = await _fireStoreUtils.uploadChatImageToFireStorage(encryptionResult.file, context);
+              String url = await _fireStoreUtils.uploadChatImageToFireStorage(context, encryptionResult.file, normalizedConversationID(currentUser.userID, identifiableUser.userID));
               _sendMessage(encryptionResult.fileSecret.toString(), Url(url: url, mime: lookupMimeType(image.path)));
             }
           },
@@ -410,7 +441,7 @@ class _ChatScreenState extends State<ChatScreen> {
             PickedFile image = await _imagePicker.getImage(source: ImageSource.camera);
             if (image != null) {
               var encryptionResult = await encryptFileAtPath(image.path);
-              String url = await _fireStoreUtils.uploadChatImageToFireStorage(encryptionResult.file, context);
+              String url = await _fireStoreUtils.uploadChatImageToFireStorage(context, encryptionResult.file, normalizedConversationID(currentUser.userID, identifiableUser.userID));
               await _sendMessage(encryptionResult.fileSecret.toString(), Url(url: url, mime: lookupMimeType(image.path)));
             }
           },
@@ -510,15 +541,15 @@ class _ChatScreenState extends State<ChatScreen> {
     
     ConversationModel conversationModel = ConversationModel(
       lastSenderID: currentUser.userID,
-      id: normalizedConversationID(currentUser.userID, chatWithUser.userID),
-      participantIDs: List.unmodifiable([currentUser.userID, chatWithUser.userID]),
+      id: normalizedConversationID(currentUser.userID, identifiableUser.userID),
+      participantIDs: List.unmodifiable([currentUser.userID, identifiableUser.userID]),
       lastMessageDate: Timestamp.now(),
     );
 
     MessageData message = MessageData(
       created: Timestamp.now(),
       content: Content(content: Map<String, String>()),
-      recipientID: chatWithUser.userID,
+      recipientID: identifiableUser.userID,
       recipientProfilePictureURL: chatWithUser.profilePictureURL,
       senderUsername: currentUser.userName,
       senderID: currentUser.userID,
@@ -556,7 +587,7 @@ class _ChatScreenState extends State<ChatScreen> {
 
     // update conversation model first
     await FireStoreUtils.updateChannel(conversationModel);
-    await FireStoreUtils.sendMessage(currentUser, chatWithUser, message, notificationText: notificationText);
+    await FireStoreUtils.sendMessage(currentUser, identifiableUser, message, notificationText: notificationText);
 
   }
 
@@ -572,7 +603,7 @@ class _ChatScreenState extends State<ChatScreen> {
           onPressed: () async {
             Navigator.pop(context);
             showProgress(context, 'Blocking user...', false);
-            bool isSuccessful = await _fireStoreUtils.blockUser(chatWithUser, 'block');
+            bool isSuccessful = await _fireStoreUtils.blockUser(identifiableUser, 'block');
 
             Navigator.of(context).pop(); // Close Dialog
 
@@ -591,7 +622,7 @@ class _ChatScreenState extends State<ChatScreen> {
             Navigator.pop(context);
 
             showProgress(context, 'Reporting user...', false);
-            bool isSuccessful = await _fireStoreUtils.blockUser(chatWithUser, 'report');
+            bool isSuccessful = await _fireStoreUtils.blockUser(identifiableUser, 'report');
             Navigator.of(context).pop(); // Close Dialog
 
             if (isSuccessful) {

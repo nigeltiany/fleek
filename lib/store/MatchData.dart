@@ -38,15 +38,15 @@ class MatchData with ChangeNotifier {
       .collection(MATCHES)
       .doc(FirebaseAuth.instance.currentUser.uid)
       .collection('matches')
-      .doc(match.matchUserID)
+      .doc(match.match.userID)
       .set((match..seen = true).toJson(), SetOptions(merge: true));
   }
 
   void _addMatch(FleekMatch fleekMatch) {
-    if (_matchDataStore.containsKey(fleekMatch.matchUserID)) {
+    if (_matchDataStore.containsKey(fleekMatch.match.userID)) {
       return;
     }
-    _matchDataStore[fleekMatch.matchUserID] = fleekMatch;
+    _matchDataStore[fleekMatch.match.userID] = fleekMatch;
     _matchController.add(fleekMatch);
     _matches.add(fleekMatch);
   }

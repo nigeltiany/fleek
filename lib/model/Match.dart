@@ -1,15 +1,17 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:dating/model/SearchInterests.dart';
+import 'package:dating/model/Swipe.dart';
+import 'package:dating/model/User.dart';
 import 'package:flutter/cupertino.dart';
 
 class FleekMatch {
-  String matchUserID;
+  SwipeSubject match;
   SearchInterest matchInterest;
   bool seen;
   Timestamp createdAt = Timestamp.now();
 
   FleekMatch({
-    this.matchUserID,
+    this.match,
     this.matchInterest,
     this.createdAt,
     this.seen
@@ -17,7 +19,7 @@ class FleekMatch {
 
   factory FleekMatch.fromJson(Map<String, dynamic> parsedJson) {
     return FleekMatch(
-      matchUserID: parsedJson['matchUserID'] ?? "",
+      match: SwipeSubject.fromJson(parsedJson["match"] ?? SwipeSubject.fromUser(AppUser())),
       seen: parsedJson['seen'] ?? '',
       createdAt: parsedJson['createdAt'] ?? Timestamp.now(),
       matchInterest: searchInterestFromFirebaseString(parsedJson['matchInterest']) ?? SearchInterest.DATES
@@ -26,7 +28,7 @@ class FleekMatch {
 
   Map<String, dynamic> toJson() {
     return {
-      "matchUserID": this.matchUserID,
+      "match": this.match,
       "matchInterest": this.matchInterest.toFirebaseString(),
       "createdAt": this.createdAt,
       "seen": false

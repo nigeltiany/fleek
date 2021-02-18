@@ -5,7 +5,11 @@ import 'package:dating/model/ProfileSettings.dart';
 import 'package:dating/model/UserLocation.dart';
 import 'package:flutter/foundation.dart';
 
-class AppUser with ChangeNotifier {
+abstract class IdentifiableUser {
+  String get userID;
+}
+
+class AppUser with ChangeNotifier implements IdentifiableUser {
 
   String _userName;
   Firestore.Timestamp _birthDate;

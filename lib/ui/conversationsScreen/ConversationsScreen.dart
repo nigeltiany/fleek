@@ -82,46 +82,32 @@ class _ConversationsState extends State<ConversationsScreen> {
               itemCount: snap.hasData ? snap.data.size : 0,
               // ignore: missing_return
               itemBuilder: (BuildContext context, int index) {
-                FleekMatch match = FleekMatch.fromJson(snap.data.docs[index].data());
-                return FutureBuilder<AppUser>(
-                  future: FireStoreUtils.getUserByID(match.matchUserID),
-                  builder: (BuildContext context, AsyncSnapshot userSnapshot) {
-                    if (userSnapshot.connectionState == ConnectionState.waiting) {
-                      return Container(
-                        child: CircularProgressIndicator(),
-                      );
-                    } else if (userSnapshot.hasData && userSnapshot.data != null && userSnapshot.data is AppUser) {
-                      conversationState.addConversationUser(userSnapshot.data);
-                      return Padding(
-                        padding: const EdgeInsets.only(top: 8.0, left: 4, right: 4),
-                        child: InkWell(
-                          onLongPress: () => _onMatchLongPress(userSnapshot.data),
-                          onTap: () async {
-                            push(context, ChatScreen(chatWithUser: userSnapshot.data));
-                          },
-                          child: Column(
-                            children: <Widget>[
-                              displayCircleImage(userSnapshot.data.profilePictureURL, 50, false),
-                              Expanded(
-                                child: Container(
-                                  width: 75,
-                                  child: Padding(
-                                    padding: const EdgeInsets.only(top: 8.0, left: 8, right: 8),
-                                    child: Text('${userSnapshot.data.userName}',
-                                      textAlign: TextAlign.center,
-                                      maxLines: 1,
-                                    ),
-                                  ),
-                                ),
+                FleekMatch fleekMatch = FleekMatch.fromJson(snap.data.docs[index].data());
+                return Padding(
+                  padding: const EdgeInsets.only(top: 8.0, left: 4, right: 4),
+                  child: InkWell(
+                    onLongPress: () => _onMatchLongPress(fleekMatch),
+                    onTap: () async {
+                      push(context, ChatScreen(chatWithUser: fleekMatch.match));
+                    },
+                    child: Column(
+                      children: <Widget>[
+                        displayCircleImage(fleekMatch.match.profilePictureURL, 50, false),
+                        Expanded(
+                          child: Container(
+                            width: 75,
+                            child: Padding(
+                              padding: const EdgeInsets.only(top: 8.0, left: 8, right: 8),
+                              child: Text('${fleekMatch.match.userName}',
+                                textAlign: TextAlign.center,
+                                maxLines: 1,
                               ),
-                            ],
+                            ),
                           ),
                         ),
-                      );
-                    } else {
-                      return Container();
-                    }
-                  },
+                      ],
+                    ),
+                  ),
                 );
               },
             );
@@ -232,10 +218,9 @@ class _ConversationsState extends State<ConversationsScreen> {
     );
   }
 
-  _onMatchLongPress(AppUser friend) {
+  _onMatchLongPress(FleekMatch fleekMatch) {
     final action = CupertinoActionSheet(
-      message: Text(
-        friend.userName,
+      message: Text(fleekMatch.match.userName ?? "",
         style: TextStyle(fontSize: 15.0),
       ),
       actions: <Widget>[
@@ -244,7 +229,7 @@ class _ConversationsState extends State<ConversationsScreen> {
           isDefaultAction: true,
           onPressed: () async {
             Navigator.pop(context);
-            push(context, UserDetailsScreen(user: friend, isMatch: true,));
+            push(context, UserDetailsScreen(identifiableUser: fleekMatch.match, isMatch: true,));
           },
         ),
       ],

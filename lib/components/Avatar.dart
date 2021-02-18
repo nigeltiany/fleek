@@ -13,7 +13,7 @@ class Avatar extends StatelessWidget {
   Widget build(BuildContext context) {
     return GestureDetector(
       onTap: () {
-        push(context, UserDetailsScreen(user: appUser, isMatch: true,));
+        push(context, UserDetailsScreen(identifiableUser: appUser, isMatch: true,));
       },
       child: Stack(
         alignment: Alignment.bottomRight,

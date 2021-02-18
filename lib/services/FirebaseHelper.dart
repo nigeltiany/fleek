@@ -1,10 +1,10 @@
 import 'dart:async';
+import 'dart:convert';
 import 'dart:io';
 
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:cloud_functions/cloud_functions.dart';
 import 'package:dating/model/BlockUserModel.dart';
-import 'package:dating/model/ChannelParticipation.dart';
 import 'package:dating/model/ChatVideoContainer.dart';
 import 'package:dating/model/ConversationModel.dart';
 import 'package:dating/model/Gender.dart';
@@ -17,7 +17,6 @@ import 'package:dating/model/SearchInterests.dart';
 import 'package:dating/model/UserPrivateDetails.dart';
 import 'package:dating/services/helper.dart';
 import 'package:dating/store/Data.dart';
-import 'package:dating/ui/matchScreen/MatchScreen.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:firebase_storage/firebase_storage.dart';
@@ -33,16 +32,16 @@ import '../constants.dart';
 
 final geo = Geoflutterfire();
 
+enum ImageType {
+  DISPLAY_PIC,
+  ACCOUNT_PIC
+}
 
 class FireStoreUtils {
 
   static FirebaseMessaging firebaseMessaging = FirebaseMessaging();
   static FirebaseFirestore firestore = FirebaseFirestore.instance;
-  Reference storage = FirebaseStorage.instance.ref();
-  List<Swipe> matchedUsersList = [];
-  List<BlockUserModel> blockedList = [];
-  List<AppUser> matches = [];
-  StreamController fleekCardsStreamController;
+  static Reference storage = FirebaseStorage.instance.ref();
 
   static Future<UserPrivateDetails> getCurrentUserPrivateDetails() async {
     DocumentSnapshot userDocument = await firestore.collection(USERS_PRIVATE).doc(FirebaseAuth.instance.currentUser.uid).get();
@@ -82,22 +81,43 @@ class FireStoreUtils {
     });
   }
 
-  Future<String> uploadUserImageToFireStorage(AppUser user, File image, String userID) async {
-    if (user.profilePictureURL != null && user.profilePictureURL.isNotEmpty) {
-      await FirebaseStorage.instance.refFromURL(user.profilePictureURL).delete();
-    }
-    Reference upload = storage.child("profile_picture/$userID/${Uuid().v4()}.png");
-    UploadTask uploadTask = upload.putFile(image);
-    await uploadTask;
-    return await uploadTask.snapshot.ref.getDownloadURL();
+  String _getFileExtension(File file) {
+    return file.path == null ? "" : Path.extension(file.path);
   }
 
-  Future<String> uploadChatImageToFireStorage(image, BuildContext context) async {
+  Future<String> uploadUserImageToFireStorage(AppUser user, File image, ImageType imageType) async {
+
+    if (FirebaseAuth.instance.currentUser == null) return null;
+
+    if (user.profilePictureURL != null && user.profilePictureURL.isNotEmpty && imageType == ImageType.DISPLAY_PIC) {
+      await FirebaseStorage.instance.refFromURL(user.profilePictureURL).delete();
+    }
+
+    String userID = FirebaseAuth.instance.currentUser.uid;
+    String userPath = base64Url.encode(Uuid().v5(Uuid().v5(Uuid.NAMESPACE_URL, userID), userID).codeUnits);
+
+    String location;
+    if (imageType == ImageType.DISPLAY_PIC) {
+      location = "user_profile_picture/$userPath${_getFileExtension(image)}";
+    } else {
+      location = "user_pictures/$userPath/${base64Url.encode(Uuid().v4().codeUnits)}${_getFileExtension(image)}";
+    }
+
+    Reference upload = storage.child(location);
+    UploadTask uploadTask = upload.putFile(image);
+
+    await uploadTask;
+
+    return await uploadTask.snapshot.ref.getDownloadURL();
+
+  }
+
+  Future<String> uploadChatImageToFireStorage(BuildContext context, File image, String conversationID) async {
 
     showProgress(context, 'Uploading image...', false);
 
     var uniqueID = Uuid().v4();
-    Reference upload = storage.child("images/$uniqueID.png");
+    Reference upload = storage.child("conversation_images/${conversationID.replaceAll(USER_ID_DELIMITER, "-u0u-")}/$uniqueID${_getFileExtension(image)}");
     UploadTask uploadTask = upload.putFile(image);
 
     uploadTask.snapshotEvents.listen((event) {
@@ -107,7 +127,7 @@ class FireStoreUtils {
           '${(event.totalBytes.toDouble() / 1000)
           .toStringAsFixed(2)} '
           'KB'
-      );
+      );  
     });
 
     await uploadTask;
@@ -154,52 +174,6 @@ class FireStoreUtils {
     // return downloadUrl.toString();
   }
 
-  Future<List<Swipe>> getMatches(String userID) async {
-    List matchList = List<Swipe>();
-    await firestore
-        .collection(SWIPES)
-        .where('swiperUserID', isEqualTo: userID)
-        .where('hasBeenSeen', isEqualTo: true)
-        .get()
-        .then((querysnapShot) {
-      querysnapShot.docs.forEach((doc) {
-        Swipe match = Swipe.fromJson(doc.data());
-        if (match.id.isEmpty) {
-          match.id = doc.id;
-        }
-        matchList.add(match);
-      });
-    });
-    return matchList.toSet().toList();
-  }
-
-  Future<bool> removeMatch(String id) async {
-    bool isSuccessful;
-    await firestore.collection(SWIPES).doc(id).delete().then((onValue) {
-      isSuccessful = true;
-    }, onError: (e) {
-      print('${e.toString()}');
-      isSuccessful = false;
-    });
-    return isSuccessful;
-  }
-
-  Future<List<AppUser>> getMatchedUserObject(String userID) async {
-    List<String> friendIDs = [];
-    matchedUsersList.clear();
-    matchedUsersList = await getMatches(userID);
-    matchedUsersList.forEach((matchedUser) {
-      friendIDs.add(matchedUser.forUserID);
-    });
-    matches.clear();
-    for (String id in friendIDs) {
-      await firestore.collection(USERS).doc(id).get().then((user) {
-        matches.add(AppUser.fromJson(user.data()));
-      });
-    }
-    return matches;
-  }
-
   static Stream<AppUser> getUserByIDStream(String id) async* {
     StreamController<AppUser> userStreamController = StreamController();
     firestore.collection(USERS).doc(id).snapshots().listen((user) {
@@ -224,23 +198,8 @@ class FireStoreUtils {
     await ref.set(message.toJson(), SetOptions(merge: true));
   }
 
-  Future<ConversationModel> getOrCreateChannel(String channelID) async {
-    ConversationModel conversationModel;
-    var channel = await firestore.collection(CHANNELS).doc(channelID).get();
-    if (channel != null && channel.exists) {
-      conversationModel = ConversationModel.fromJson(channel.data());
-    } else {
-      
-    }
-    return conversationModel;
-  }
-
   static Future<void> updateChannel(ConversationModel conversationModel) async {
     await firestore.collection(CHANNELS).doc(conversationModel.id).set(conversationModel.toJson(), SetOptions(merge: true));
-  }
-
-  Future<void> createChannelParticipation(ChannelParticipation channelParticipation) async {
-    await firestore.collection(CHANNEL_PARTICIPATION).add(channelParticipation.toJson());
   }
 
   Future<bool> blockUser(AppUser blockedUser, String type) async {
@@ -258,35 +217,6 @@ class FireStoreUtils {
         isSuccessful = true;
     });
     return isSuccessful;
-  }
-
-  // Stream<bool> getBlocks() async* {
-  //   StreamController<bool> refreshStreamController = StreamController();
-  //
-  //   firestore.collection(BLOCKS)
-  //     .where('blocker', isEqualTo: FirebaseAuth.instance.currentUser.uid,)
-  //       .snapshots().listen((onData) {
-  //     List<BlockUserModel> list = [];
-  //     for (DocumentSnapshot block in onData.docs) {
-  //       list.add(BlockUserModel.fromJson(block.data()));
-  //     }
-  //     blockedList = list;
-  //
-  //     if (homeConversations.isNotEmpty || matches.isNotEmpty) {
-  //       refreshStreamController.sink.add(true);
-  //     }
-  //   });
-  //
-  //   yield* refreshStreamController.stream;
-  // }
-
-  bool validateIfUserBlocked(String userID) {
-    for (BlockUserModel blockedUser in blockedList) {
-      if (userID == blockedUser.blocker) {
-        return true;
-      }
-    }
-    return false;
   }
 
   static getFleekUsers(AppUser currentUser, FleekData data) async {
@@ -364,42 +294,13 @@ class FireStoreUtils {
     // }
   }
 
-  // matchChecker(BuildContext context) async {
-  //   String myID = FirebaseAuth.instance.currentUser.uid;
-  //   QuerySnapshot result = await firestore
-  //     .collection(SWIPES)
-  //     .where('forUserID', isEqualTo: myID)
-  //     .where('type', isEqualTo: 'like')
-  //     .get();
-  //   if (result.docs.isNotEmpty) {
-  //     await Future.forEach(result.docs, (DocumentSnapshot document) async {
-  //       Swipe match = Swipe.fromJson(document.data());
-  //       QuerySnapshot unSeenMatches = await firestore
-  //         .collection(SWIPES)
-  //         .where('swiperUserID', isEqualTo: myID)
-  //         .where('type', isEqualTo: 'like')
-  //         .where('forUserID', isEqualTo: match.swiperUserID)
-  //         .where('hasBeenSeen', isEqualTo: false)
-  //         .get();
-  //       if (unSeenMatches.docs.isNotEmpty) {
-  //         unSeenMatches.docs.forEach((DocumentSnapshot unSeenMatch) async {
-  //           DocumentSnapshot matchedUserDocSnapshot = await firestore.collection(USERS).doc(match.swiperUserID).get();
-  //           AppUser matchedUser = AppUser.fromJson(matchedUserDocSnapshot.data());
-  //           push(context, MatchScreen(matchedUser: matchedUser));
-  //           updateHasBeenSeen(unSeenMatch.data());
-  //         });
-  //       }
-  //     });
-  //   }
-  // }
-
   onSwipeLeft({ @required AppUser currentUser, @required AppUser dislikedUser }) async {
     DocumentReference documentReference = firestore.collection(SWIPES).doc();
     Swipe leftSwipe = Swipe(
       id: documentReference.id,
-      type: 'dislike',
-      swiperUserID: FirebaseAuth.instance.currentUser.uid,
-      forUserID: dislikedUser.userID,
+      type: SwipeType.PASS,
+      swiper: SwipeSubject.fromUser(currentUser),
+      subject: SwipeSubject.fromUser(dislikedUser),
       createdAt: Timestamp.now(),
       hasBeenSeen: false,
       searchInterest: currentUser.settings.searchInterest
@@ -412,11 +313,11 @@ class FireStoreUtils {
     DocumentReference documentReference = firestore.collection(SWIPES).doc();
     Swipe swipe = Swipe(
       id: documentReference.id,
-      swiperUserID: FirebaseAuth.instance.currentUser.uid,
-      forUserID: likedUser.userID,
+      swiper: SwipeSubject.fromUser(currentUser),
+      subject: SwipeSubject.fromUser(likedUser),
       hasBeenSeen: false,
       createdAt: Timestamp.now(),
-      type: 'like',
+      type: SwipeType.LIKE,
       searchInterest: currentUser.settings.searchInterest
     );
     await documentReference.set(swipe.toJson()).then((onValue) {
@@ -425,11 +326,6 @@ class FireStoreUtils {
       isSuccessful = false;
     });
     return isSuccessful;
-  }
-
-  updateHasBeenSeen(Map<String, dynamic> target) async {
-    target['hasBeenSeen'] = true;
-    await firestore.collection(SWIPES).doc(target['id'] ?? '').update(target);
   }
 
   Future<void> deleteImage(String imageFileUrl) async {
@@ -443,8 +339,8 @@ class FireStoreUtils {
     await firestore
         .collection(SWIPES)
         .where('searchInterest', isEqualTo: searchInterest.toFirebaseString())
-        .where('swiperUserID', isEqualTo: FirebaseAuth.instance.currentUser.uid)
-        .where('forUserID', isEqualTo: forUserID)
+        .where('swiper.id', isEqualTo: FirebaseAuth.instance.currentUser.uid)
+        .where('subject.id', isEqualTo: forUserID)
         .get()
         .then((value) async {
       if (value.docs.isNotEmpty) {
@@ -454,16 +350,6 @@ class FireStoreUtils {
           .delete();
       }
     });
-  }
-
-  closeFleekStream() {
-    if (fleekCardsStreamController != null) {
-      fleekCardsStreamController.close();
-    }
-  }
-
-  void updateCardStream(List<AppUser> data) {
-    fleekCardsStreamController.add(data);
   }
 
   Future<bool> incrementSwipe() async {

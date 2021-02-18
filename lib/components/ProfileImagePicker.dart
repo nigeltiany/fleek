@@ -165,11 +165,7 @@ class _ProfileImagePickerState extends State<ProfileImagePicker> {
   _imagePicked(File image) async {
     showProgress(context, 'Uploading image...', false);
     AppUser user = context.read<AppUser>();
-    String url = await FireStoreUtils().uploadUserImageToFireStorage(
-      user,
-      image,
-      FirebaseAuth.instance.currentUser.uid
-    );
+    String url = await FireStoreUtils().uploadUserImageToFireStorage(user, image, ImageType.DISPLAY_PIC);
     user.profilePictureURL = url;
     FireStoreUtils.updateCurrentUser(user);
     Navigator.of(context).pop(); // Close Dialog

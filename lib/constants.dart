@@ -8,7 +8,6 @@ const USERS = 'users';
 const USERS_PRIVATE = 'users_private';
 const MATCHES = 'users_matches';
 const SWIPES = 'swipes';
-const CHANNEL_PARTICIPATION = "channel_participation";
 const CHANNELS = "channels";
 const THREAD = 'thread';
 const BLOCKS = 'user_blocks';

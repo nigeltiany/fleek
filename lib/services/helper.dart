@@ -309,11 +309,15 @@ String updateTime(Timer timer) {
   return "${twoDigitsHours(callDuration.inHours)}$twoDigitMinutes:$twoDigitSeconds";
 }
 
+// IMPORTANT!!!
+// NEVER CHANGE AFTER DEPLOYING. Should not be a common alpha num character and neither of (_,-,/,\)
+const String USER_ID_DELIMITER = ':';
+
 String normalizedConversationID(String userID, String userID2) {
   if (userID.compareTo(userID2) < 0) {
-    return "$userID:$userID2";
+    return "$userID$USER_ID_DELIMITER$userID2";
   } else {
-    return "$userID2:$userID";
+    return "$userID2$USER_ID_DELIMITER$userID";
   }
 }
 

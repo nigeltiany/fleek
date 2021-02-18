@@ -281,7 +281,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
             PickedFile image =
             await _imagePicker.getImage(source: ImageSource.gallery);
             if (image != null) {
-              String imageUrl = await _fireStoreUtils.uploadChatImageToFireStorage(File(image.path), context);
+              String imageUrl = await _fireStoreUtils.uploadUserImageToFireStorage(user, File(image.path), ImageType.ACCOUNT_PIC);
               images.removeLast();
               images.add(imageUrl);
               user.photos = images;
@@ -301,7 +301,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
             PickedFile image =
             await _imagePicker.getImage(source: ImageSource.camera);
             if (image != null) {
-              String imageUrl = await _fireStoreUtils.uploadChatImageToFireStorage(File(image.path), context);
+              String imageUrl = await _fireStoreUtils.uploadUserImageToFireStorage(user, File(image.path), ImageType.ACCOUNT_PIC);
               images.removeLast();
               images.add(imageUrl);
               user.photos = images;
