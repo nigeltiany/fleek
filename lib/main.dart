@@ -60,7 +60,6 @@ class MyApp extends StatefulWidget {
 class MyAppState extends State<MyApp> with WidgetsBindingObserver {
 
   final Store store;
-  AppUser databaseAppUserState;
   final FlutterSecureStorage secureStorage;
   StreamSubscription tokenStream;
   NewVersion newVersion;
@@ -165,14 +164,14 @@ class MyAppState extends State<MyApp> with WidgetsBindingObserver {
 
     FirebaseAuth.instance.authStateChanges().where((User i) => i != null).listen((User u) async {
 
-      databaseAppUserState = await FireStoreUtils.getCurrentUser();
+      AppUser databaseAppUserState = await FireStoreUtils.getCurrentUser();
       UserPrivateDetails userPrivateDetails = await FireStoreUtils.getCurrentUserPrivateDetails();
 
       if (databaseAppUserState == null) {
         store.appUser.userID = u.uid;
         store.appUser.signedIn = true;
       } else {
-        databaseAppUserState.signedIn = true;
+        store.appUser.signedIn = true;
         store.appUser.copy(databaseAppUserState);
         await FireStoreUtils.updateCurrentUser(store.appUser);
       }
@@ -193,10 +192,6 @@ class MyAppState extends State<MyApp> with WidgetsBindingObserver {
 
     });
 
-    FirebaseAuth.instance.authStateChanges().firstWhere((User i) => i == null).then((_) {
-      databaseAppUserState = null;
-    });
-
   }
 
   @override
@@ -208,15 +203,15 @@ class MyAppState extends State<MyApp> with WidgetsBindingObserver {
 
   @override
   void didChangeAppLifecycleState(AppLifecycleState state) {
-    if (FirebaseAuth.instance.currentUser != null && databaseAppUserState != null) {
+    if (FirebaseAuth.instance.currentUser != null) {
       if (state == AppLifecycleState.paused) {
         tokenStream?.pause();
-        databaseAppUserState.lastOnlineTimestamp = Timestamp.now();
-        FireStoreUtils.updateCurrentUser(databaseAppUserState);
+        store.appUser.lastOnlineTimestamp = Timestamp.now();
+        FireStoreUtils.updateCurrentUser(store.appUser);
       } else if (state == AppLifecycleState.resumed) {
         tokenStream?.resume();
-        databaseAppUserState.lastOnlineTimestamp = Timestamp.now();
-        FireStoreUtils.updateCurrentUser(databaseAppUserState);
+        store.appUser.lastOnlineTimestamp = Timestamp.now();
+        FireStoreUtils.updateCurrentUser(store.appUser);
       }
     }
   }
