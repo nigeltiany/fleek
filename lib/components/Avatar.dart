@@ -1,3 +1,4 @@
+import 'package:dating/model/Swipe.dart';
 import 'package:dating/model/User.dart';
 import 'package:dating/services/helper.dart';
 import 'package:dating/ui/userDetailsScreen/UserDetailsScreen.dart';
@@ -5,20 +6,20 @@ import 'package:flutter/material.dart';
 
 class Avatar extends StatelessWidget {
 
-  final AppUser appUser;
+  final IdentifiableUser identifiableUser;
 
-  Avatar(this.appUser);
+  Avatar(this.identifiableUser);
 
   @override
   Widget build(BuildContext context) {
     return GestureDetector(
       onTap: () {
-        push(context, UserDetailsScreen(identifiableUser: appUser, isMatch: true,));
+        push(context, UserDetailsScreen(identifiableUser: identifiableUser, isMatch: true,));
       },
       child: Stack(
         alignment: Alignment.bottomRight,
         children: <Widget>[
-          displayCircleImage(appUser.profilePictureURL, 50, false),
+          displayCircleImage((identifiableUser is AppUser) ? (identifiableUser as AppUser).profilePictureURL : (identifiableUser as SwipeSubject).profilePictureURL, 50, false),
           // Positioned(
           //   right: 2.4,
           //   bottom: 2.4,

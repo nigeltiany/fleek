@@ -62,7 +62,7 @@ class _MatchScreenState extends State<MatchScreen> {
         });
         pushReplacement(context, 
           ChatScreen(
-            chatWithUser: widget.matchedUser,
+            identifiableUser: widget.matchedUser,
           ),
         );
       },

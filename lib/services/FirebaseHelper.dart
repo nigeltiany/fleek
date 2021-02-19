@@ -193,13 +193,13 @@ class FireStoreUtils {
   }
 
   static Future<void> sendMessage(AppUser currentUser, AppUser matchedUser, MessageData message, { String notificationText }) async {
-    var ref = firestore.collection(CHANNELS).doc(normalizedConversationID(currentUser.userID, matchedUser.userID)).collection(THREAD).doc();
+    var ref = firestore.collection(MATCH_CONVERSATIONS).doc(normalizedConversationID(currentUser.userID, matchedUser.userID)).collection(CONVERSATION_MESSAGES).doc();
     message.messageID = ref.id;
     await ref.set(message.toJson(), SetOptions(merge: true));
   }
 
   static Future<void> updateChannel(ConversationModel conversationModel) async {
-    await firestore.collection(CHANNELS).doc(conversationModel.id).set(conversationModel.toJson(), SetOptions(merge: true));
+    await firestore.collection(MATCH_CONVERSATIONS).doc(conversationModel.id).set(conversationModel.toJson(), SetOptions(merge: true));
   }
 
   Future<bool> blockUser(AppUser blockedUser, String type) async {

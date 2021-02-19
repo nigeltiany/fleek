@@ -49,7 +49,7 @@ class ConversationData with ChangeNotifier {
 
   _getConversations(String userID) async {
     _streamSubscription = FirebaseFirestore.instance
-      .collection(CHANNELS)
+      .collection(MATCH_CONVERSATIONS)
       .where('participantIDs', arrayContains: userID)
       .orderBy('lastMessageDate', descending: true)
       .snapshots().listen((querySnapshot) {

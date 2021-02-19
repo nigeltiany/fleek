@@ -88,7 +88,7 @@ class _ConversationsState extends State<ConversationsScreen> {
                   child: InkWell(
                     onLongPress: () => _onMatchLongPress(fleekMatch),
                     onTap: () async {
-                      push(context, ChatScreen(chatWithUser: fleekMatch.match));
+                      push(context, ChatScreen(identifiableUser: fleekMatch.match));
                     },
                     child: Column(
                       children: <Widget>[
@@ -170,7 +170,7 @@ class _ConversationsState extends State<ConversationsScreen> {
     var listItem = (AppUser user) {
       return InkWell(
         onTap: () {
-          push(context, ChatScreen(chatWithUser: user,));
+          push(context, ChatScreen(identifiableUser: user,));
         },
         child: ListTile(
           leading: Avatar(user),
@@ -190,7 +190,7 @@ class _ConversationsState extends State<ConversationsScreen> {
       );
     };
 
-    if (conversationState.hasUserID(participants[0])) {
+    if (participants.isNotEmpty && conversationState.hasUserID(participants[0])) {
       return listItem(conversationState.getUser(participants[0]));
     }
 

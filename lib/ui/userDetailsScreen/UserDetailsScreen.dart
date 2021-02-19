@@ -62,28 +62,33 @@ class _UserDetailsScreenState extends State<UserDetailsScreen> {
 
       appUser = Provider.of<ConversationData>(context, listen: false).getUser(identifiableUser.userID);
 
-      return FutureBuilder<AppUser>(
-        future: FireStoreUtils.getUserByID(identifiableUser.userID).then((user) {
-          Provider.of<ConversationData>(context, listen: false).addConversationUser(user);
-          appUser = user;
-          return user;
-        }),
-        builder: (BuildContext context, AsyncSnapshot<AppUser> snapshot) {
-          if (snapshot.hasData) {
-            images.add(snapshot.data.profilePictureURL);
-            images.addAll(snapshot.data.photos.cast<String>());
-            images.removeWhere((element) => element == null);
-            setState(() {});
-          }
-          return Container(
-            child: Center(
-              child: snapshot.hasError ? Icon(Icons.error, color: Colors.redAccent) : CircularProgressIndicator(),
-            ),
-          );
-        },
-      );
+      if (appUser == null) {
+
+        return FutureBuilder<AppUser>(
+          future: FireStoreUtils.getUserByID(identifiableUser.userID).then((user) {
+            Provider.of<ConversationData>(context, listen: false).addConversationUser(user);
+            appUser = user;
+            return user;
+          }),
+          builder: (BuildContext context, AsyncSnapshot<AppUser> snapshot) {
+            if (snapshot.hasData) {
+              setState(() {});
+            }
+            return Container(
+              child: Center(
+                child: snapshot.hasError ? Icon(Icons.error, color: Colors.redAccent) : CircularProgressIndicator(),
+              ),
+            );
+          },
+        );
+
+      }
 
     }
+
+    images.add(appUser.profilePictureURL);
+    images.addAll(appUser.photos.cast<String>());
+    images.removeWhere((element) => element == null);
     
     num imageViewerHeight = (MediaQuery.of(context).size.height * 0.6) + 28;
     _gridPages = _buildGridView();

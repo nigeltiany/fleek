@@ -88,9 +88,9 @@ class ChatData with ChangeNotifier {
 
   Query _fetchQuery(AppUser matchedUser) {
     return FirebaseFirestore.instance
-      .collection(CHANNELS)
+      .collection(MATCH_CONVERSATIONS)
       .doc(_conversationID(matchedUser))
-      .collection(THREAD)
+      .collection(CONVERSATION_MESSAGES)
       .orderBy('createdAt', descending: true);
   }
   

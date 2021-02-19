@@ -335,7 +335,7 @@ class _SwipeScreenState extends State<SwipeScreen> {
                   orientation: AmassOrientation.BOTTOM,
                   totalNum: fleekData.users.length,
                   stackNum: 3,
-                  swipeEdge: 15,
+                  swipeEdge: 12,
                   maxWidth: MediaQuery.of(context).size.width,
                   maxHeight: MediaQuery.of(context).size.height,
                   minWidth: MediaQuery.of(context).size.width * 0.9,

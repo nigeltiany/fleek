@@ -34,15 +34,15 @@ enum RecordingState { HIDDEN, VISIBLE, Recording }
 
 class ChatScreen extends StatefulWidget {
 
-  final IdentifiableUser chatWithUser;
+  final IdentifiableUser identifiableUser;
 
   const ChatScreen({
     Key key,
-    @required this.chatWithUser,
+    @required this.identifiableUser,
   }) : super(key: key);
 
   @override
-  _ChatScreenState createState() => _ChatScreenState(chatWithUser);
+  _ChatScreenState createState() => _ChatScreenState(identifiableUser);
 
 }
 
@@ -70,9 +70,9 @@ class _ChatScreenState extends State<ChatScreen> {
 
   @override
   void initState() {
+
     super.initState();
     currentUser = context.read<AppUser>();
-    context.read<ChatData>().chattingWith(identifiableUser);
     currentUsersEncrypter = context.read<EncrypterState>().encrypter;
 
     context.read<ChatData>().fetchStateStream.listen((fetching) {
@@ -83,7 +83,9 @@ class _ChatScreenState extends State<ChatScreen> {
     });
     _chatScrollController.addListener(() {
       if (_chatScrollController.position.extentBefore + 80 >= _chatScrollController.position.maxScrollExtent && !_fetchingMessages && _hasMoreMessages) {
-        context.read<ChatData>().scrollFetch(identifiableUser);
+        if (chatWithUser != null) {
+          context.read<ChatData>().scrollFetch(chatWithUser);
+        }
       }
     });
   }
@@ -111,7 +113,7 @@ class _ChatScreenState extends State<ChatScreen> {
       mainAxisAlignment: MainAxisAlignment.start,
       crossAxisAlignment: CrossAxisAlignment.center,
       children: <Widget>[
-        Avatar(identifiableUser),
+        Avatar(chatWithUser ?? identifiableUser),
         SizedBox(width: 12),
         Flexible(
           child: Text((identifiableUser is AppUser) ? (identifiableUser as AppUser).userName : (identifiableUser as SwipeSubject).userName,
@@ -157,6 +159,7 @@ class _ChatScreenState extends State<ChatScreen> {
           return FutureBuilder<AppUser>(
             future: FireStoreUtils.getUserByID(identifiableUser.userID).then((user) {
               Provider.of<ConversationData>(context, listen: false).addConversationUser(user);
+              Provider.of<ChatData>(context, listen: false).chattingWith(user);
               chatWithUser = user;
               return user;
             }),
@@ -172,6 +175,8 @@ class _ChatScreenState extends State<ChatScreen> {
             },
           );
         }
+
+        Provider.of<ChatData>(context, listen: false).chattingWith(chatWithUser);
 
         return _body(context);
 
@@ -202,7 +207,7 @@ class _ChatScreenState extends State<ChatScreen> {
               itemBuilder: (BuildContext context, int index) {
                 return Padding(
                   padding: const EdgeInsets.symmetric(horizontal: 12),
-                  child: buildMessage(chatData.messages[index], identifiableUser),
+                  child: buildMessage(chatData.messages[index], chatWithUser),
                 );
               },
             );
@@ -415,7 +420,7 @@ class _ChatScreenState extends State<ChatScreen> {
             PickedFile image = await _imagePicker.getImage(source: ImageSource.gallery);
             if (image != null) {
               var encryptionResult = await encryptFileAtPath(image.path);
-              String url = await _fireStoreUtils.uploadChatImageToFireStorage(context, encryptionResult.file, normalizedConversationID(currentUser.userID, identifiableUser.userID));
+              String url = await _fireStoreUtils.uploadChatImageToFireStorage(context, encryptionResult.file, normalizedConversationID(currentUser.userID, chatWithUser.userID));
               _sendMessage(encryptionResult.fileSecret.toString(), Url(url: url, mime: lookupMimeType(image.path)));
             }
           },
@@ -441,7 +446,7 @@ class _ChatScreenState extends State<ChatScreen> {
             PickedFile image = await _imagePicker.getImage(source: ImageSource.camera);
             if (image != null) {
               var encryptionResult = await encryptFileAtPath(image.path);
-              String url = await _fireStoreUtils.uploadChatImageToFireStorage(context, encryptionResult.file, normalizedConversationID(currentUser.userID, identifiableUser.userID));
+              String url = await _fireStoreUtils.uploadChatImageToFireStorage(context, encryptionResult.file, normalizedConversationID(currentUser.userID, chatWithUser.userID));
               await _sendMessage(encryptionResult.fileSecret.toString(), Url(url: url, mime: lookupMimeType(image.path)));
             }
           },
@@ -541,15 +546,15 @@ class _ChatScreenState extends State<ChatScreen> {
     
     ConversationModel conversationModel = ConversationModel(
       lastSenderID: currentUser.userID,
-      id: normalizedConversationID(currentUser.userID, identifiableUser.userID),
-      participantIDs: List.unmodifiable([currentUser.userID, identifiableUser.userID]),
+      id: normalizedConversationID(currentUser.userID, chatWithUser.userID),
+      participantIDs: List.unmodifiable([currentUser.userID, chatWithUser.userID]),
       lastMessageDate: Timestamp.now(),
     );
 
     MessageData message = MessageData(
       created: Timestamp.now(),
       content: Content(content: Map<String, String>()),
-      recipientID: identifiableUser.userID,
+      recipientID: chatWithUser.userID,
       recipientProfilePictureURL: chatWithUser.profilePictureURL,
       senderUsername: currentUser.userName,
       senderID: currentUser.userID,
@@ -587,7 +592,7 @@ class _ChatScreenState extends State<ChatScreen> {
 
     // update conversation model first
     await FireStoreUtils.updateChannel(conversationModel);
-    await FireStoreUtils.sendMessage(currentUser, identifiableUser, message, notificationText: notificationText);
+    await FireStoreUtils.sendMessage(currentUser, chatWithUser, message, notificationText: notificationText);
 
   }
 
