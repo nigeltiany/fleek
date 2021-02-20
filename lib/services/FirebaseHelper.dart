@@ -319,9 +319,14 @@ class FireStoreUtils {
   }
 
   static onSwipeLeft({ @required AppUser currentUser, @required AppUser dislikedUser }) async {
-    DocumentReference documentReference = firestore.collection(SWIPES).doc();
+
+    DocumentReference documentReference = firestore.collection(SWIPES)
+      .doc(FirebaseAuth.instance.currentUser.uid)
+      .collection(SWIPES_SUB_COLLECTION)
+      .doc(dislikedUser.userID);
+
     Swipe leftSwipe = Swipe(
-      id: documentReference.id,
+      id: dislikedUser.userID,
       type: SwipeType.PASS,
       swiper: SwipeSubject.fromUser(currentUser),
       subject: SwipeSubject.fromUser(dislikedUser),
@@ -329,14 +334,21 @@ class FireStoreUtils {
       hasBeenSeen: false,
       searchInterest: currentUser.settings.searchInterest
     );
+
     await documentReference.set(leftSwipe.toJson());
+
   }
 
   static Future<bool> onSwipeRight({ @required AppUser currentUser, @required AppUser likedUser, bool superLike = false }) async {
     bool isSuccessful;
-    DocumentReference documentReference = firestore.collection(SWIPES).doc();
+
+    DocumentReference documentReference = firestore.collection(SWIPES)
+      .doc(FirebaseAuth.instance.currentUser.uid)
+      .collection(SWIPES_SUB_COLLECTION)
+      .doc(likedUser.userID);
+
     Swipe swipe = Swipe(
-      id: documentReference.id,
+      id: likedUser.userID,
       swiper: SwipeSubject.fromUser(currentUser),
       subject: SwipeSubject.fromUser(likedUser),
       hasBeenSeen: false,
@@ -344,11 +356,13 @@ class FireStoreUtils {
       type: superLike ? SwipeType.SUPER_LIKE : SwipeType.LIKE,
       searchInterest: currentUser.settings.searchInterest
     );
+
     await documentReference.set(swipe.toJson()).then((onValue) {
       isSuccessful = true;
     }, onError: (e) {
       isSuccessful = false;
     });
+
     return isSuccessful;
   }
 
@@ -362,8 +376,9 @@ class FireStoreUtils {
   static undo(String forUserID, SearchInterest searchInterest) async {
     await firestore
         .collection(SWIPES)
+        .doc(FirebaseAuth.instance.currentUser.uid)
+        .collection(SWIPES_SUB_COLLECTION)
         .where('searchInterest', isEqualTo: searchInterest.toFirebaseString())
-        .where('swiper.id', isEqualTo: FirebaseAuth.instance.currentUser.uid)
         .where('subject.id', isEqualTo: forUserID)
         .get()
         .then((value) async {

@@ -36,7 +36,6 @@ class _ConversationsState extends State<ConversationsScreen> {
 
   AppUser currentUser;
   ConversationData conversationState;
-  MatchData matchData;
   final fireStoreUtils = FireStoreUtils();
 
   _ConversationsState();
@@ -46,7 +45,6 @@ class _ConversationsState extends State<ConversationsScreen> {
     super.initState();
     currentUser = context.read<AppUser>();
     conversationState = context.read<ConversationData>();
-    matchData = context.read<MatchData>();
   }
 
   @override
@@ -69,32 +67,26 @@ class _ConversationsState extends State<ConversationsScreen> {
   }
 
   Widget get _matchesList {
-    return SizedBox(
-      height: 100,
-      child: StreamBuilder<FleekMatch>(
-        stream: matchData.matchStream,
-        builder: (context, snap) {
-          if (!snap.hasData || matchData.matches.isEmpty) {
-            return Center(
-              child: Text('No Matches found.', style: TextStyle(fontSize: 18),),
-            );
-          } else if (snap.connectionState == ConnectionState.waiting) {
-            return Container(
-              child: Center(
-                child: CircularProgressIndicator(
-                  valueColor: AlwaysStoppedAnimation<Color>(Color(COLOR_ACCENT)),
-                ),
-              ),
-            );
-          } else {
-            return ListView.builder(
+    return Consumer<MatchData>(
+      builder: (BuildContext context, MatchData md, _) {
+        if (md.matches.isEmpty) {
+          return SizedBox(
+            height: 100,
+            child: Center(
+              child: Text('No Matches yet', style: TextStyle(fontSize: 18),),
+            ),
+          );
+        } else {
+          return SizedBox(
+            height: 100,
+            child: ListView.builder(
               scrollDirection: Axis.horizontal,
-              itemCount: matchData.matches.length,
+              itemCount: md.matches.length,
               itemBuilder: (BuildContext context, int index) {
                 return InkWell(
-                  onLongPress: () => _onMatchLongPress(matchData.matches[index]),
+                  onLongPress: () => _onMatchLongPress(md.matches[index]),
                   onTap: () async {
-                    push(context, ChatScreen(identifiableUser: matchData.matches[index].match));
+                    push(context, ChatScreen(identifiableUser: md.matches[index].match));
                   },
                   child: Padding(
                     padding: const EdgeInsets.symmetric(vertical: 8.0, horizontal: 4),
@@ -102,13 +94,13 @@ class _ConversationsState extends State<ConversationsScreen> {
                       crossAxisAlignment: CrossAxisAlignment.center,
                       mainAxisAlignment: MainAxisAlignment.end,
                       children: [
-                        displayCircleImage(matchData.matches[index].match.profilePictureURL, 50, false),
+                        displayCircleImage(md.matches[index].match.profilePictureURL, 50, false),
                         Expanded(
                           child: Container(
                             width: 76,
                             child: Padding(
                               padding: const EdgeInsets.only(top: 8.0, left: 8, right: 8),
-                              child: Text('${matchData.matches[index].match.userName}',
+                              child: Text('${md.matches[index].match.userName}',
                                 textAlign: TextAlign.center,
                                 maxLines: 1,
                                 overflow: TextOverflow.fade,
@@ -121,10 +113,10 @@ class _ConversationsState extends State<ConversationsScreen> {
                   ),
                 );
               },
-            );
-          }
-        },
-      ),
+            ),
+          );
+        }
+      },
     );
   }
 

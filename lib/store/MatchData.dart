@@ -56,6 +56,7 @@ class MatchData with ChangeNotifier {
     _matchDataStore[fleekMatch.match.userID] = fleekMatch;
     _matchController.add(fleekMatch);
     _matches.add(fleekMatch);
+    notifyListeners();
   }
 
   Query _matchQuery() {
@@ -74,10 +75,16 @@ class MatchData with ChangeNotifier {
   }
 
   _listenForMatches(User user) {
-    _streamSubscription = _matchQuery().where("seen", isEqualTo: false).limit(1).snapshots().listen((querySnapshot) {
-      querySnapshot.docs.forEach((doc) {
-        _addMatch(FleekMatch.fromJson(doc.data()));
-      });
+    _streamSubscription = _matchQuery().limit(1).snapshots().listen((querySnapshot) {
+      if (querySnapshot.docs.isEmpty && querySnapshot.docChanges.isNotEmpty) {
+        _matchDataStore.removeWhere((key, _) => key == querySnapshot.docChanges.first.doc.id);
+        _matches.removeWhere((match) => match.match.userID == querySnapshot.docChanges.first.doc.id);
+        notifyListeners();
+      } else {
+        querySnapshot.docs.forEach((doc) {
+          _addMatch(FleekMatch.fromJson(doc.data()));
+        });
+      }
     });
   }
 
