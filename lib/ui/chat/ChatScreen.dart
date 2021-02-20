@@ -624,6 +624,8 @@ class _ChatScreenState extends State<ChatScreen> {
                 showProgress(context, 'Blocking user...', false);
 
                 bool isSuccessful = await FireStoreUtils.blockUser(identifiableUser);
+                var cid = normalizedConversationID(currentUser.userID, chatWithUser.userID);
+                Provider.of<ConversationData>(context, listen: false).removeConversation(cid);
                 Navigator.of(context).pop(); // Close Dialog
 
                 if (isSuccessful) {

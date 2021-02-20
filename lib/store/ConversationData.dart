@@ -33,6 +33,13 @@ class ConversationData with ChangeNotifier {
     notifyListeners();
   }
 
+  void removeConversation(String id) {
+    if (_conversation.containsKey(id)) {
+      _conversation.removeWhere((key, _) => key == id);
+      notifyListeners();
+    }
+  }
+
   bool hasUserID(String userID) {
     return _conversationUsers.containsKey(userID);
   }

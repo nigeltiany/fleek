@@ -219,6 +219,12 @@ class FireStoreUtils {
       .doc(user.userID)
       .delete();
 
+    await firestore.collection(MATCHES)
+      .doc(user.userID)
+      .collection('matches')
+      .doc(FirebaseAuth.instance.currentUser.uid)
+      .delete();
+
     await firestore.collection(USERS).doc(FirebaseAuth.instance.currentUser.uid).set({
       "blockList": FieldValue.arrayUnion([user.userID])
     }, SetOptions(merge: true)).then((document) {

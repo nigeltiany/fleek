@@ -6,9 +6,11 @@ import 'package:dating/constants.dart';
 import 'package:dating/model/User.dart';
 import 'package:dating/services/FirebaseHelper.dart';
 import 'package:dating/services/helper.dart';
+import 'package:dating/store/ConversationData.dart';
 import 'package:dating/store/Data.dart';
 import 'package:dating/ui/upgradeAccount/UpgradeAccount.dart';
 import 'package:dating/ui/userDetailsScreen/UserDetailsScreen.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/widgets.dart';
 import 'package:provider/provider.dart';
@@ -277,6 +279,8 @@ class _SwipeScreenState extends State<SwipeScreen> {
                 Navigator.pop(innerContext);
                 showProgress(context, 'Blocking user...', false);
                 bool isSuccessful = await FireStoreUtils.blockUser(user);
+                var cid = normalizedConversationID(FirebaseAuth.instance.currentUser.uid, user.userID);
+                Provider.of<ConversationData>(context, listen: false).removeConversation(cid);
                 Navigator.pop(context);
                 if (isSuccessful) {
                   await FireStoreUtils.onSwipeLeft(currentUser: currentUser, dislikedUser: user);
