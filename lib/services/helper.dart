@@ -371,6 +371,7 @@ _goToHomeScreen (BuildContext context, AppUser contextUser, KeyPair keyPair, Enc
     encrypterState.encrypter = (String message) async {
       return await Gecies.encrypt(keyPair.publicKeyBase64, message);
     };
+    user.online = true;
     user.signedIn = true;
     await FireStoreUtils.updateCurrentUser(user);
     contextUser.copy(user);
