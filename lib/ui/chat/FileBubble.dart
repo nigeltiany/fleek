@@ -42,6 +42,8 @@ class _FileBubbleState extends State<FileBubble> {
   AppUser currentUser;
   MemoryFileSystem memoryFileSystem;
   KeyPair keyPair;
+  Image image;
+  bool processFailure = false;
 
   _FileBubbleState(this.messageData, this.mediaURL, this.isVideo);
 
@@ -103,9 +105,18 @@ class _FileBubbleState extends State<FileBubble> {
 
   Widget _decryptedImageFileContent(MessageData messageData, String mediaURL) {
 
+    if (image != null) {
+      return imageRenderer(image);
+    } else if (processFailure) {
+      return WidgetBubble(
+        byCurrentUser:  messageData.senderID == currentUser.userID,
+        child: Icon(Icons.error, color: Colors.redAccent),
+      );
+    }
+
     var fileName = Uri.parse(mediaURL).queryParameters["token"];
     if (memoryFileSystem.file(fileName).existsSync()) {
-      var image = Image.memory(memoryFileSystem.file(fileName).readAsBytesSync());
+      image = Image.memory(memoryFileSystem.file(fileName).readAsBytesSync());
       return imageRenderer(image);
     }
 
@@ -120,7 +131,8 @@ class _FileBubbleState extends State<FileBubble> {
             future: decryptFileHelper(memoryFileSystem,(snapshot.data[0] as String), (snapshot.data[1] as File), fileName),
             builder: (BuildContext deepContext, AsyncSnapshot<File> innerSnap) {
               if (innerSnap.hasData) {
-                return imageRenderer(Image.memory(innerSnap.data.readAsBytesSync()));
+                image = Image.memory(innerSnap.data.readAsBytesSync());
+                return imageRenderer(image);
               } else if (innerSnap.hasError) {
                 return WidgetBubble(
                   byCurrentUser:  messageData.senderID == currentUser.userID,
@@ -132,6 +144,7 @@ class _FileBubbleState extends State<FileBubble> {
             },
           );
         } else if (snapshot.hasError) {
+          processFailure = true;
           return WidgetBubble(
             byCurrentUser:  messageData.senderID == currentUser.userID,
             child: Icon(Icons.error, color: Colors.redAccent),

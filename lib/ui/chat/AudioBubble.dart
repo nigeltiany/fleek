@@ -37,6 +37,8 @@ class _AudioBubbleState extends State<AudioBubble> {
   final MessageData messageData;
   final String audioURL;
 
+  Widget _decryptedResults;
+
   _AudioBubbleState(this.messageData, this.audioURL);
 
   @override
@@ -50,15 +52,20 @@ class _AudioBubbleState extends State<AudioBubble> {
   @override
   Widget build(BuildContext context) {
 
+    if (_decryptedResults != null) {
+      return _decryptedResults;
+    }
+
     var fileName = Uri.parse(audioURL).queryParameters["token"];
     if (memoryFileSystem.file(fileName).existsSync()) {
-      return WidgetBubble(
+      _decryptedResults = WidgetBubble(
         byCurrentUser: messageData.senderID == currentUser.userID,
         child: PlayerWidget(
           bytes: memoryFileSystem.file(fileName).readAsBytesSync(),
           color: isDarkMode(context) ? Colors.grey[800] : Colors.grey[200],
         ),
       );
+      return _decryptedResults;
     }
 
     return FutureBuilder<List<dynamic>>(
@@ -72,13 +79,14 @@ class _AudioBubbleState extends State<AudioBubble> {
             future: decryptFileHelper(memoryFileSystem, (snapshot.data[0] as String), (snapshot.data[1] as File), fileName),
             builder: (BuildContext deepContext, AsyncSnapshot<File> innerSnap) {
               if (innerSnap.hasData) {
-                return WidgetBubble(
+                _decryptedResults =  WidgetBubble(
                   byCurrentUser: messageData.senderID == currentUser.userID,
                   child: PlayerWidget(
                     bytes: memoryFileSystem.file(fileName).readAsBytesSync(),
                     color: isDarkMode(context) ? Colors.grey[800] : Colors.grey[200],
                   ),
                 );
+                return _decryptedResults;
               } else if (innerSnap.hasError) {
                 return WidgetBubble(
                   byCurrentUser:  messageData.senderID == currentUser.userID,
@@ -90,10 +98,11 @@ class _AudioBubbleState extends State<AudioBubble> {
             },
           );
         } else if (snapshot.hasError) {
-          return WidgetBubble(
+          _decryptedResults =  WidgetBubble(
             byCurrentUser:  messageData.senderID == currentUser.userID,
             child: Icon(Icons.error, color: Colors.redAccent),
           );
+          return _decryptedResults;
         } else {
           return WidgetBubble(
             byCurrentUser:  messageData.senderID == currentUser.userID,

@@ -26,6 +26,7 @@ class _TextBubbleState extends State<TextBubble> {
   final MessageData messageData;
   AppUser currentUser;
   KeyPair keyPair;
+  Widget _result;
 
   _TextBubbleState(this.messageData);
 
@@ -39,19 +40,24 @@ class _TextBubbleState extends State<TextBubble> {
   @override
   Widget build(BuildContext context) {
 
+    if (_result != null) {
+      return _result;
+    }
+
     return FutureBuilder<String>(
       future: Gecies.decrypt(keyPair.privateKeyBase64, messageData.content.content[currentUser.userID]),
       builder: (BuildContext context, AsyncSnapshot<String> snapshot) {
         if (snapshot.hasError) {
-          return WidgetBubble(
+          _result = WidgetBubble(
             byCurrentUser:  messageData.senderID == currentUser.userID,
             child: Icon(Icons.error, color: Colors.redAccent),
           );
+          return _result;
         }
         if (snapshot.data == null) {
           return Container();
         }
-        return WidgetBubble(
+        _result = WidgetBubble(
           byCurrentUser: messageData.senderID == currentUser.userID,
           child: Text(snapshot.data,
             textAlign: TextAlign.start,
@@ -62,6 +68,7 @@ class _TextBubbleState extends State<TextBubble> {
             ),
           ),
         );
+        return _result;
       },
     );
 
