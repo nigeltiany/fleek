@@ -306,6 +306,10 @@ class _ChatScreenState extends State<ChatScreen> {
     );
   }
 
+  Color get _recordingMessageColor {
+    return isDarkMode(context) ? Colors.white : Colors.black;
+  }
+
   Widget _buildAudioMessageRecorder(BuildContext innerContext) {
     return Visibility(
       visible: currentRecordingState != RecordingState.HIDDEN,
@@ -318,7 +322,8 @@ class _ChatScreenState extends State<ChatScreen> {
               child: Center(
                 child: Text(audioMessageTime,
                   style: TextStyle(
-                    color: (Duration(seconds: audioMessageTimer.tick).inMinutes > 2 ? Colors.redAccent : isDarkMode(context) ? Colors.white : Colors.black),
+                    fontSize: audioMessageTime == 'Start Recording' ? 16 : 32,
+                    color: (audioMessageTimer != null ? (Duration(seconds: audioMessageTimer.tick).inMinutes > 2 ? Colors.redAccent : _recordingMessageColor) : _recordingMessageColor),
                   ),
                 ),
               ),
