@@ -314,7 +314,15 @@ class _ChatScreenState extends State<ChatScreen> {
           mainAxisAlignment: MainAxisAlignment.center,
           mainAxisSize: MainAxisSize.max,
           children: <Widget>[
-            Expanded(child: Center(child: Text(audioMessageTime))),
+            Expanded(
+              child: Center(
+                child: Text(audioMessageTime,
+                  style: TextStyle(
+                    color: (Duration(seconds: audioMessageTimer.tick).inMinutes > 2 ? Colors.redAccent : isDarkMode(context) ? Colors.white : Colors.black),
+                  ),
+                ),
+              ),
+            ),
             Align(
               alignment: Alignment.bottomCenter,
               child: Padding(
@@ -685,6 +693,9 @@ class _ChatScreenState extends State<ChatScreen> {
     if (await AudioRecorder.hasPermissions) {
       await AudioRecorder.start(path: tempPathForAudioMessages, audioOutputFormat: AudioOutputFormat.AAC);
       audioMessageTimer = Timer.periodic(Duration(seconds: 1), (timer) {
+        if (Duration(seconds: audioMessageTimer.tick).inMinutes > 3) {
+          _onSendRecord();
+        }
         setState(() {
           audioMessageTime = updateTime(audioMessageTimer);
         });
