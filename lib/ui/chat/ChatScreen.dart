@@ -407,32 +407,27 @@ class _ChatScreenState extends State<ChatScreen> {
   _onCameraClick() {
 
     final action = Container(
-      color: isDarkMode(context) ? Colors.black : Colors.white,
+      color: isDarkMode(context) ? Color(DARK_MODE_SCAFFOLD) : Colors.white,
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
           Padding(
             padding: const EdgeInsets.symmetric(vertical: 12),
-            child: Text("Send Media", textAlign: TextAlign.center),
+            child: Text("Send Media",
+              textAlign: TextAlign.center,
+              style: TextStyle(
+                fontSize: 18,
+                color: Color(COLOR_PRIMARY_DARK),
+              ),
+            ),
           ),
           ListView(
             shrinkWrap: true,
             children: [
-              FlatButton(
-                child: Text("Choose image from gallery"),
-                onPressed: () async {
-                  Navigator.pop(context);
-                  PickedFile image = await _imagePicker.getImage(source: ImageSource.gallery);
-                  if (image != null) {
-                    var encryptionResult = await encryptFileAtPath(image.path);
-                    String url = await FireStoreUtils.uploadChatImageToFireStorage(context, encryptionResult.file, normalizedConversationID(currentUser.userID, chatWithUser.userID));
-                    _sendMessage(encryptionResult.fileSecret.toString(), Url(url: url, mime: lookupMimeType(image.path)));
-                  }
-                },
-              ),
-              FlatButton(
-                child: Text("Take a picture"),
-                onPressed: () async {
+              ListTile(
+                title: Text("Take a picture"),
+                leading: Icon(Icons.camera_alt_rounded),
+                onTap: () async {
                   Navigator.pop(context);
                   PickedFile image = await _imagePicker.getImage(source: ImageSource.camera);
                   if (image != null) {
@@ -442,14 +437,22 @@ class _ChatScreenState extends State<ChatScreen> {
                   }
                 },
               ),
-              FlatButton(
-                child: Text("Close"),
-                onPressed: () {
+              ListTile(
+                title: Text("Choose image from gallery"),
+                leading: Icon(Icons.add_photo_alternate),
+                onTap: () async {
                   Navigator.pop(context);
+                  PickedFile image = await _imagePicker.getImage(source: ImageSource.gallery);
+                  if (image != null) {
+                    var encryptionResult = await encryptFileAtPath(image.path);
+                    String url = await FireStoreUtils.uploadChatImageToFireStorage(context, encryptionResult.file, normalizedConversationID(currentUser.userID, chatWithUser.userID));
+                    _sendMessage(encryptionResult.fileSecret.toString(), Url(url: url, mime: lookupMimeType(image.path)));
+                  }
                 },
               ),
             ],
           ),
+          SizedBox(height: 12),
         ],
       ),
     );
@@ -496,7 +499,7 @@ class _ChatScreenState extends State<ChatScreen> {
   Widget _messageContentWidget(MessageData messageData, { bool byCurrentUser = false }) {
 
     String mediaUrl = '';
-    bool isVideo = false;
+    // bool isVideo = false;
 
     if (messageData.url != null && messageData.url.url.isNotEmpty) {
       if (messageData.url.mime.contains('image')) {
@@ -512,7 +515,7 @@ class _ChatScreenState extends State<ChatScreen> {
     if (mediaUrl.contains('audio')) {
       return AudioBubble(key: Key(messageData.messageID), messageData: messageData, audioURL: mediaUrl);
     } else if (mediaUrl.isNotEmpty) {
-      return FileBubble(key: Key(messageData.messageID), messageData: messageData, mediaURL: mediaUrl, isVideo: isVideo);
+      return FileBubble(key: Key(messageData.messageID), messageData: messageData, mediaURL: mediaUrl, isVideo: false);
     } else {
       return TextBubble(key: Key(messageData.messageID), messageData: messageData);
     }
@@ -583,22 +586,25 @@ class _ChatScreenState extends State<ChatScreen> {
       context: context,
       builder: (BuildContext innerContext) {
         return SimpleDialog(
-          titlePadding: EdgeInsets.zero,
+          titlePadding: EdgeInsets.symmetric(horizontal: 8),
           title: AppBar(
-            leading: Avatar(chatWithUser),
-            title: Text(chatWithUser.userName ?? ""),
-            actions: [
-              IconButton(
-                icon: Icon(Icons.close),
-                onPressed: () {
-                  Navigator.pop(innerContext);
-                },
-              )
-            ],
+            elevation: 0,
+            backgroundColor: Colors.transparent,
+            toolbarHeight: 64,
+            leading: Center(child: Avatar(chatWithUser)),
+            title: Text(chatWithUser.userName ?? "",
+              style: TextStyle(
+                color: isDarkMode(context) ? Colors.white : Colors.black,
+              ),
+            ),
           ),
           children: [
             ListTile(
-              title: Text("Block user"),
+              title: Text("Block user",
+                style: TextStyle(
+                  color: Colors.redAccent,
+                ),
+              ),
               onTap: () async {
                 Navigator.pop(context);
 

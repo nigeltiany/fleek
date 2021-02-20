@@ -66,7 +66,7 @@ class _FileBubbleState extends State<FileBubble> {
           alignment: Alignment.center,
           children: [
             _decryptedImageFileContent(messageData, mediaURL),
-            messageData.videoThumbnail != null ?
+            isVideo && messageData.videoThumbnail != null ?
             FloatingActionButton(
               mini: true,
               heroTag: messageData.messageID,
@@ -76,8 +76,7 @@ class _FileBubbleState extends State<FileBubble> {
               },
               child: Icon(
                 Icons.play_arrow,
-                color:
-                isDarkMode(context) ? Colors.black : Colors.white,
+                color: isDarkMode(context) ? Colors.black : Colors.white,
               ),
             )
                 :

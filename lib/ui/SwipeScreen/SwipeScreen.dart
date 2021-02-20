@@ -254,22 +254,25 @@ class _SwipeScreenState extends State<SwipeScreen> {
       context: context,
       builder: (BuildContext innerContext) {
         return SimpleDialog(
-          titlePadding: EdgeInsets.zero,
+          titlePadding: EdgeInsets.symmetric(horizontal: 8),
           title: AppBar(
-            leading: Avatar(user),
-            title: Text(user.userName ?? ""),
-            actions: [
-              IconButton(
-                icon: Icon(Icons.close),
-                onPressed: () {
-                  Navigator.pop(innerContext);
-                },
-              )
-            ],
+            elevation: 0,
+            backgroundColor: Colors.transparent,
+            toolbarHeight: 64,
+            leading: Center(child: Avatar(user)),
+            title: Text(user.userName ?? "",
+              style: TextStyle(
+                color: isDarkMode(context) ? Colors.white : Colors.black,
+              ),
+            ),
           ),
           children: [
             ListTile(
-              title: Text("Block user"),
+              title: Text("Block user",
+                style: TextStyle(
+                  color: Colors.redAccent
+                ),
+              ),
               onTap: () async {
                 Navigator.pop(innerContext);
                 showProgress(context, 'Blocking user...', false);

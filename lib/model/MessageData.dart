@@ -35,7 +35,7 @@ class MessageData {
 
     return MessageData(
       messageID: parsedJson['id'] ?? parsedJson['messageID'] ?? '',
-      url: Url.fromJson(parsedJson['url'] ?? Url().toJson()),
+      url: parsedJson['url'] != null ? Url.fromJson(parsedJson['url']) : null,
       content: Content(content: content),
       created: parsedJson['createdAt'] ?? parsedJson['created'] ?? Timestamp.now(),
       recipientProfilePictureURL: parsedJson['recipientProfilePictureURL'] ?? '',
@@ -43,7 +43,7 @@ class MessageData {
       senderUsername: parsedJson['senderUsername'] ?? '',
       senderProfilePictureURL: parsedJson['senderProfilePictureURL'] ?? '',
       senderID: parsedJson['senderID'] ?? '',
-      videoThumbnail: Url.fromJson(parsedJson['videoThumbnail'] ?? Url().toJson()),
+      videoThumbnail: parsedJson['videoThumbnail'] != null ? Url.fromJson(parsedJson['videoThumbnail']) : null,
     );
   }
 

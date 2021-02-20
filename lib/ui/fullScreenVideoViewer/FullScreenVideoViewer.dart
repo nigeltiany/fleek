@@ -1,3 +1,4 @@
+import 'package:dating/constants.dart';
 import 'package:flutter/material.dart';
 import 'package:video_player/video_player.dart';
 
@@ -63,6 +64,7 @@ class _FullScreenVideoViewerState extends State<FullScreenVideoViewer> {
         },
         child: Icon(
           _controller.value.isPlaying ? Icons.pause : Icons.play_arrow,
+          color: Color(COLOR_PRIMARY_DARK),
         ),
       ),
       floatingActionButtonLocation: FloatingActionButtonLocation.centerFloat,
