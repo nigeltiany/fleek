@@ -205,9 +205,7 @@ class FireStoreUtils {
     await firestore.collection(MATCH_CONVERSATIONS).doc(conversationModel.id).set(conversationModel.toJson(), SetOptions(merge: true));
   }
 
-  static Future<bool> blockUser(IdentifiableUser user) async {
-
-    bool isSuccessful = false;
+  static Future<void> removeMatch(IdentifiableUser user) async {
 
     await firestore.collection(MATCH_CONVERSATIONS)
       .doc(normalizedConversationID(FirebaseAuth.instance.currentUser.uid, user.userID))
@@ -224,6 +222,14 @@ class FireStoreUtils {
       .collection('matches')
       .doc(FirebaseAuth.instance.currentUser.uid)
       .delete();
+
+  }
+
+  static Future<bool> blockUser(IdentifiableUser user) async {
+
+    bool isSuccessful = false;
+
+    await removeMatch(user);
 
     await firestore.collection(USERS).doc(FirebaseAuth.instance.currentUser.uid).set({
       "blockList": FieldValue.arrayUnion([user.userID])

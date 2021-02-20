@@ -9,6 +9,7 @@ import 'package:dating/model/Swipe.dart';
 import 'package:dating/store/ChatData.dart';
 import 'package:dating/store/ConversationData.dart';
 import 'package:dating/store/KeyPair.dart';
+import 'package:dating/store/MatchData.dart';
 import 'package:dating/ui/chat/AudioBubble.dart';
 import 'package:dating/ui/chat/FileBubble.dart';
 import 'package:dating/ui/chat/TextBubble.dart';
@@ -613,6 +614,21 @@ class _ChatScreenState extends State<ChatScreen> {
           ),
           children: [
             ListTile(
+              title: Text("Unmatch"),
+              onTap: () async {
+                Navigator.pop(context); // Close Dialog
+
+                await FireStoreUtils.removeMatch(identifiableUser).catchError((e) => print(e));
+                var cid = normalizedConversationID(currentUser.userID, chatWithUser.userID);
+                Provider.of<ConversationData>(context, listen: false).removeConversation(cid);
+                Provider.of<MatchData>(context, listen: false).removeCachedMatch(chatWithUser);
+
+                Navigator.of(context).pop();
+              },
+            ),
+            Divider(),
+            SizedBox(height: 8),
+            ListTile(
               title: Text("Block user",
                 style: TextStyle(
                   color: Colors.redAccent,
@@ -623,9 +639,10 @@ class _ChatScreenState extends State<ChatScreen> {
 
                 showProgress(context, 'Blocking user...', false);
 
-                bool isSuccessful = await FireStoreUtils.blockUser(identifiableUser);
+                bool isSuccessful = await FireStoreUtils.blockUser(identifiableUser).catchError((e) => print(e));
                 var cid = normalizedConversationID(currentUser.userID, chatWithUser.userID);
                 Provider.of<ConversationData>(context, listen: false).removeConversation(cid);
+                Provider.of<MatchData>(context, listen: false).removeCachedMatch(chatWithUser);
                 Navigator.of(context).pop(); // Close Dialog
 
                 if (isSuccessful) {

@@ -1,9 +1,12 @@
 import 'package:cached_network_image/cached_network_image.dart';
+import 'package:dating/components/SecondaryButton.dart';
 import 'package:dating/model/User.dart';
 import 'package:dating/services/FirebaseHelper.dart';
 import 'package:dating/services/helper.dart';
 import 'package:dating/store/ConversationData.dart';
+import 'package:dating/store/MatchData.dart';
 import 'package:dating/ui/fullScreenImageViewer/FullScreenImageViewer.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
@@ -72,7 +75,7 @@ class _UserDetailsScreenState extends State<UserDetailsScreen> {
           }),
           builder: (BuildContext context, AsyncSnapshot<AppUser> snapshot) {
             if (snapshot.hasData) {
-              setState(() {});
+              return _mainContent;
             }
             return Container(
               child: Center(
@@ -86,172 +89,192 @@ class _UserDetailsScreenState extends State<UserDetailsScreen> {
 
     }
 
+    return _mainContent;
+
+  }
+
+  Widget get _mainContent {
+
     images.add(appUser.profilePictureURL);
     images.addAll(appUser.photos.cast<String>());
     images.removeWhere((element) => element == null);
-    
+
     num imageViewerHeight = (MediaQuery.of(context).size.height * 0.6) + 28;
     _gridPages = _buildGridView();
-    
+
     return SafeArea(
-        child: Scaffold(
-          body: SingleChildScrollView(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              mainAxisSize: MainAxisSize.max,
-              children: <Widget>[
-                Stack(
-                  alignment: Alignment.bottomRight,
-                  clipBehavior: Clip.none,
-                  children: <Widget>[
-                    Container(
-                      height: imageViewerHeight,
-                      child: Column(
-                        mainAxisSize: MainAxisSize.max,
-                        children: [
-                          Container(
-                            height: imageViewerHeight - 28,
-                            child: PageView.builder(
-                              itemBuilder: (BuildContext context, int index) => _buildImage(index),
-                              itemCount: images.length,
-                              controller: controller,
-                              scrollDirection: Axis.horizontal,
-                            ),
+      child: Scaffold(
+        body: SingleChildScrollView(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            mainAxisSize: MainAxisSize.max,
+            children: <Widget>[
+              Stack(
+                alignment: Alignment.bottomRight,
+                clipBehavior: Clip.none,
+                children: <Widget>[
+                  Container(
+                    height: imageViewerHeight,
+                    child: Column(
+                      mainAxisSize: MainAxisSize.max,
+                      children: [
+                        Container(
+                          height: imageViewerHeight - 28,
+                          child: PageView.builder(
+                            itemBuilder: (BuildContext context, int index) => _buildImage(index),
+                            itemCount: images.length,
+                            controller: controller,
+                            scrollDirection: Axis.horizontal,
                           ),
-                          Container(
-                            color: Colors.transparent,
-                            height: 28,
-                          )
-                        ],
+                        ),
+                        Container(
+                          color: Colors.transparent,
+                          height: 28,
+                        )
+                      ],
+                    ),
+                  ),
+                  Positioned(
+                    top: 0,
+                    child: Padding(
+                      padding: const EdgeInsets.all(4.0),
+                      child: SmoothPageIndicator(
+                        controller: controller, // PageController
+                        count: images.length,
+                        effect: SlideEffect(
+                          spacing: 4.0,
+                          radius: 4.0,
+                          dotWidth: (MediaQuery.of(context).size.width - (4 * images.length) - 4) / images.length,
+                          dotHeight: 4.0,
+                          paintStyle: PaintingStyle.fill,
+                          dotColor: Colors.grey,
+                          activeDotColor: Colors.white,
+                        ), // your preferred effect
                       ),
                     ),
-                    Positioned(
-                      top: 0,
-                      child: Padding(
-                        padding: const EdgeInsets.all(4.0),
-                        child: SmoothPageIndicator(
-                          controller: controller, // PageController
-                          count: images.length,
-                          effect: SlideEffect(
-                            spacing: 4.0,
-                            radius: 4.0,
-                            dotWidth: (MediaQuery.of(context).size.width - (4 * images.length) - 4) / images.length,
-                            dotHeight: 4.0,
-                            paintStyle: PaintingStyle.fill,
-                            dotColor: Colors.grey,
-                            activeDotColor: Colors.white,
-                          ), // your preferred effect
-                        ),
+                  ),
+                  Positioned(
+                    right: 16,
+                    bottom: 0,
+                    child: FloatingActionButton(
+                      backgroundColor: Color(COLOR_PRIMARY),
+                      child: Icon(Icons.arrow_downward,
+                        size: 30,
+                        color: Colors.white,
+                      ),
+                      onPressed: () {
+                        Navigator.of(context).pop();
+                      },
+                    ),
+                  ),
+                ],
+              ),
+              Padding(
+                padding: const EdgeInsets.only(left: 16, right: 16, bottom: 16),
+                child: Row(
+                  children: <Widget>[
+                    Text('${appUser.userName}',
+                      style: TextStyle(
+                        fontWeight: FontWeight.bold,
+                        fontSize: 27,
                       ),
                     ),
-                    Positioned(
-                      right: 16,
-                      bottom: 0,
-                      child: FloatingActionButton(
-                        backgroundColor: Color(COLOR_PRIMARY),
-                        child: Icon(Icons.arrow_downward,
-                          size: 30,
-                          color: Colors.white,
-                        ),
-                        onPressed: () {
-                          Navigator.of(context).pop();
-                        },
+                    SizedBox(width: 16),
+                    Text(appUser.birthDate == null ? '' : '${getUserAge(appUser.birthDate)}',
+                      style: TextStyle(
+                        fontSize: 19,
+                        fontWeight: FontWeight.w600,
                       ),
                     ),
                   ],
                 ),
-                Padding(
-                  padding: const EdgeInsets.only(left: 16, right: 16, bottom: 16),
-                  child: Row(
-                    children: <Widget>[
-                      Text('${appUser.userName}',
-                        style: TextStyle(
-                          fontWeight: FontWeight.bold,
-                          fontSize: 27,
-                        ),
-                      ),
-                      SizedBox(width: 16),
-                      Text(appUser.birthDate == null ? '' : '${getUserAge(appUser.birthDate)}',
-                        style: TextStyle(
-                          fontSize: 19,
-                          fontWeight: FontWeight.w600,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-                // Padding(
-                //   padding: const EdgeInsets.symmetric(horizontal: 16.0),
-                //   child: Row(
-                //     children: <Widget>[
-                //       Icon(Icons.school),
-                //       Text('   ${user.school}')
-                //     ],
-                //   ),
-                // ),
-                // Padding(
-                //   padding: const EdgeInsets.only(left: 16.0, top: 8),
-                //   child: Row(
-                //     children: <Widget>[
-                //       Icon(Icons.location_on),
-                //       Text('   ${user.milesAway}')
-                //     ],
-                //   ),
-                // ),
-                // Divider(),
-                Padding(
-                  padding: const EdgeInsets.only(left: 16.0, top: 8),
-                  child: Text(appUser.bio ?? ""),
-                ),
-                Padding(
-                  padding: const EdgeInsets.only(top: 8.0, left: 16, right: 16),
-                  child: Row(
-                    mainAxisSize: MainAxisSize.max,
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: skipNulls([
-                      Text(
-                        'Photos',
-                        textAlign: TextAlign.start,
-                        style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18),
-                      ),
-                      (_pages.length >= 2 ?
-                        SmoothPageIndicator(
-                          controller: gridPageViewController,
-                          // PageController
-                          count: _pages.length,
-                          effect: JumpingDotEffect(
-                            spacing: 4.0,
-                            radius: 4.0,
-                            dotWidth: 8,
-                            dotHeight: 8.0,
-                            paintStyle: PaintingStyle.fill,
-                            dotColor: Colors.grey, activeDotColor: Color(COLOR_PRIMARY)
-                          ), // your preferred effect
-                        )
+              ),
+              // Padding(
+              //   padding: const EdgeInsets.symmetric(horizontal: 16.0),
+              //   child: Row(
+              //     children: <Widget>[
+              //       Icon(Icons.school),
+              //       Text('   ${user.school}')
+              //     ],
+              //   ),
+              // ),
+              // Padding(
+              //   padding: const EdgeInsets.only(left: 16.0, top: 8),
+              //   child: Row(
+              //     children: <Widget>[
+              //       Icon(Icons.location_on),
+              //       Text('   ${user.milesAway}')
+              //     ],
+              //   ),
+              // ),
+              // Divider(),
+              Padding(
+                padding: const EdgeInsets.only(left: 16.0, top: 8),
+                child: Text(appUser.bio ?? ""),
+              ),
+              Padding(
+                padding: const EdgeInsets.only(top: 8.0, left: 16, right: 16),
+                child: Row(
+                  mainAxisSize: MainAxisSize.max,
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: skipNulls([
+                    Text(
+                      'Photos',
+                      textAlign: TextAlign.start,
+                      style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18),
+                    ),
+                    (_pages.length >= 2 ?
+                    SmoothPageIndicator(
+                      controller: gridPageViewController,
+                      // PageController
+                      count: _pages.length,
+                      effect: JumpingDotEffect(
+                          spacing: 4.0,
+                          radius: 4.0,
+                          dotWidth: 8,
+                          dotHeight: 8.0,
+                          paintStyle: PaintingStyle.fill,
+                          dotColor: Colors.grey, activeDotColor: Color(COLOR_PRIMARY)
+                      ), // your preferred effect
+                    )
                         : null
-                      )
-                    ]),
+                    )
+                  ]),
+                ),
+              ),
+              Padding(
+                padding: EdgeInsets.only(top: 16, bottom: 8),
+                child: SizedBox(
+                  height: appUser.photos.length > 3 ? 260 : 130,
+                  width: double.infinity,
+                  child: PageView(
+                    controller: gridPageViewController,
+                    children: _gridPages,
                   ),
                 ),
-                Padding(
-                  padding: EdgeInsets.only(top: 16, bottom: 8),
-                  child: SizedBox(
-                      height: appUser.photos.length > 3 ? 260 : 130,
-                      width: double.infinity,
-                      child: PageView(
-                        controller: gridPageViewController,
-                        children: _gridPages,
-                      )),
-                ),
-                Visibility(
-                  visible: !widget.isMatch,
-                  child: Container(
-                    height: 110,
+              ),
+              Visibility(
+                visible: widget.isMatch,
+                child: Padding(
+                  padding: const EdgeInsets.only(top: 48, left: 16, right: 16, bottom: 24),
+                  child: ConstrainedBox(
+                    constraints: const BoxConstraints(minWidth: double.infinity),
+                    child: SecondaryButton(
+                      label: "Remove Match",
+                      onTap: () async {
+                        await FireStoreUtils.removeMatch(identifiableUser).catchError((e) => print(e));
+                        var cid = normalizedConversationID(FirebaseAuth.instance.currentUser.uid, identifiableUser.userID);
+                        Provider.of<ConversationData>(context, listen: false).removeConversation(cid);
+                        Provider.of<MatchData>(context, listen: false).removeCachedMatch(identifiableUser);
+                        Navigator.of(context).pop();
+                      },
+                    ),
                   ),
-                )
-              ],
-            ),
+                ),
+              )
+            ],
           ),
+        ),
         bottomSheet: Visibility(
           visible: !widget.isMatch,
           child: Container(
@@ -286,8 +309,8 @@ class _UserDetailsScreenState extends State<UserDetailsScreen> {
                     backgroundColor: Colors.white,
                     mini: true,
                     child: Icon(
-                    Icons.star,
-                    color: Color(COLOR_PRIMARY),
+                      Icons.star,
+                      color: Color(COLOR_PRIMARY),
                       size: 30,
                     ),
                   ),
@@ -312,6 +335,7 @@ class _UserDetailsScreenState extends State<UserDetailsScreen> {
         ),
       ),
     );
+
   }
 
   List<Widget> _buildGridView() {

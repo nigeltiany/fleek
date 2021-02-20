@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:dating/constants.dart';
 import 'package:dating/model/Match.dart';
+import 'package:dating/model/User.dart';
 import 'package:dating/store/ConversationData.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
@@ -40,6 +41,12 @@ class MatchData with ChangeNotifier {
       .collection('matches')
       .doc(match.match.userID)
       .set((match..seen = true).toJson(), SetOptions(merge: true));
+  }
+
+  void removeCachedMatch(IdentifiableUser user) {
+    _matchDataStore.removeWhere((key, _) => key == user.userID);
+    _matches.removeWhere((match) => match.match.userID == user.userID);
+    notifyListeners();
   }
 
   void _addMatch(FleekMatch fleekMatch) {
