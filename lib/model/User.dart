@@ -23,6 +23,7 @@ class AppUser with ChangeNotifier implements IdentifiableUser {
   String _publicKey;
 
   bool _signedIn = false;
+  bool _online = false;
   bool _isVip = false;
   bool _developerAccount = kDebugMode;
 
@@ -43,6 +44,7 @@ class AppUser with ChangeNotifier implements IdentifiableUser {
   copy(AppUser cp) {
     _userName = cp.userName ?? _userName;
     _birthDate = cp.birthDate ?? _birthDate;
+    _online = cp.online ?? false;
     _signedIn = cp.signedIn ?? false;
     _lastOnlineTimestamp= cp.lastOnlineTimestamp;
     _settings = cp.settings ?? _settings;
@@ -64,7 +66,7 @@ class AppUser with ChangeNotifier implements IdentifiableUser {
   reset () {
     _userName = null;
     _birthDate = null;
-    _signedIn = false;
+    _online = false;
     _settings = Settings();
     _userID = null;
     _profilePictureURL = null;
@@ -84,6 +86,7 @@ class AppUser with ChangeNotifier implements IdentifiableUser {
     return AppUser()
       ..userName = parsedJson['userName'] ?? ''
       ..birthDate = parsedJson['birthDate']
+      ..online = parsedJson['online'] ?? false
       ..signedIn = parsedJson['signedIn'] ?? false
       ..lastOnlineTimestamp = parsedJson['lastOnlineTimestamp']
       ..settings = Settings.fromJson(parsedJson['settings'] ?? Settings().toJson())
@@ -109,6 +112,7 @@ class AppUser with ChangeNotifier implements IdentifiableUser {
       "birthDate": this.birthDate,
       "settings": this.settings != null ? this.settings.toJson() : Settings().toJson(),
       "id": this.userID,
+      'online': this.online,
       'signedIn': this.signedIn,
       'lastOnlineTimestamp': this.lastOnlineTimestamp,
       "profilePictureURL": this.profilePictureURL,
@@ -154,6 +158,13 @@ class AppUser with ChangeNotifier implements IdentifiableUser {
 
   set settings(Settings value) {
     _settings = value;
+    notifyListeners();
+  }
+
+  bool get online => _online;
+
+  set online(bool value) {
+    _online = value;
     notifyListeners();
   }
 
