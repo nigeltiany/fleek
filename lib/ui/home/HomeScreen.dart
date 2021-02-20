@@ -186,8 +186,8 @@ class _HomeState extends State<HomeScreen> with TickerProviderStateMixin {
                 ),
                 BottomNavigationBarItem(
                   label: "",
-                  icon: Icon(Icons.message),
-                  activeIcon: Icon(Icons.message, size: 40),
+                  icon: Icon(Icons.forum),
+                  activeIcon: Icon(Icons.forum, size: 40),
                 )
               ],
             ),
@@ -202,7 +202,7 @@ class _HomeState extends State<HomeScreen> with TickerProviderStateMixin {
       context: context,
       builder: (BuildContext context) {
         return Container(
-          color: isDarkMode(context) ? Color(0xFF303030) : Colors.white,
+          color: isDarkMode(context) ? Color(DARK_MODE_SCAFFOLD) : Colors.white,
           child: Padding(
             padding: const EdgeInsets.all(16.0),
             child: Column(

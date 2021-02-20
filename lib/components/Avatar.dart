@@ -30,7 +30,7 @@ class Avatar extends StatelessWidget {
           //       color: homeConversationModel.members.first.active ? Colors.green : Colors.grey,
           //       borderRadius: BorderRadius.circular(100),
           //       border: Border.all(
-          //         color: isDarkMode(context) ? Color(0xFF303030) : Colors.white,
+          //         color: isDarkMode(context) ? Color(_DARK_MODE_SCAFFOLD) : Colors.white,
           //         width: 1.6,
           //       ),
           //     ),

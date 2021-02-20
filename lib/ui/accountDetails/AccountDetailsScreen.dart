@@ -5,7 +5,6 @@ import 'package:dating/services/FirebaseHelper.dart';
 import 'package:dating/services/helper.dart';
 import 'package:dating/ui/auth/AuthScreen.dart';
 import 'package:firebase_auth/firebase_auth.dart';
-import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/widgets.dart';
 import 'package:provider/provider.dart';
@@ -41,7 +40,7 @@ class _AccountDetailsScreenState extends State<AccountDetailsScreen> {
     return Scaffold(
       appBar: AppBar(
         elevation: 0,
-        backgroundColor: isDarkMode(context) ? Colors.black : Colors.transparent,
+        backgroundColor: Colors.transparent,
         brightness: isDarkMode(context) ? Brightness.dark : Brightness.light,
         centerTitle: true,
         iconTheme: IconThemeData(

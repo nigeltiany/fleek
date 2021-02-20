@@ -9,9 +9,10 @@ class SwipeCounter {
 
   factory SwipeCounter.fromJson(Map<String, dynamic> parsedJson) {
     return new SwipeCounter(
-        authorID: parsedJson['authorID'] ?? '',
-        count: parsedJson['count'] ?? 0,
-        createdAt: parsedJson['createdAt'] ?? Timestamp.now());
+      authorID: parsedJson['authorID'] ?? '',
+      count: parsedJson['count'] ?? 0,
+      createdAt: parsedJson['createdAt'] ?? Timestamp.now(),
+    );
   }
 
   Map<String, dynamic> toJson() {

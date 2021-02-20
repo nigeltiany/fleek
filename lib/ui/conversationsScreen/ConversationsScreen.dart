@@ -13,7 +13,7 @@ import 'package:dating/services/FirebaseHelper.dart';
 import 'package:dating/services/helper.dart';
 import 'package:dating/ui/chat/ChatScreen.dart';
 import 'package:dating/ui/userDetailsScreen/UserDetailsScreen.dart';
-import 'package:flutter/cupertino.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/widgets.dart';
 import 'package:gecies/gecies.dart';
@@ -62,7 +62,7 @@ class _ConversationsState extends State<ConversationsScreen> {
     return SizedBox(
       height: 100,
       child: StreamBuilder<QuerySnapshot>(
-        stream: FirebaseFirestore.instance.collection(MATCHES).doc(currentUser.userID).collection('matches').snapshots(),
+        stream: FirebaseFirestore.instance.collection(MATCHES).doc(FirebaseAuth.instance.currentUser.uid).collection('matches').snapshots(),
         builder: (context, snap) {
           if (snap.connectionState == ConnectionState.waiting) {
             return Container(
@@ -228,30 +228,12 @@ class _ConversationsState extends State<ConversationsScreen> {
   }
 
   _onMatchLongPress(FleekMatch fleekMatch) {
-    final action = CupertinoActionSheet(
-      message: Text(fleekMatch.match.userName ?? "",
-        style: TextStyle(fontSize: 15.0),
-      ),
-      actions: <Widget>[
-        CupertinoActionSheetAction(
-          child: Text("View Profile"),
-          isDefaultAction: true,
-          onPressed: () async {
-            Navigator.pop(context);
-            push(context, UserDetailsScreen(identifiableUser: fleekMatch.match, isMatch: true,));
-          },
-        ),
-      ],
-      cancelButton: CupertinoActionSheetAction(
-        child: Text(
-          "Cancel",
-        ),
-        onPressed: () {
-          Navigator.pop(context);
-        },
+    push(context,
+      UserDetailsScreen(
+        identifiableUser: fleekMatch.match,
+        isMatch: true,
       ),
     );
-    showCupertinoModalPopup(context: context, builder: (context) => action);
   }
 
 }

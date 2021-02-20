@@ -21,7 +21,6 @@ import 'package:dating/model/MessageData.dart';
 import 'package:dating/model/User.dart';
 import 'package:dating/services/FirebaseHelper.dart';
 import 'package:dating/services/helper.dart';
-import 'package:flutter/cupertino.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/widgets.dart';
@@ -53,7 +52,7 @@ class _ChatScreenState extends State<ChatScreen> {
   final IdentifiableUser identifiableUser;
   final ImagePicker _imagePicker = ImagePicker();
   TextEditingController _messageController = new TextEditingController();
-  final FireStoreUtils _fireStoreUtils = FireStoreUtils();
+  final FireStoreUtils ddddd = FireStoreUtils();
   TextEditingController _groupNameController = TextEditingController();
   RecordingState currentRecordingState = RecordingState.HIDDEN;
   Timer audioMessageTimer;
@@ -406,75 +405,57 @@ class _ChatScreenState extends State<ChatScreen> {
   }
 
   _onCameraClick() {
-    final action = CupertinoActionSheet(
-      message: Text(
-        "Send Media",
-        style: TextStyle(fontSize: 15.0),
-      ),
-      actions: <Widget>[
-        CupertinoActionSheetAction(
-          child: Text("Choose image from gallery"),
-          isDefaultAction: false,
-          onPressed: () async {
-            Navigator.pop(context);
-            PickedFile image = await _imagePicker.getImage(source: ImageSource.gallery);
-            if (image != null) {
-              var encryptionResult = await encryptFileAtPath(image.path);
-              String url = await _fireStoreUtils.uploadChatImageToFireStorage(context, encryptionResult.file, normalizedConversationID(currentUser.userID, chatWithUser.userID));
-              _sendMessage(encryptionResult.fileSecret.toString(), Url(url: url, mime: lookupMimeType(image.path)));
-            }
-          },
-        ),
-        // CupertinoActionSheetAction(
-        //   child: Text("Choose video from gallery"),
-        //   isDefaultAction: false,
-        //   onPressed: () async {
-        //     Navigator.pop(context);
-        //     PickedFile galleryVideo = await _imagePicker.getVideo(source: ImageSource.gallery);
-        //     if (galleryVideo != null) {
-        //       var encryptionResult = await _encryptFileAtPath(galleryVideo.path);
-        //       ChatVideoContainer videoContainer = await _fireStoreUtils.uploadChatVideoToFireStorage(encryptionResult.file, context);
-        //       await _sendMessage(encryptionResult.fileSecret.toString(), videoContainer.videoUrl, videoContainer.thumbnailUrl);
-        //     }
-        //   },
-        // ),
-        CupertinoActionSheetAction(
-          child: Text("Take a picture"),
-          isDestructiveAction: false,
-          onPressed: () async {
-            Navigator.pop(context);
-            PickedFile image = await _imagePicker.getImage(source: ImageSource.camera);
-            if (image != null) {
-              var encryptionResult = await encryptFileAtPath(image.path);
-              String url = await _fireStoreUtils.uploadChatImageToFireStorage(context, encryptionResult.file, normalizedConversationID(currentUser.userID, chatWithUser.userID));
-              await _sendMessage(encryptionResult.fileSecret.toString(), Url(url: url, mime: lookupMimeType(image.path)));
-            }
-          },
-        ),
-        // CupertinoActionSheetAction(
-        //   child: Text("Record video"),
-        //   isDestructiveAction: false,
-        //   onPressed: () async {
-        //     Navigator.pop(context);
-        //     PickedFile recordedVideo = await _imagePicker.getVideo(source: ImageSource.camera);
-        //     if (recordedVideo != null) {
-        //       var encryptionResult = await _encryptFileAtPath(recordedVideo.path);
-        //       ChatVideoContainer videoContainer = await _fireStoreUtils.uploadChatVideoToFireStorage(encryptionResult.file, context);
-        //       await _sendMessage(encryptionResult.fileSecret.toString(), videoContainer.videoUrl, videoContainer.thumbnailUrl);
-        //     }
-        //   },
-        // )
-      ],
-      cancelButton: CupertinoActionSheetAction(
-        child: Text(
-          "Cancel",
-        ),
-        onPressed: () {
-          Navigator.pop(context);
-        },
+
+    final action = Container(
+      color: isDarkMode(context) ? Colors.black : Colors.white,
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Padding(
+            padding: const EdgeInsets.symmetric(vertical: 12),
+            child: Text("Send Media", textAlign: TextAlign.center),
+          ),
+          ListView(
+            shrinkWrap: true,
+            children: [
+              FlatButton(
+                child: Text("Choose image from gallery"),
+                onPressed: () async {
+                  Navigator.pop(context);
+                  PickedFile image = await _imagePicker.getImage(source: ImageSource.gallery);
+                  if (image != null) {
+                    var encryptionResult = await encryptFileAtPath(image.path);
+                    String url = await FireStoreUtils.uploadChatImageToFireStorage(context, encryptionResult.file, normalizedConversationID(currentUser.userID, chatWithUser.userID));
+                    _sendMessage(encryptionResult.fileSecret.toString(), Url(url: url, mime: lookupMimeType(image.path)));
+                  }
+                },
+              ),
+              FlatButton(
+                child: Text("Take a picture"),
+                onPressed: () async {
+                  Navigator.pop(context);
+                  PickedFile image = await _imagePicker.getImage(source: ImageSource.camera);
+                  if (image != null) {
+                    var encryptionResult = await encryptFileAtPath(image.path);
+                    String url = await FireStoreUtils.uploadChatImageToFireStorage(context, encryptionResult.file, normalizedConversationID(currentUser.userID, chatWithUser.userID));
+                    await _sendMessage(encryptionResult.fileSecret.toString(), Url(url: url, mime: lookupMimeType(image.path)));
+                  }
+                },
+              ),
+              FlatButton(
+                child: Text("Close"),
+                onPressed: () {
+                  Navigator.pop(context);
+                },
+              ),
+            ],
+          ),
+        ],
       ),
     );
-    showCupertinoModalPopup(context: context, builder: (context) => action);
+
+    showModalBottomSheet(context: context, builder: (context) => action);
+
   }
 
   Widget buildMessage(MessageData messageData, AppUser matchedUser) {
@@ -597,58 +578,48 @@ class _ChatScreenState extends State<ChatScreen> {
   }
 
   _onPrivateChatSettingsClick() {
-    final action = CupertinoActionSheet(
-      message: Text(
-        "Chat Settings",
-        style: TextStyle(fontSize: 15.0),
-      ),
-      actions: <Widget>[
-        CupertinoActionSheetAction(
-          child: Text("Block user"),
-          onPressed: () async {
-            Navigator.pop(context);
-            showProgress(context, 'Blocking user...', false);
-            bool isSuccessful = await _fireStoreUtils.blockUser(identifiableUser, 'block');
 
-            Navigator.of(context).pop(); // Close Dialog
+    showDialog(
+      context: context,
+      builder: (BuildContext innerContext) {
+        return SimpleDialog(
+          titlePadding: EdgeInsets.zero,
+          title: AppBar(
+            leading: Avatar(chatWithUser),
+            title: Text(chatWithUser.userName ?? ""),
+            actions: [
+              IconButton(
+                icon: Icon(Icons.close),
+                onPressed: () {
+                  Navigator.pop(innerContext);
+                },
+              )
+            ],
+          ),
+          children: [
+            ListTile(
+              title: Text("Block user"),
+              onTap: () async {
+                Navigator.pop(context);
 
-            if (isSuccessful) {
-              Navigator.pop(context);
-              _showAlertDialog(context, 'Block',
-                  '${chatWithUser.userName} has been blocked.');
-            } else {
-              _showAlertDialog(context, 'Block', 'Couldn''\'t block ${chatWithUser.userName}, please try again later.');
-            }
-          },
-        ),
-        CupertinoActionSheetAction(
-          child: Text("Report user"),
-          onPressed: () async {
-            Navigator.pop(context);
+                showProgress(context, 'Blocking user...', false);
 
-            showProgress(context, 'Reporting user...', false);
-            bool isSuccessful = await _fireStoreUtils.blockUser(identifiableUser, 'report');
-            Navigator.of(context).pop(); // Close Dialog
+                bool isSuccessful = await FireStoreUtils.blockUser(identifiableUser);
+                Navigator.of(context).pop(); // Close Dialog
 
-            if (isSuccessful) {
-              Navigator.pop(context);
-              _showAlertDialog(context, 'Report', '${chatWithUser.userName} has been reported and blocked.');
-            } else {
-              _showAlertDialog(context, 'Report', 'Couldn''\'t report ${chatWithUser.userName}, please try again later.');
-            }
-          },
-        ),
-      ],
-      cancelButton: CupertinoActionSheetAction(
-        child: Text(
-          "Cancel",
-        ),
-        onPressed: () {
-          Navigator.pop(context);
-        },
-      ),
+                if (isSuccessful) {
+                  Navigator.pop(context);
+                  _showAlertDialog(context, 'Block successful', '${chatWithUser.userName} has been blocked.');
+                } else {
+                  _showAlertDialog(context, 'Block', 'Couldn''\'t block ${chatWithUser.userName}, please try again later.');
+                }
+              },
+            ),
+          ],
+        );
+      }
     );
-    showCupertinoModalPopup(context: context, builder: (context) => action);
+
   }
 
   _showAlertDialog(BuildContext context, String title, String message) {
@@ -688,7 +659,7 @@ class _ChatScreenState extends State<ChatScreen> {
     });
 
     var encryptionResult = await encryptFileAtPath(_recording.path);
-    Url url = await _fireStoreUtils.uploadAudioFile(encryptionResult.file, context);
+    Url url = await FireStoreUtils.uploadAudioFile(encryptionResult.file, context);
 
     await _sendMessage(encryptionResult.fileSecret.toString(), url);
     Directory(_recording.path).deleteSync(recursive: true);

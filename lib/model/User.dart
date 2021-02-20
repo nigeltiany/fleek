@@ -34,6 +34,7 @@ class AppUser with ChangeNotifier implements IdentifiableUser {
   String _school;
   String _schoolCode = "002905";
   List<dynamic> _photos = [];
+  List<dynamic> _blockList = [];
 
   //internal use only, don't save to db
   String _milesAway = '0 Miles Away';
@@ -59,7 +60,8 @@ class AppUser with ChangeNotifier implements IdentifiableUser {
     _school = cp.school ?? _school;
     _schoolCode = cp.schoolCode ?? _schoolCode;
     _bio = cp.bio ?? _bio;
-    _photos = cp._photos ?? _bio;
+    _photos = cp._photos ?? _photos;
+    _blockList = cp.blockList ?? _blockList;
     notifyListeners();
   }
 
@@ -90,7 +92,7 @@ class AppUser with ChangeNotifier implements IdentifiableUser {
       ..signedIn = parsedJson['signedIn'] ?? false
       ..lastOnlineTimestamp = parsedJson['lastOnlineTimestamp']
       ..settings = Settings.fromJson(parsedJson['settings'] ?? Settings().toJson())
-      ..userID = parsedJson['id'] ?? ''
+      ..userID = parsedJson['id']
       ..profilePictureURL = parsedJson['profilePictureURL'] ?? ''
       ..isVip = parsedJson['isVip' ?? false]
       ..developerAccount = parsedJson['developerAccount' ?? kDebugMode]
@@ -101,12 +103,14 @@ class AppUser with ChangeNotifier implements IdentifiableUser {
       ..signUpLocation = UserLocation.fromJson(parsedJson['signUpLocation'] ?? UserLocation().toJson())
       ..school = parsedJson['school'] ?? 'North Carolina A&T University'
       ..schoolCode = parsedJson['schoolCode'] ?? '002905'
-      ..bio = parsedJson['bio'] ?? 'N/A'
-      ..photos = parsedJson['photos'] ?? [].cast<String>();
+      ..bio = parsedJson['bio'] ?? ''
+      ..photos = parsedJson['photos'] ?? [].cast<String>()
+      ..blockList = parsedJson['blockList'] ?? [].cast<String>();
   }
 
   Map<String, dynamic> toJson() {
     photos.toList().removeWhere((element) => element == null);
+    blockList.toList().removeWhere((element) => element == null);
     return {
       "userName": this.userName,
       "birthDate": this.birthDate,
@@ -130,6 +134,7 @@ class AppUser with ChangeNotifier implements IdentifiableUser {
       'school': this.school,
       'schoolCode': this.schoolCode,
       'photos': this.photos,
+      'blockList': this.blockList,
     };
   }
 
@@ -249,6 +254,13 @@ class AppUser with ChangeNotifier implements IdentifiableUser {
 
   set photos(List<dynamic> value) {
     _photos = value;
+    notifyListeners();
+  }
+
+  List<dynamic> get blockList => _blockList;
+
+  set blockList(List<dynamic> value) {
+    _blockList = value;
     notifyListeners();
   }
 

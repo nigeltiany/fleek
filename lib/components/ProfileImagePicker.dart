@@ -2,11 +2,9 @@ import 'dart:io';
 
 import 'package:dating/constants.dart';
 import 'package:dating/model/User.dart';
-import 'package:firebase_storage/firebase_storage.dart';
 import 'package:provider/provider.dart';
 import 'package:dating/services/FirebaseHelper.dart';
 import 'package:dating/services/helper.dart';
-import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
@@ -19,7 +17,6 @@ class ProfileImagePicker extends StatefulWidget {
 class _ProfileImagePickerState extends State<ProfileImagePicker> {
 
   final ImagePicker _imagePicker = ImagePicker();
-  UploadTask _uploadTask;
 
   @override
   void initState() {
@@ -57,8 +54,7 @@ class _ProfileImagePickerState extends State<ProfileImagePicker> {
               backgroundColor: Color(COLOR_ACCENT),
               child: Icon(
                 Icons.camera_alt,
-                color:
-                isDarkMode(context) ? Colors.black : Colors.white,
+                color: isDarkMode(context) ? Colors.black : Colors.white,
               ),
               mini: true,
               onPressed: _onCameraClick
@@ -88,7 +84,7 @@ class _ProfileImagePickerState extends State<ProfileImagePicker> {
 
     final iosAction = CupertinoActionSheet(
       message: Text(
-        "Add profile picture",
+        "Set profile picture",
         style: TextStyle(fontSize: 15.0),
       ),
       actions: <Widget>[
@@ -122,13 +118,20 @@ class _ProfileImagePickerState extends State<ProfileImagePicker> {
     );
 
     final androidAction = BottomSheet(
+      backgroundColor: isDarkMode(context) ? Color(DARK_MODE_SCAFFOLD) : Colors.white,
       enableDrag: false,
       onClosing: () {},
       builder: (BuildContext context) {
         return ListView(
           shrinkWrap: true,
           children: [
-            ListTile(title: Text("Add Profile Picture")),
+            ListTile(
+              title: Text("Set Profile Picture",
+                style: TextStyle(
+                  color:  Color(COLOR_PRIMARY_DARK),
+                ),
+              ),
+            ),
             ListTile(
               leading: Icon(Icons.camera_alt),
               title: Text("Camera"),
@@ -165,7 +168,7 @@ class _ProfileImagePickerState extends State<ProfileImagePicker> {
   _imagePicked(File image) async {
     showProgress(context, 'Uploading image...', false);
     AppUser user = context.read<AppUser>();
-    String url = await FireStoreUtils().uploadUserImageToFireStorage(user, image, ImageType.DISPLAY_PIC);
+    String url = await FireStoreUtils.uploadUserImageToFireStorage(user, image, ImageType.DISPLAY_PIC);
     user.profilePictureURL = url;
     FireStoreUtils.updateCurrentUser(user);
     Navigator.of(context).pop(); // Close Dialog

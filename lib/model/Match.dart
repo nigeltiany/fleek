@@ -2,7 +2,6 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:dating/model/SearchInterests.dart';
 import 'package:dating/model/Swipe.dart';
 import 'package:dating/model/User.dart';
-import 'package:flutter/cupertino.dart';
 
 class FleekMatch {
   SwipeSubject match;

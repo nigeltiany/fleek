@@ -2,18 +2,20 @@ import 'dart:io';
 
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:dating/components/ProfileImagePicker.dart';
+import 'package:dating/constants.dart';
 import 'package:dating/model/User.dart';
 import 'package:dating/services/FirebaseHelper.dart';
 import 'package:dating/services/helper.dart';
 import 'package:dating/ui/fullScreenImageViewer/FullScreenImageViewer.dart';
+import 'package:firebase_storage/firebase_storage.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/widgets.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:page_view_indicators/circle_page_indicator.dart';
+import 'package:path_provider/path_provider.dart';
 import 'package:provider/provider.dart';
 
-import '../../constants.dart';
 
 class ProfileScreen extends StatefulWidget {
 
@@ -28,7 +30,6 @@ class _ProfileScreenState extends State<ProfileScreen> {
 
   final ImagePicker _imagePicker = ImagePicker();
   AppUser user;
-  FireStoreUtils _fireStoreUtils = FireStoreUtils();
   final _currentPageNotifier = ValueNotifier<int>(0);
 
   _ProfileScreenState();
@@ -88,8 +89,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
               mainAxisSize: MainAxisSize.max,
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: skipNulls([
-                Text(
-                  'My Photos',
+                Text('My Photos',
                   textAlign: TextAlign.start,
                   style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
                 ),
@@ -204,39 +204,55 @@ class _ProfileScreenState extends State<ProfileScreen> {
       _pages.add(images.sublist(i, end));
     }
     _pages.forEach((elements) {
-      gridViewPages.add(GridView.builder(
+      gridViewPages.add(
+        GridView.builder(
           padding: EdgeInsets.only(right: 16, left: 16),
           gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-              crossAxisCount: 3,
-              childAspectRatio: 1,
-              crossAxisSpacing: 10,
-              mainAxisSpacing: 10),
+            crossAxisCount: 3,
+            childAspectRatio: 1,
+            crossAxisSpacing: 10,
+            mainAxisSpacing: 10,
+          ),
           itemBuilder: (context, index) => _imageBuilder(elements[index]),
           itemCount: elements.length,
-          physics: BouncingScrollPhysics()));
+          physics: BouncingScrollPhysics(),
+        ),
+      );
     });
     return gridViewPages;
   }
 
   _viewOrDeleteImage(String url) {
+
+    final removePicture = () async {
+      Navigator.pop(context);
+      images.removeLast();
+      images.remove(url);
+      await FireStoreUtils.deleteImage(url);
+      user.photos = images;
+      AppUser updatedUser = await FireStoreUtils.updateCurrentUser(user);
+      context.read<AppUser>().copy(updatedUser);
+      user = updatedUser;
+      images.add(null);
+      setState(() {});
+    };
+
+    final makeProfilePicture = () async {
+      Navigator.pop(context);
+      var data = await FirebaseStorage.instance.refFromURL(url).getData();
+      String dir = (await getTemporaryDirectory()).path;
+      File tempFile = File('$dir/picture_switch');
+      await tempFile.writeAsBytes(data);
+      var newURL = await FireStoreUtils.uploadUserImageToFireStorage(user, tempFile, ImageType.DISPLAY_PIC);
+      await tempFile.delete();
+      user.profilePictureURL = newURL;
+      user = await FireStoreUtils.updateCurrentUser(user);
+      context.read<AppUser>().copy(user);
+      setState(() {});
+    };
+
     final action = CupertinoActionSheet(
       actions: <Widget>[
-        CupertinoActionSheetAction(
-          onPressed: () async {
-            Navigator.pop(context);
-            images.removeLast();
-            images.remove(url);
-            await _fireStoreUtils.deleteImage(url);
-            user.photos = images;
-            AppUser newUser = await FireStoreUtils.updateCurrentUser(user);
-            context.read<AppUser>().copy(newUser);
-            user = newUser;
-            images.add(null);
-            setState(() {});
-          },
-          child: Text("Remove Picture"),
-          isDestructiveAction: true,
-        ),
         CupertinoActionSheetAction(
           onPressed: () {
             Navigator.pop(context);
@@ -247,14 +263,18 @@ class _ProfileScreenState extends State<ProfileScreen> {
         ),
         CupertinoActionSheetAction(
           onPressed: () async {
-            Navigator.pop(context);
-            user.profilePictureURL = url;
-            user = await FireStoreUtils.updateCurrentUser(user);
-            setState(() {});
+            await makeProfilePicture();
           },
           isDefaultAction: true,
           child: Text("Make Profile Picture"),
-        )
+        ),
+        CupertinoActionSheetAction(
+          onPressed: () async {
+            await removePicture();
+          },
+          child: Text("Remove Picture"),
+          isDestructiveAction: true,
+        ),
       ],
       cancelButton: CupertinoActionSheetAction(
         child: Text("Cancel"),
@@ -263,13 +283,88 @@ class _ProfileScreenState extends State<ProfileScreen> {
         },
       ),
     );
-    showCupertinoModalPopup(context: context, builder: (context) => action);
+
+    final androidAction = BottomSheet(
+      backgroundColor: isDarkMode(context) ? Color(DARK_MODE_SCAFFOLD) : Colors.white,
+      enableDrag: false,
+      onClosing: () {},
+      builder: (BuildContext context) {
+        return ListView(
+          shrinkWrap: true,
+          children: [
+            ListTile(
+              title: Text("View Picture"),
+              onTap: () async {
+                Navigator.pop(context);
+                push(context, FullScreenImageViewer(image: NetworkImage(url), tag: url));
+              },
+            ),
+            ListTile(
+              title: Text("Make Profile Picture"),
+              onTap: () async {
+                await makeProfilePicture();
+              },
+            ),
+            ListTile(
+              title: Text("Remove Picture",
+                style: TextStyle(
+                  color: Colors.redAccent,
+                ),
+              ),
+              onTap: () async {
+                await removePicture();
+              },
+            ),
+            SizedBox(height: 16)
+          ],
+        );
+      },
+    );
+
+    if (Platform.isIOS) {
+      showCupertinoModalPopup(context: context, builder: (context) => action);
+    } else {
+      showModalBottomSheet(context: context, builder: (context) => androidAction);
+    }
+
   }
 
   _pickImage() {
+
+    final imageFromGallery = () async {
+      Navigator.pop(context);
+      PickedFile image = await _imagePicker.getImage(source: ImageSource.gallery);
+      if (image != null) {
+        String imageUrl = await FireStoreUtils.uploadUserImageToFireStorage(user, File(image.path), ImageType.ACCOUNT_PIC);
+        images.removeLast();
+        images.add(imageUrl);
+        user.photos = images;
+        AppUser updatedUser = await FireStoreUtils.updateCurrentUser(user);
+        context.read<AppUser>().copy(updatedUser);
+        user = updatedUser;
+        images.add(null);
+        setState(() {});
+      }
+    };
+
+    final imageFromCamera = () async {
+      Navigator.pop(context);
+      PickedFile image = await _imagePicker.getImage(source: ImageSource.camera);
+      if (image != null) {
+        String imageUrl = await FireStoreUtils.uploadUserImageToFireStorage(user, File(image.path), ImageType.ACCOUNT_PIC);
+        images.removeLast();
+        images.add(imageUrl);
+        user.photos = images;
+        AppUser updatedUser = await FireStoreUtils.updateCurrentUser(user);
+        context.read<AppUser>().copy(updatedUser);
+        user = updatedUser;
+        images.add(null);
+        setState(() {});
+      }
+    };
+
     final action = CupertinoActionSheet(
-      message: Text(
-        "Add picture",
+      message: Text("Add picture",
         style: TextStyle(fontSize: 15.0),
       ),
       actions: <Widget>[
@@ -277,40 +372,14 @@ class _ProfileScreenState extends State<ProfileScreen> {
           child: Text("Choose from gallery"),
           isDefaultAction: false,
           onPressed: () async {
-            Navigator.pop(context);
-            PickedFile image =
-            await _imagePicker.getImage(source: ImageSource.gallery);
-            if (image != null) {
-              String imageUrl = await _fireStoreUtils.uploadUserImageToFireStorage(user, File(image.path), ImageType.ACCOUNT_PIC);
-              images.removeLast();
-              images.add(imageUrl);
-              user.photos = images;
-              AppUser newUser = await FireStoreUtils.updateCurrentUser(user);
-              context.read<AppUser>().copy(newUser);
-              user = newUser;
-              images.add(null);
-              setState(() {});
-            }
+            await imageFromGallery();
           },
         ),
         CupertinoActionSheetAction(
           child: Text("Take a picture"),
           isDestructiveAction: false,
           onPressed: () async {
-            Navigator.pop(context);
-            PickedFile image =
-            await _imagePicker.getImage(source: ImageSource.camera);
-            if (image != null) {
-              String imageUrl = await _fireStoreUtils.uploadUserImageToFireStorage(user, File(image.path), ImageType.ACCOUNT_PIC);
-              images.removeLast();
-              images.add(imageUrl);
-              user.photos = images;
-              AppUser newUser = await FireStoreUtils.updateCurrentUser(user);
-              context.read<AppUser>().copy(newUser);
-              user = newUser;
-              images.add(null);
-              setState(() {});
-            }
+            await imageFromCamera();
           },
         )
       ],
@@ -321,7 +390,48 @@ class _ProfileScreenState extends State<ProfileScreen> {
         },
       ),
     );
-    showCupertinoModalPopup(context: context, builder: (context) => action);
+
+    final androidAction = BottomSheet(
+      backgroundColor: isDarkMode(context) ? Color(DARK_MODE_SCAFFOLD) : Colors.white,
+      enableDrag: false,
+      onClosing: () {},
+      builder: (BuildContext context) {
+        return ListView(
+          shrinkWrap: true,
+          children: [
+            ListTile(
+              title: Text("Add Picture",
+                style: TextStyle(
+                  color:  Color(COLOR_PRIMARY_DARK),
+                ),
+              ),
+            ),
+            ListTile(
+              leading: Icon(Icons.camera_alt),
+              title: Text("Camera"),
+              onTap: () async {
+                await imageFromCamera();
+              },
+            ),
+            ListTile(
+              leading: Icon(Icons.photo),
+              title: Text("Gallery"),
+              onTap: () async {
+                await imageFromGallery();
+              },
+            ),
+            SizedBox(height: 16)
+          ],
+        );
+      },
+    );
+
+    if (Platform.isIOS) {
+      showCupertinoModalPopup(context: context, builder: (context) => action);
+    } else {
+      showModalBottomSheet(context: context, builder: (context) => androidAction);
+    }
+
   }
 
   _showBioEditor(BuildContext ctx) {
@@ -343,7 +453,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                       contentPadding: EdgeInsets.only(
                         top: preferredHeight,
                         left: 16,
-                        right: 16
+                        right: 16,
                       ),
                       tileColor: Color(COLOR_PRIMARY_DARK),
                       leading: IconButton(
@@ -355,7 +465,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                       title: Text("Bio",
                         style: TextStyle(
                           fontSize: 18,
-                          fontWeight: FontWeight.bold
+                          fontWeight: FontWeight.bold,
                         ),
                       ),
                       trailing: IconButton(

@@ -2,10 +2,8 @@ import 'package:cached_network_image/cached_network_image.dart';
 import 'package:dating/components/PrimaryButton.dart';
 import 'package:dating/constants.dart';
 import 'package:dating/model/User.dart';
-import 'package:dating/services/FirebaseHelper.dart';
 import 'package:dating/services/helper.dart';
 import 'package:dating/ui/chat/ChatScreen.dart';
-import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
@@ -19,8 +17,8 @@ class MatchScreen extends StatefulWidget {
 }
 
 class _MatchScreenState extends State<MatchScreen> {
+
   bool checkingConversationState = false;
-  final FireStoreUtils _fireStoreUtils = FireStoreUtils();
 
   @override
   void dispose() {

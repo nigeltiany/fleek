@@ -3,12 +3,12 @@ import 'dart:async';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:cloud_functions/cloud_functions.dart';
+import 'package:dating/constants.dart';
 import 'package:dating/store/KeyPair.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:gecies/gecies.dart';
 import 'package:provider/provider.dart';
-import 'package:dating/model/Gender.dart';
 import 'package:dating/model/ProfileSetup.dart';
 import 'package:dating/model/StudentStatus.dart';
 import 'package:dating/model/User.dart';
@@ -17,14 +17,11 @@ import 'package:dating/services/FirebaseHelper.dart';
 import 'package:dating/ui/StudentVerification/StudentVerification.dart';
 import 'package:dating/ui/home/HomeScreen.dart';
 import 'package:dating/ui/profile_setup/ProfileSetupScreen.dart';
-import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:latlong/latlong.dart';
 import 'package:location/location.dart';
 import 'package:progress_dialog/progress_dialog.dart';
-
-import '../constants.dart';
 
 String validateName(String value) {
   String patttern = r'(^[a-zA-Z ]*$)';
@@ -191,19 +188,19 @@ Widget _getPlaceholderOrErrorImage(double size, hasBorder) => Container(
   height: size,
   decoration: BoxDecoration(
     color: const Color(0xff7c94b6),
-    borderRadius: new BorderRadius.all(new Radius.circular(size / 2)),
-    border: new Border.all(
+    borderRadius: BorderRadius.all(Radius.circular(size / 2)),
+    border: Border.all(
       color: Colors.white,
       width: hasBorder ? 2.0 : 0.0,
     ),
   ),
   child: ClipOval(
-      child: Image.asset(
-        'assets/images/placeholder.jpg',
-        fit: BoxFit.cover,
-        height: size,
-        width: size,
-      )),
+    child: Image.asset('assets/images/placeholder.jpg',
+      fit: BoxFit.cover,
+      height: size,
+      width: size,
+    ),
+  ),
 );
 
 Widget _getCircularImageProvider(ImageProvider provider, double size, bool hasBorder) {
@@ -219,15 +216,16 @@ Widget _getCircularImageProvider(ImageProvider provider, double size, bool hasBo
       ),
     ),
     child: ClipOval(
-        child: FadeInImage(
-            fit: BoxFit.cover,
-            placeholder: Image.asset(
-              'assets/images/placeholder.jpg',
-              fit: BoxFit.cover,
-              height: size,
-              width: size,
-            ).image,
-            image: provider)),
+      child: FadeInImage(
+        fit: BoxFit.cover,
+        placeholder: Image.asset('assets/images/placeholder.jpg',
+          fit: BoxFit.cover,
+          height: size,
+          width: size,
+        ).image,
+        image: provider,
+      ),
+    ),
   );
 }
 
@@ -310,7 +308,7 @@ String updateTime(Timer timer) {
 }
 
 // IMPORTANT!!!
-// NEVER CHANGE AFTER DEPLOYING. Should not be a common alpha num character and neither of (_,-,/,\)
+// NEVER CHANGE AFTER DEPLOYING. Should not be an alpha num character and neither of (_,-,/,\)
 const String USER_ID_DELIMITER = ':';
 
 String normalizedConversationID(String userID, String userID2) {

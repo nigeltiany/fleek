@@ -11,7 +11,7 @@ class MessageData {
   String senderUsername = '';
   String senderProfilePictureURL = '';
   String senderID = '';
-  Url videoThumbnail = Url(url: '', mime: '');
+  Url videoThumbnail; // Url(url: '', mime: '');
 
   MessageData({
     this.messageID,
@@ -33,7 +33,7 @@ class MessageData {
       content = Map<String, dynamic>.from(parsedJson["content"]).map((key, value) => MapEntry(key, value?.toString()));
     }
 
-    return new MessageData(
+    return MessageData(
       messageID: parsedJson['id'] ?? parsedJson['messageID'] ?? '',
       url: Url.fromJson(parsedJson['url'] ?? Url().toJson()),
       content: Content(content: content),

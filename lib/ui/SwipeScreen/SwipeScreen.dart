@@ -1,15 +1,14 @@
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:dating/CustomFlutterTinderCard.dart';
+import 'package:dating/components/Avatar.dart';
 import 'package:dating/components/SecondaryButton.dart';
 import 'package:dating/constants.dart';
 import 'package:dating/model/User.dart';
 import 'package:dating/services/FirebaseHelper.dart';
 import 'package:dating/services/helper.dart';
 import 'package:dating/store/Data.dart';
-import 'package:dating/ui/matchScreen/MatchScreen.dart';
 import 'package:dating/ui/upgradeAccount/UpgradeAccount.dart';
 import 'package:dating/ui/userDetailsScreen/UserDetailsScreen.dart';
-import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/widgets.dart';
 import 'package:provider/provider.dart';
@@ -26,10 +25,10 @@ class SwipeScreen extends StatefulWidget {
 
 class _SwipeScreenState extends State<SwipeScreen> {
 
-  final FireStoreUtils _fireStoreUtils = FireStoreUtils();
   CardController cardController;
   AppUser currentUser;
   FleekData fleekData;
+  bool superLike = false;
 
   _SwipeScreenState();
 
@@ -250,68 +249,54 @@ class _SwipeScreenState extends State<SwipeScreen> {
   }
 
   _onCardSettingsClick(AppUser user) {
-    final action = CupertinoActionSheet(
-      message: Text(
-        user.userName,
-        style: TextStyle(fontSize: 15.0),
-      ),
-      actions: <Widget>[
-        CupertinoActionSheetAction(
-          child: Text("Block user"),
-          onPressed: () async {
-            Navigator.pop(context);
-            showProgress(context, 'Blocking user...', false);
-            bool isSuccessful = await _fireStoreUtils.blockUser(user, 'block');
-            Navigator.of(context).pop(); // Close Dialog
-            if (isSuccessful) {
-              await _fireStoreUtils.onSwipeLeft(currentUser: currentUser, dislikedUser: user);
-              fleekData.removeUser(user, currentUser.settings.searchInterest);
-              Scaffold.of(context).showSnackBar(SnackBar(content: Text
-                ('${user.userName} has been blocked.'),),);
-            } else {
-              Scaffold.of(context).showSnackBar(SnackBar(content: Text
-                ('Couldn\'t block ${user.userName}, please try again later.'),),);
-            }
-          },
-        ),
-        CupertinoActionSheetAction(
-          child: Text("Report user"),
-          onPressed: () async {
-            Navigator.pop(context);
-            showProgress(context, 'Reporting user...', false);
-            bool isSuccessful = await _fireStoreUtils.blockUser(
-                user, 'report');
-            Navigator.of(context).pop(); // Close Dialog
-            if (isSuccessful) {
-              await _fireStoreUtils.onSwipeLeft(currentUser: currentUser, dislikedUser: user);
-              fleekData.removeUser(user, currentUser.settings.searchInterest);
-              Scaffold.of(context).showSnackBar(SnackBar(content: Text
-                ('${user.userName} has been reported and blocked.'),),);
-            } else {
-              Scaffold.of(context).showSnackBar(SnackBar(content: Text
-                ('Couldn\'t report ${user.userName}, please try again later.'),),);
-            }
-          },
-        ),
-      ],
-      cancelButton: CupertinoActionSheetAction(
-        child: Text(
-          "Cancel",
-        ),
-        onPressed: () {
-          Navigator.pop(context);
-        },
-      ),
+
+    showDialog(
+      context: context,
+      builder: (BuildContext innerContext) {
+        return SimpleDialog(
+          titlePadding: EdgeInsets.zero,
+          title: AppBar(
+            leading: Avatar(user),
+            title: Text(user.userName ?? ""),
+            actions: [
+              IconButton(
+                icon: Icon(Icons.close),
+                onPressed: () {
+                  Navigator.pop(innerContext);
+                },
+              )
+            ],
+          ),
+          children: [
+            ListTile(
+              title: Text("Block user"),
+              onTap: () async {
+                Navigator.pop(innerContext);
+                showProgress(context, 'Blocking user...', false);
+                bool isSuccessful = await FireStoreUtils.blockUser(user);
+                Navigator.pop(context);
+                if (isSuccessful) {
+                  await FireStoreUtils.onSwipeLeft(currentUser: currentUser, dislikedUser: user);
+                  fleekData.removeUser(user, currentUser.settings.searchInterest);
+                  Scaffold.of(context).showSnackBar(SnackBar(content: Text
+                    ('${user.userName} has been blocked.'),),);
+                } else {
+                  Scaffold.of(context).showSnackBar(SnackBar(content: Text
+                    ('Couldn\'t block ${user.userName}, please try again later.'),),);
+                }
+              },
+            ),
+          ],
+        );
+      }
     );
-    showCupertinoModalPopup(context: context, builder: (context) => action);
+
   }
 
   _undo() async {
     //if (currentUser.isVip != null && currentUser.isVip) {
     //   AppUser undoUser = swipedUsers.removeLast();
     //   users.insert(0, undoUser);
-    //   _fireStoreUtils.updateCardStream(users);
-    //   await _fireStoreUtils.undo(undoUser);
          fleekData.undoLeftSwipe(currentUser.settings.searchInterest);
     // } else {
     //   _showUpgradeAccountDialog();
@@ -343,16 +328,18 @@ class _SwipeScreenState extends State<SwipeScreen> {
                   cardBuilder: (context, index) => _buildCard(fleekData.users[index]),
                   cardController: cardController = CardController(),
                   swipeCompleteCallback: (CardSwipeOrientation orientation, int index) async {
+                    bool sl = superLike;
+                    superLike = false;
                     // if (orientation == CardSwipeOrientation.LEFT || orientation == CardSwipeOrientation.RIGHT) {
                       // bool isValidSwipe = currentUser.isVip != null && currentUser.isVip ? true :
                       AppUser swipedUser = fleekData.users.elementAt(index);
-                      await _fireStoreUtils.incrementSwipe();
+                      await FireStoreUtils.incrementSwipe();
                       if (orientation == CardSwipeOrientation.RIGHT) {
-                        await FireStoreUtils.onSwipeRight(currentUser: currentUser, likedUser: swipedUser);
+                        await FireStoreUtils.onSwipeRight(currentUser: currentUser, likedUser: swipedUser, superLike: sl);
                         fleekData.removeUser(fleekData.users.elementAt(index), currentUser.settings.searchInterest);
                       } else if (orientation == CardSwipeOrientation.LEFT) {
                         fleekData.previousLeftSwipedUser = fleekData.users.elementAt(index);
-                        await _fireStoreUtils.onSwipeLeft(currentUser: currentUser, dislikedUser: swipedUser);
+                        await FireStoreUtils.onSwipeLeft(currentUser: currentUser, dislikedUser: swipedUser);
                         fleekData.removeUser(fleekData.users.elementAt(index), currentUser.settings.searchInterest);
                       }
                       if (fleekData.users.length < 5 && fleekData.recentlyFetchedCount >= FleekData.MAX_FETCH_COUNT) {
@@ -389,6 +376,7 @@ class _SwipeScreenState extends State<SwipeScreen> {
                 elevation: 1,
                 heroTag: 'center',
                 onPressed: () {
+                  superLike = true;
                   cardController.triggerRight();
                 },
                 backgroundColor: Color(COLOR_PRIMARY),

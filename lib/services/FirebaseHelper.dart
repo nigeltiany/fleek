@@ -4,7 +4,7 @@ import 'dart:io';
 
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:cloud_functions/cloud_functions.dart';
-import 'package:dating/model/BlockUserModel.dart';
+import 'package:dating/constants.dart';
 import 'package:dating/model/ChatVideoContainer.dart';
 import 'package:dating/model/ConversationModel.dart';
 import 'package:dating/model/Gender.dart';
@@ -20,15 +20,14 @@ import 'package:dating/store/Data.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:firebase_storage/firebase_storage.dart';
-import 'package:flutter/cupertino.dart';
+import 'package:flutter/material.dart';
 import 'package:flutter/foundation.dart';
 import 'package:geoflutterfire/geoflutterfire.dart';
 import 'package:path/path.dart' as Path;
 import 'package:uuid/uuid.dart';
-import 'package:provider/provider.dart';
 import 'package:video_thumbnail/video_thumbnail.dart';
 
-import '../constants.dart';
+
 
 final geo = Geoflutterfire();
 
@@ -81,16 +80,20 @@ class FireStoreUtils {
     });
   }
 
-  String _getFileExtension(File file) {
+  static String _getFileExtension(File file) {
     return file.path == null ? "" : Path.extension(file.path);
   }
 
-  Future<String> uploadUserImageToFireStorage(AppUser user, File image, ImageType imageType) async {
+  static Future<String> uploadUserImageToFireStorage(AppUser user, File image, ImageType imageType) async {
 
     if (FirebaseAuth.instance.currentUser == null) return null;
 
     if (user.profilePictureURL != null && user.profilePictureURL.isNotEmpty && imageType == ImageType.DISPLAY_PIC) {
-      await FirebaseStorage.instance.refFromURL(user.profilePictureURL).delete();
+      try {
+        await FirebaseStorage.instance.refFromURL(user.profilePictureURL).delete();
+      } catch (e) {
+
+      }
     }
 
     String userID = FirebaseAuth.instance.currentUser.uid;
@@ -112,7 +115,7 @@ class FireStoreUtils {
 
   }
 
-  Future<String> uploadChatImageToFireStorage(BuildContext context, File image, String conversationID) async {
+  static Future<String> uploadChatImageToFireStorage(BuildContext context, File image, String conversationID) async {
 
     showProgress(context, 'Uploading image...', false);
 
@@ -137,36 +140,36 @@ class FireStoreUtils {
 
   }
 
-  Future<ChatVideoContainer> uploadChatVideoToFireStorage(video, BuildContext context) async {
-    // showProgress(context, 'Uploading video...', false);
-    // var uniqueID = Uuid().v4();
-    // Reference upload = storage.child("videos/$uniqueID.mp4");
-    // SettableMetadata metadata = new SettableMetadata(contentType: 'video');
-    // UploadTask uploadTask = upload.putFile(video, metadata);
-    // uploadTask.events.listen((event) {
-    //   updateProgress(
-    //       'Uploading video ${(event.snapshot.bytesTransferred.toDouble() / 1000)
-    //           .toStringAsFixed(2)} /'
-    //           '${(event.snapshot.totalByteCount.toDouble() / 1000)
-    //           .toStringAsFixed(2)} '
-    //           'KB');
-    // });
-    // var storageRef = (await uploadTask.onComplete).ref;
-    // var downloadUrl = await storageRef.getDownloadURL();
-    // var metaData = await storageRef.getMetadata();
-    // final uint8list = await VideoThumbnail.thumbnailFile(
-    //     video: downloadUrl,
-    //     thumbnailPath: (await getTemporaryDirectory()).path,
-    //     imageFormat: ImageFormat.PNG);
-    // final file = File(uint8list);
-    // String thumbnailDownloadUrl = await uploadVideoThumbnailToFireStorage(file);
-    // Navigator.of(context).pop(); // Close Dialog
-    // return ChatVideoContainer(
-    //     videoUrl: Url(url: downloadUrl.toString(), mime: metaData.contentType),
-    //     thumbnailUrl: thumbnailDownloadUrl);
-  }
+  // Future<ChatVideoContainer> uploadChatVideoToFireStorage(video, BuildContext context) async {
+  //   showProgress(context, 'Uploading video...', false);
+  //   var uniqueID = Uuid().v4();
+  //   Reference upload = storage.child("videos/$uniqueID.mp4");
+  //   SettableMetadata metadata = new SettableMetadata(contentType: 'video');
+  //   UploadTask uploadTask = upload.putFile(video, metadata);
+  //   uploadTask.events.listen((event) {
+  //     updateProgress(
+  //         'Uploading video ${(event.snapshot.bytesTransferred.toDouble() / 1000)
+  //             .toStringAsFixed(2)} /'
+  //             '${(event.snapshot.totalByteCount.toDouble() / 1000)
+  //             .toStringAsFixed(2)} '
+  //             'KB');
+  //   });
+  //   var storageRef = (await uploadTask.onComplete).ref;
+  //   var downloadUrl = await storageRef.getDownloadURL();
+  //   var metaData = await storageRef.getMetadata();
+  //   final uint8list = await VideoThumbnail.thumbnailFile(
+  //       video: downloadUrl,
+  //       thumbnailPath: (await getTemporaryDirectory()).path,
+  //       imageFormat: ImageFormat.PNG);
+  //   final file = File(uint8list);
+  //   String thumbnailDownloadUrl = await uploadVideoThumbnailToFireStorage(file);
+  //   Navigator.of(context).pop(); // Close Dialog
+  //   return ChatVideoContainer(
+  //       videoUrl: Url(url: downloadUrl.toString(), mime: metaData.contentType),
+  //       thumbnailUrl: thumbnailDownloadUrl);
+  // }
 
-  Future<String> uploadVideoThumbnailToFireStorage(file) async {
+  static Future<String> uploadVideoThumbnailToFireStorage(file) async {
     // var uniqueID = Uuid().v4();
     // Reference upload = storage.child("thumbnails/$uniqueID.png");
     // UploadTask uploadTask = upload.putFile(file);
@@ -202,21 +205,28 @@ class FireStoreUtils {
     await firestore.collection(MATCH_CONVERSATIONS).doc(conversationModel.id).set(conversationModel.toJson(), SetOptions(merge: true));
   }
 
-  Future<bool> blockUser(AppUser blockedUser, String type) async {
+  static Future<bool> blockUser(IdentifiableUser user) async {
+
     bool isSuccessful = false;
-    BlockUserModel blockUserModel = BlockUserModel(
-      type: type,
-      source: FirebaseAuth.instance.currentUser.uid,
-      blocker: blockedUser.userID,
-      createdAt: Timestamp.now(),
-    );
-    await firestore
-      .collection(BLOCKS)
-      .add(blockUserModel.toJson())
-      .then((onValue) {
-        isSuccessful = true;
+
+    await firestore.collection(MATCH_CONVERSATIONS)
+      .doc(normalizedConversationID(FirebaseAuth.instance.currentUser.uid, user.userID))
+      .delete();
+
+    await firestore.collection(MATCHES)
+      .doc(FirebaseAuth.instance.currentUser.uid)
+      .collection('matches')
+      .doc(user.userID)
+      .delete();
+
+    await firestore.collection(USERS).doc(FirebaseAuth.instance.currentUser.uid).set({
+      "blockList": FieldValue.arrayUnion([user.userID])
+    }, SetOptions(merge: true)).then((document) {
+      isSuccessful = true;
     });
+
     return isSuccessful;
+
   }
 
   static getFleekUsers(AppUser currentUser, FleekData data) async {
@@ -270,7 +280,9 @@ class FireStoreUtils {
           if (fleekUser.id != FirebaseAuth.instance.currentUser.uid) {
             AppUser user = AppUser.fromJson(fleekUser.data());
             // int distance = getDistance(user.location, currentUser.location).ceil();
-            if (!viewedUsers.contains(user.userID) && !data.seenRecently(user, currentUser.settings.searchInterest)) {
+            if (user.blockList.contains(currentUser.userID) || currentUser.blockList.contains(user.userID)) {
+              skippedUserCount += 1;
+            } else if (!viewedUsers.contains(user.userID) && !data.seenRecently(user, currentUser.settings.searchInterest)) {
               // user.milesAway = '${distance < 3 ? '~2' : distance} Miles Away';
               data.addUser(user, currentUser.settings.searchInterest);
               resultSize += 1;
@@ -294,7 +306,7 @@ class FireStoreUtils {
     // }
   }
 
-  onSwipeLeft({ @required AppUser currentUser, @required AppUser dislikedUser }) async {
+  static onSwipeLeft({ @required AppUser currentUser, @required AppUser dislikedUser }) async {
     DocumentReference documentReference = firestore.collection(SWIPES).doc();
     Swipe leftSwipe = Swipe(
       id: documentReference.id,
@@ -308,7 +320,7 @@ class FireStoreUtils {
     await documentReference.set(leftSwipe.toJson());
   }
 
-  static Future<bool> onSwipeRight({ @required AppUser currentUser, @required AppUser likedUser }) async {
+  static Future<bool> onSwipeRight({ @required AppUser currentUser, @required AppUser likedUser, bool superLike = false }) async {
     bool isSuccessful;
     DocumentReference documentReference = firestore.collection(SWIPES).doc();
     Swipe swipe = Swipe(
@@ -317,7 +329,7 @@ class FireStoreUtils {
       subject: SwipeSubject.fromUser(likedUser),
       hasBeenSeen: false,
       createdAt: Timestamp.now(),
-      type: SwipeType.LIKE,
+      type: superLike ? SwipeType.SUPER_LIKE : SwipeType.LIKE,
       searchInterest: currentUser.settings.searchInterest
     );
     await documentReference.set(swipe.toJson()).then((onValue) {
@@ -328,7 +340,7 @@ class FireStoreUtils {
     return isSuccessful;
   }
 
-  Future<void> deleteImage(String imageFileUrl) async {
+  static Future<void> deleteImage(String imageFileUrl) async {
     var fileUrl = Uri.decodeFull(Path.basename(imageFileUrl)).replaceAll(new RegExp(r'(\?alt).*'), '');
 
     final Reference firebaseStorageRef = FirebaseStorage.instance.ref().child(fileUrl);
@@ -352,7 +364,7 @@ class FireStoreUtils {
     });
   }
 
-  Future<bool> incrementSwipe() async {
+  static Future<bool> incrementSwipe() async {
     DocumentReference documentReference = firestore.collection(SWIPE_COUNT).doc(FirebaseAuth.instance.currentUser.uid);
 
     DocumentSnapshot validationDocumentSnapshot = await documentReference.get();
@@ -376,7 +388,7 @@ class FireStoreUtils {
 
   }
 
-  Future<Url> uploadAudioFile(file, BuildContext context) async {
+  static Future<Url> uploadAudioFile(file, BuildContext context) async {
 
     showProgress(context, 'Uploading Audio...', false);
 
@@ -405,7 +417,7 @@ class FireStoreUtils {
 
   }
 
-  Future<bool> _shouldResetCounter(DocumentSnapshot documentSnapshot) async {
+  static Future<bool> _shouldResetCounter(DocumentSnapshot documentSnapshot) async {
     SwipeCounter counter = SwipeCounter.fromJson(documentSnapshot.data());
     DateTime now = DateTime.now();
     DateTime from = DateTime.fromMillisecondsSinceEpoch(counter.createdAt.millisecondsSinceEpoch);

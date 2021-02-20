@@ -1,3 +1,4 @@
+import 'package:dating/constants.dart';
 import 'package:dating/model/Gender.dart';
 import 'package:dating/model/User.dart';
 import 'package:dating/services/FirebaseHelper.dart';
@@ -35,7 +36,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
       appBar: AppBar(
         elevation: 0,
         iconTheme: IconThemeData(color: isDarkMode(context) ? Colors.white : Colors.black),
-        backgroundColor: isDarkMode(context) ? Colors.black : Colors.transparent,
+        backgroundColor: Colors.transparent,
         brightness: isDarkMode(context) ? Brightness.dark : Brightness.light,
         centerTitle: true,
         title: Text('Settings',
@@ -55,6 +56,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                 SettingsTile.switchTile(
                   title: 'Show me on Fleek',
                   // leading: Icon(Icons.fingerprint),
+                  switchActiveColor: Color(COLOR_PRIMARY),
                   switchValue: user.settings.showMe,
                   onToggle: (bool value) async {
                     user.settings.showMe = value;
@@ -76,6 +78,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                 SettingsTile.switchTile(
                   title: 'New matches',
                   // leading: Icon(Icons.fingerprint),
+                  switchActiveColor: Color(COLOR_PRIMARY),
                   switchValue: user.settings.pushNewMatchesEnabled,
                   onToggle: (bool value) async {
                     user.settings.pushNewMatchesEnabled = value;
@@ -86,6 +89,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                 SettingsTile.switchTile(
                   title: 'New Messages',
                   // leading: Icon(Icons.fingerprint),
+                  switchActiveColor: Color(COLOR_PRIMARY),
                   switchValue: user.settings.pushNewMessages,
                   onToggle: (bool value) async {
                     user.settings.pushNewMessages = value;

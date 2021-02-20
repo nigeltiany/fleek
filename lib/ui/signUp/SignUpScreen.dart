@@ -6,7 +6,6 @@ import 'package:dating/store/KeyPair.dart';
 import 'package:dating/model/User.dart';
 import 'package:dating/services/helper.dart';
 import 'package:firebase_auth/firebase_auth.dart';
-import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:gecies/gecies.dart';

@@ -23,7 +23,7 @@ final List<String> _subtitlesList = [
 
 final List<dynamic> _imageList = [
   'assets/images/app_logo.png',
-  Icons.chat_bubble_outline,
+  Icons.forum,
   Icons.notifications_none
 ];
 final List<Widget> _pages = [];
