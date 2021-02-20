@@ -167,6 +167,15 @@ class _ConversationsState extends State<ConversationsScreen> {
 
     List<dynamic> participants = ([]..addAll(conversationModel.participantIDs))..removeWhere((id) => id == currentUser.userID);
 
+    if (participants.length == 0) {
+      // TODO: add trailing action to report error to developers
+      return ListTile(
+        leading: CircleAvatar(child: Icon(Icons.error, color: Colors.redAccent)),
+        title: Text("Oh snap!"),
+        subtitle: Text("An error occurred showing this conversation :-("),
+      );
+    }
+
     var listItem = (AppUser user) {
       return InkWell(
         onTap: () {
