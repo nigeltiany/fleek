@@ -11,6 +11,7 @@ import 'package:dating/model/MessageData.dart';
 import 'package:dating/model/User.dart';
 import 'package:dating/services/FirebaseHelper.dart';
 import 'package:dating/services/helper.dart';
+import 'package:dating/store/MatchData.dart';
 import 'package:dating/ui/chat/ChatScreen.dart';
 import 'package:dating/ui/userDetailsScreen/UserDetailsScreen.dart';
 import 'package:firebase_auth/firebase_auth.dart';
@@ -35,6 +36,7 @@ class _ConversationsState extends State<ConversationsScreen> {
 
   AppUser currentUser;
   ConversationData conversationState;
+  MatchData matchData;
   final fireStoreUtils = FireStoreUtils();
 
   _ConversationsState();
@@ -44,15 +46,23 @@ class _ConversationsState extends State<ConversationsScreen> {
     super.initState();
     currentUser = context.read<AppUser>();
     conversationState = context.read<ConversationData>();
+    matchData = context.read<MatchData>();
   }
 
   @override
   Widget build(BuildContext context) {
     return Container(
-      child: ListView(
-        children: <Widget>[
+      child: Column(
+        mainAxisSize: MainAxisSize.max,
+        children: [
           _matchesList,
-          _conversationsList,
+          Expanded(
+            child: ListView(
+              children: [
+                _conversationsList,
+              ],
+            ),
+          ),
         ],
       ),
     );
@@ -61,10 +71,14 @@ class _ConversationsState extends State<ConversationsScreen> {
   Widget get _matchesList {
     return SizedBox(
       height: 100,
-      child: StreamBuilder<QuerySnapshot>(
-        stream: FirebaseFirestore.instance.collection(MATCHES).doc(FirebaseAuth.instance.currentUser.uid).collection('matches').snapshots(),
+      child: StreamBuilder<FleekMatch>(
+        stream: matchData.matchStream,
         builder: (context, snap) {
-          if (snap.connectionState == ConnectionState.waiting) {
+          if (!snap.hasData || matchData.matches.isEmpty) {
+            return Center(
+              child: Text('No Matches found.', style: TextStyle(fontSize: 18),),
+            );
+          } else if (snap.connectionState == ConnectionState.waiting) {
             return Container(
               child: Center(
                 child: CircularProgressIndicator(
@@ -72,35 +86,32 @@ class _ConversationsState extends State<ConversationsScreen> {
                 ),
               ),
             );
-          } else if (!snap.hasData || snap.data.docs.isEmpty) {
-            return Center(
-              child: Text('No Matches found.', style: TextStyle(fontSize: 18),),
-            );
           } else {
             return ListView.builder(
               scrollDirection: Axis.horizontal,
-              itemCount: snap.hasData ? snap.data.size : 0,
-              // ignore: missing_return
+              itemCount: matchData.matches.length,
               itemBuilder: (BuildContext context, int index) {
-                FleekMatch fleekMatch = FleekMatch.fromJson(snap.data.docs[index].data());
-                return Padding(
-                  padding: const EdgeInsets.only(top: 8.0, left: 4, right: 4),
-                  child: InkWell(
-                    onLongPress: () => _onMatchLongPress(fleekMatch),
-                    onTap: () async {
-                      push(context, ChatScreen(identifiableUser: fleekMatch.match));
-                    },
+                return InkWell(
+                  onLongPress: () => _onMatchLongPress(matchData.matches[index]),
+                  onTap: () async {
+                    push(context, ChatScreen(identifiableUser: matchData.matches[index].match));
+                  },
+                  child: Padding(
+                    padding: const EdgeInsets.symmetric(vertical: 8.0, horizontal: 4),
                     child: Column(
-                      children: <Widget>[
-                        displayCircleImage(fleekMatch.match.profilePictureURL, 50, false),
+                      crossAxisAlignment: CrossAxisAlignment.center,
+                      mainAxisAlignment: MainAxisAlignment.end,
+                      children: [
+                        displayCircleImage(matchData.matches[index].match.profilePictureURL, 50, false),
                         Expanded(
                           child: Container(
-                            width: 75,
+                            width: 76,
                             child: Padding(
                               padding: const EdgeInsets.only(top: 8.0, left: 8, right: 8),
-                              child: Text('${fleekMatch.match.userName}',
+                              child: Text('${matchData.matches[index].match.userName}',
                                 textAlign: TextAlign.center,
                                 maxLines: 1,
+                                overflow: TextOverflow.fade,
                               ),
                             ),
                           ),
