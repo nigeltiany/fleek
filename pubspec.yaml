@@ -25,7 +25,7 @@ dependencies:
   http: ^0.12.1
   image_picker: ^0.6.5
   latlong: ^0.6.1
-  location: ^3.0.0
+  location: ^3.2.4
   mime: ^0.9.7
   native_updater: ^0.0.4
   new_version: ^0.0.5
@@ -44,7 +44,9 @@ dependencies:
   video_thumbnail: ^0.2.1
 
   gecies:
-    git: git@github.com:nigeltiany/gecies.git
+    git:
+      url: git@github.com:nigeltiany/gecies.git
+      ref: 70f63841f4912bd8da9734d372cab121356a161d
 
   flutter:
     sdk: flutter

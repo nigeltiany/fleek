@@ -147,7 +147,7 @@ class MyAppState extends State<MyApp> with WidgetsBindingObserver {
     newVersion = NewVersion(context: context);
 
     FireStoreUtils.firebaseMessaging.configure(
-      onBackgroundMessage: backgroundMessageHandler,
+      // onBackgroundMessage: backgroundMessageHandler,
       onMessage: (Map<String, dynamic> message) async {
         // TODO: add counter bubble if message is a text message
         print("onMessage: $message");
