@@ -8,7 +8,6 @@ import 'package:dating/services/FirebaseHelper.dart';
 import 'package:dating/services/helper.dart';
 import 'package:dating/store/ConversationData.dart';
 import 'package:dating/store/Data.dart';
-import 'package:dating/ui/upgradeAccount/UpgradeAccount.dart';
 import 'package:dating/ui/userDetailsScreen/UserDetailsScreen.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
@@ -415,47 +414,47 @@ class _SwipeScreenState extends State<SwipeScreen> {
     );
   }
 
-  void _showUpgradeAccountDialog() {
-
-    Widget okButton = FlatButton(
-      child: Text("OK"),
-      onPressed: () {
-        Navigator.pop(context);
-      },
-    );
-
-    Widget upgradeButton = FlatButton(
-      child: Text("Upgrade Now"),
-      onPressed: () {
-        Navigator.pop(context);
-        showModalBottomSheet(
-          context: context,
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.vertical(
-              top: Radius.circular(20),
-            ),
-          ),
-          builder: (context) {
-            return UpgradeAccount();
-          },
-        );
-      },
-    );
-
-    AlertDialog alert = AlertDialog(
-      title: Text('Upgrade account'),
-      content: Text('Upgrade your account now to have unlimited swipes per day.'),
-      actions: [upgradeButton, okButton],
-    );
-
-    // show the dialog
-    showDialog(
-      context: context,
-      builder: (BuildContext context) {
-        return alert;
-      },
-    );
-
-  }
-  
+  // void _showUpgradeAccountDialog() {
+  //
+  //   Widget okButton = FlatButton(
+  //     child: Text("OK"),
+  //     onPressed: () {
+  //       Navigator.pop(context);
+  //     },
+  //   );
+  //
+  //   Widget upgradeButton = FlatButton(
+  //     child: Text("Upgrade Now"),
+  //     onPressed: () {
+  //       Navigator.pop(context);
+  //       showModalBottomSheet(
+  //         context: context,
+  //         shape: RoundedRectangleBorder(
+  //           borderRadius: BorderRadius.vertical(
+  //             top: Radius.circular(20),
+  //           ),
+  //         ),
+  //         builder: (context) {
+  //           return UpgradeAccount();
+  //         },
+  //       );
+  //     },
+  //   );
+  //
+  //   AlertDialog alert = AlertDialog(
+  //     title: Text('Upgrade account'),
+  //     content: Text('Upgrade your account now to have unlimited swipes per day.'),
+  //     actions: [upgradeButton, okButton],
+  //   );
+  //
+  //   // show the dialog
+  //   showDialog(
+  //     context: context,
+  //     builder: (BuildContext context) {
+  //       return alert;
+  //     },
+  //   );
+  //
+  // }
+  //
 }

@@ -21,7 +21,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
-import 'package:in_app_purchase/in_app_purchase.dart';
+// import 'package:in_app_purchase/in_app_purchase.dart';
 import 'package:native_updater/native_updater.dart';
 import 'package:new_version/new_version.dart';
 import 'package:provider/provider.dart';
@@ -32,7 +32,7 @@ import 'constants.dart' as Constants;
 import 'model/User.dart';
 
 void main() async {
-  InAppPurchaseConnection.enablePendingPurchases();
+  // InAppPurchaseConnection.enablePendingPurchases();
   WidgetsFlutterBinding.ensureInitialized();
   await Firebase.initializeApp();
   runApp(
