@@ -9,6 +9,13 @@ abstract class IdentifiableUser {
   String get userID;
 }
 
+class UserID implements IdentifiableUser {
+  final String _userID;
+  UserID(this._userID);
+  @override
+  String get userID => _userID;
+}
+
 class AppUser with ChangeNotifier implements IdentifiableUser {
 
   String _userName;

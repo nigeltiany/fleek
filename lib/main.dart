@@ -1,6 +1,7 @@
 import 'dart:async';
 
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:dating/model/Notification.dart';
 import 'package:dating/model/UserPrivateDetails.dart';
 import 'package:dating/store/ChatData.dart';
 import 'package:dating/store/ConversationData.dart';
@@ -11,6 +12,7 @@ import 'package:dating/services/helper.dart';
 import 'package:dating/store/MatchData.dart';
 import 'package:dating/store/Store.dart';
 import 'package:dating/ui/auth/AuthScreen.dart';
+import 'package:dating/ui/chat/ChatScreen.dart';
 import 'package:dating/ui/onBoarding/OnBoardingScreen.dart';
 import 'package:file/memory.dart';
 import 'package:firebase_auth/firebase_auth.dart';
@@ -63,6 +65,8 @@ class MyAppState extends State<MyApp> with WidgetsBindingObserver {
   final FlutterSecureStorage secureStorage;
   StreamSubscription tokenStream;
   NewVersion newVersion;
+  bool userFetched = false;
+  final _navigatorKey = GlobalKey<NavigatorState>();
 
   MyAppState(this.store, this.secureStorage);
 
@@ -109,6 +113,7 @@ class MyAppState extends State<MyApp> with WidgetsBindingObserver {
       ],
       child: MaterialApp(
         title: 'Fleek',
+        navigatorKey: _navigatorKey,
         theme: ThemeData(
           colorScheme: ColorScheme.light(primary: Color(Constants.COLOR_PRIMARY)),
           accentColor: Color(Constants.COLOR_PRIMARY),
@@ -144,13 +149,14 @@ class MyAppState extends State<MyApp> with WidgetsBindingObserver {
     FireStoreUtils.firebaseMessaging.configure(
       onBackgroundMessage: backgroundMessageHandler,
       onMessage: (Map<String, dynamic> message) async {
+        // TODO: add counter bubble if message is a text message
         print("onMessage: $message");
       },
       onLaunch: (Map<String, dynamic> message) async {
-        print("onLaunch: $message");
+        handleNotificationAction(message);
       },
       onResume: (Map<String, dynamic> message) async {
-        print("onResume: $message");
+        handleNotificationAction(message);
       },
     );
 
@@ -167,17 +173,21 @@ class MyAppState extends State<MyApp> with WidgetsBindingObserver {
       AppUser databaseAppUserState = await FireStoreUtils.getCurrentUser();
       UserPrivateDetails userPrivateDetails = await FireStoreUtils.getCurrentUserPrivateDetails();
 
+
       if (databaseAppUserState == null) {
+        userFetched = true;
         store.appUser.userID = u.uid;
         store.appUser.signedIn = true;
       } else {
+        userFetched = true;
         store.appUser.signedIn = true;
         store.appUser.copy(databaseAppUserState);
         await FireStoreUtils.updateCurrentUser(store.appUser);
       }
 
       if (userPrivateDetails != null) {
-        if (userPrivateDetails.fcmToken == null) {
+        var currentToken = await FireStoreUtils.firebaseMessaging.getToken();
+        if (userPrivateDetails.fcmToken != currentToken) {
           userPrivateDetails.fcmToken = await FireStoreUtils.firebaseMessaging.getToken();
           await FireStoreUtils.updateUserPrivateDetails(userPrivateDetails);
         } else {
@@ -203,7 +213,7 @@ class MyAppState extends State<MyApp> with WidgetsBindingObserver {
 
   @override
   void didChangeAppLifecycleState(AppLifecycleState state) {
-    if (FirebaseAuth.instance.currentUser != null) {
+    if (FirebaseAuth.instance.currentUser != null && userFetched) {
       if (state == AppLifecycleState.paused) {
         tokenStream?.pause();
         store.appUser.online = false;
@@ -218,6 +228,24 @@ class MyAppState extends State<MyApp> with WidgetsBindingObserver {
     }
   }
 
+  void handleNotificationAction(Map<String, dynamic> message) {
+
+    if (FirebaseAuth.instance.currentUser == null) return;
+    var notification = FleekNotification.fromMap(message);
+
+    switch(notification.notificationType) {
+      case NotificationType.MATCH:
+        // TODO: Handle this case.
+        break;
+      case NotificationType.MESSAGE:
+        push(_navigatorKey.currentContext, ChatScreen(identifiableUser: UserID(notification.senderUserID)));
+        break;
+      case NotificationType.UNKNOWN:
+        break;
+    }
+
+  }
+
 }
 
 class OnBoarding extends StatefulWidget {
@@ -229,18 +257,18 @@ class OnBoarding extends StatefulWidget {
 
 class OnBoardingState extends State<OnBoarding> {
 
-  Future hasFinishedOnBoarding() async {
+  Future hasFinishedOnBoarding(BuildContext ctx) async {
     SharedPreferences prefs = await SharedPreferences.getInstance();
     bool finishedOnBoarding = (prefs.getBool(Constants.FINISHED_ON_BOARDING) ?? false);
 
     if (finishedOnBoarding) {
       if (FirebaseAuth.instance.currentUser != null) {
-        goToNextScreenAfterAuth(context);
+        goToNextScreenAfterAuth(ctx);
       } else {
-        pushReplacement(context, AuthScreen());
+        pushReplacement(ctx, AuthScreen());
       }
     } else {
-      pushReplacement(context, OnBoardingScreen());
+      pushReplacement(ctx, OnBoardingScreen());
     }
   }
 
@@ -252,19 +280,19 @@ class OnBoardingState extends State<OnBoarding> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Color(Constants.COLOR_PRIMARY),
+      backgroundColor: Color(Constants.COLOR_PRIMARY_DARK),
       body: FutureBuilder<void>(
-        future: hasFinishedOnBoarding(),
+        future: hasFinishedOnBoarding(context),
         builder: (BuildContext context, AsyncSnapshot snapshot) {
           if (snapshot.connectionState == ConnectionState.waiting) {
             return Center(
               child: CircularProgressIndicator(
-                backgroundColor: isDarkMode(context) ? Colors.black : Colors.white,
+                backgroundColor: Colors.white,
               ),
             );
           }
           // Should never get to this point
-          return Container(color: Color(Constants.COLOR_PRIMARY_DARK),);
+          return Container(color: Color(Constants.COLOR_PRIMARY_DARK));
         },
       ),
     );

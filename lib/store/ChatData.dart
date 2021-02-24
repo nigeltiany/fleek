@@ -24,6 +24,8 @@ class ChatData with ChangeNotifier {
   StreamController<bool> _chatHasMoreController;
   Stream _chatHasMoreStateStream;
 
+  AppUser _chattingWith;
+
   ChatData() {
     _conversations = Map<String, Map<String, MessageData>>();
 
@@ -48,6 +50,10 @@ class ChatData with ChangeNotifier {
   }
 
   void chattingWith(AppUser appUser) {
+    if (_chattingWith == appUser) {
+      return;
+    }
+    _chattingWith = appUser;
     var conversationID = _conversationID(appUser);
     if (_currentChatStream != null) {
       _currentChatStream.cancel();

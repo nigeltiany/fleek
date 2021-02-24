@@ -116,7 +116,7 @@ class _ChatScreenState extends State<ChatScreen> {
         Avatar(chatWithUser ?? identifiableUser),
         SizedBox(width: 12),
         Flexible(
-          child: Text((identifiableUser is AppUser) ? (identifiableUser as AppUser).userName : (identifiableUser as SwipeSubject).userName,
+          child: Text(chatWithUser?.userName ?? "",
             overflow: TextOverflow.fade,
             maxLines: 1,
             softWrap: false,
@@ -132,17 +132,6 @@ class _ChatScreenState extends State<ChatScreen> {
 
 
   Widget _body(BuildContext context) {
-    return Column(
-      children: <Widget>[
-        _messagesArea(context),
-        _inputArea(context),
-        _buildAudioMessageRecorder(context)
-      ],
-    );
-  }
-
-  @override
-  Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
         actions: _actions,
@@ -151,37 +140,47 @@ class _ChatScreenState extends State<ChatScreen> {
         backgroundColor: Color(COLOR_PRIMARY),
         title: _title
       ),
-      body: Builder(builder: (BuildContext innerContext) {
-
-        chatWithUser = Provider.of<ConversationData>(context, listen: false).getUser(identifiableUser.userID);
-
-        if (chatWithUser == null) {
-          return FutureBuilder<AppUser>(
-            future: FireStoreUtils.getUserByID(identifiableUser.userID).then((user) {
-              Provider.of<ConversationData>(context, listen: false).addConversationUser(user);
-              Provider.of<ChatData>(context, listen: false).chattingWith(user);
-              chatWithUser = user;
-              return user;
-            }),
-            builder: (BuildContext context, AsyncSnapshot snapshot) {
-              if (snapshot.hasData) {
-                return _body(context);
-              }
-              return Container(
-                child: Center(
-                  child: snapshot.hasError ? Icon(Icons.error, color: Colors.redAccent) : CircularProgressIndicator(),
-                ),
-              );
-            },
-          );
-        }
-
-        Provider.of<ChatData>(context, listen: false).chattingWith(chatWithUser);
-
-        return _body(context);
-
-      }),
+      body: Column(
+        children: <Widget>[
+          _messagesArea(context),
+          _inputArea(context),
+          _buildAudioMessageRecorder(context)
+        ],
+      ),
     );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+
+    chatWithUser = Provider.of<ConversationData>(context, listen: false).getUser(identifiableUser.userID);
+
+    if (chatWithUser == null) {
+      return FutureBuilder<AppUser>(
+        future: FireStoreUtils.getUserByID(identifiableUser.userID).then((user) {
+          Provider.of<ConversationData>(context, listen: false).addConversationUser(user);
+          Provider.of<ChatData>(context, listen: false).chattingWith(user);
+          chatWithUser = user;
+          return user;
+        }),
+        builder: (BuildContext context, AsyncSnapshot snapshot) {
+          if (snapshot.hasData) {
+            return _body(context);
+          }
+          return Container(
+            color: isDarkMode(context) ? Color(DARK_MODE_SCAFFOLD) : Colors.white,
+            child: Center(
+              child: snapshot.hasError ? Icon(Icons.error, color: Colors.redAccent) : CircularProgressIndicator(),
+            ),
+          );
+        },
+      );
+    }
+
+    Provider.of<ChatData>(context, listen: false).chattingWith(chatWithUser);
+
+    return _body(context);
+
   }
 
   Widget _messagesArea(BuildContext context) {
