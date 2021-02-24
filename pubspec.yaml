@@ -23,7 +23,7 @@ dependencies:
   flutter_swiper: ^1.1.6
   geoflutterfire: ^2.2.1
   http: ^0.12.1
-  image_picker: ^0.6.5
+  image_picker: ^0.6.7+22
   latlong: ^0.6.1
   location: ^3.2.4
   mime: ^0.9.7
