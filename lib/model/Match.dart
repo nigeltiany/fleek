@@ -13,13 +13,13 @@ class FleekMatch {
     this.match,
     this.matchInterest,
     this.createdAt,
-    this.seen
+    this.seen = false
   });
 
   factory FleekMatch.fromJson(Map<String, dynamic> parsedJson) {
     return FleekMatch(
       match: SwipeSubject.fromJson(parsedJson["match"] ?? SwipeSubject.fromUser(AppUser())),
-      seen: parsedJson['seen'] ?? '',
+      seen: parsedJson['seen'] ?? false,
       createdAt: parsedJson['createdAt'] ?? Timestamp.now(),
       matchInterest: searchInterestFromFirebaseString(parsedJson['matchInterest']) ?? SearchInterest.DATES
     );
@@ -27,10 +27,10 @@ class FleekMatch {
 
   Map<String, dynamic> toJson() {
     return {
-      "match": this.match,
+      "match": this.match.toJson(),
       "matchInterest": this.matchInterest.toFirebaseString(),
       "createdAt": this.createdAt,
-      "seen": false
+      "seen": this.seen
     };
   }
 }

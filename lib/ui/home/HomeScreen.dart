@@ -2,14 +2,17 @@ import 'package:dating/components/GenderSelector.dart';
 import 'package:dating/components/InterestSelector.dart';
 import 'package:dating/components/OrientationSelector.dart';
 import 'package:dating/model/Gender.dart';
+import 'package:dating/model/Match.dart';
 import 'package:dating/model/SearchInterests.dart';
 import 'package:dating/model/User.dart';
 import 'package:dating/services/FirebaseHelper.dart';
 import 'package:dating/services/helper.dart';
 import 'package:dating/store/Data.dart';
+import 'package:dating/store/MatchData.dart';
 import 'package:dating/ui/SwipeScreen/SwipeScreen.dart';
 import 'package:dating/ui/accountDetails/AccountDetailsScreen.dart';
 import 'package:dating/ui/conversationsScreen/ConversationsScreen.dart';
+import 'package:dating/ui/matchScreen/MatchScreen.dart';
 import 'package:dating/ui/profile/ProfileScreen.dart';
 import 'package:dating/ui/settings/SettingsScreen.dart';
 import 'package:flutter/cupertino.dart';
@@ -40,6 +43,7 @@ class _HomeState extends State<HomeScreen> with TickerProviderStateMixin {
   TabController _genderTabController;
   TabController _orientationTabController;
   TabController _searchInterestController;
+  bool showingNewMatchPopUp; // leave as null
 
   @override
   void initState() {
@@ -48,6 +52,27 @@ class _HomeState extends State<HomeScreen> with TickerProviderStateMixin {
 
     WidgetsBinding.instance.addPostFrameCallback((_){
       context.read<FleekData>().loadData(user);
+      context.read<MatchData>().matchStream.listen((FleekMatch match) async {
+        await Future.delayed(Duration(seconds: showingNewMatchPopUp == null ? 3 : 0), () => Future.value(null));
+        if (showingNewMatchPopUp == null) {
+          showingNewMatchPopUp = false;
+        }
+        if (!match.seen && !showingNewMatchPopUp) {
+          showingNewMatchPopUp = true;
+          await showDialog(
+            context: context,
+            barrierDismissible: false,
+            builder: (BuildContext context) {
+              return MatchScreen();
+            },
+          );
+          showingNewMatchPopUp = false;
+          var unseenMatches = Provider.of<MatchData>(context, listen: false).matches.where((m) => !m.seen).toList();
+          await Future.forEach(unseenMatches, (FleekMatch m) async {
+            await Provider.of<MatchData>(context, listen: false).setMatchAsSeen(m);
+          });
+        }
+      });
     });
 
     _genderTabController = TabController(

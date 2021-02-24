@@ -213,13 +213,13 @@ class FireStoreUtils {
 
     await firestore.collection(MATCHES)
       .doc(FirebaseAuth.instance.currentUser.uid)
-      .collection('matches')
+      .collection(MATCHES_SUB_COLLECTION)
       .doc(user.userID)
       .delete();
 
     await firestore.collection(MATCHES)
       .doc(user.userID)
-      .collection('matches')
+      .collection(MATCHES_SUB_COLLECTION)
       .doc(FirebaseAuth.instance.currentUser.uid)
       .delete();
 

@@ -8,6 +8,7 @@ const DARK_MODE_SCAFFOLD = 0xFF303030;
 const USERS = 'users';
 const USERS_PRIVATE = 'users_private';
 const MATCHES = 'users_matches';
+const MATCHES_SUB_COLLECTION = 'matches';
 const SWIPES = 'user_swipes';
 const SWIPES_SUB_COLLECTION = 'swipes';
 const MATCH_CONVERSATIONS = "match_conversations";

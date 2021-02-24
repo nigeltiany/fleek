@@ -42,8 +42,7 @@ class _FileBubbleState extends State<FileBubble> {
   AppUser currentUser;
   MemoryFileSystem memoryFileSystem;
   KeyPair keyPair;
-  Image image;
-  bool processFailure = false;
+  Widget _decryptedResults;
 
   _FileBubbleState(this.messageData, this.mediaURL, this.isVideo);
 
@@ -105,19 +104,15 @@ class _FileBubbleState extends State<FileBubble> {
 
   Widget _decryptedImageFileContent(MessageData messageData, String mediaURL) {
 
-    if (image != null) {
-      return imageRenderer(image);
-    } else if (processFailure) {
-      return WidgetBubble(
-        byCurrentUser:  messageData.senderID == currentUser.userID,
-        child: Icon(Icons.error, color: Colors.redAccent),
-      );
+    if (_decryptedResults != null) {
+      return _decryptedResults;
     }
 
     var fileName = Uri.parse(mediaURL).queryParameters["token"];
     if (memoryFileSystem.file(fileName).existsSync()) {
-      image = Image.memory(memoryFileSystem.file(fileName).readAsBytesSync());
-      return imageRenderer(image);
+      var image = Image.memory(memoryFileSystem.file(fileName).readAsBytesSync());
+      _decryptedResults = imageRenderer(image);
+      return _decryptedResults;
     }
 
     return FutureBuilder<List<dynamic>>(
@@ -128,32 +123,38 @@ class _FileBubbleState extends State<FileBubble> {
       builder: (BuildContext innerContext, AsyncSnapshot<List<dynamic>> snapshot) {
         if (snapshot.hasData) {
           return FutureBuilder<File>(
-            future: decryptFileHelper(memoryFileSystem,(snapshot.data[0] as String), (snapshot.data[1] as File), fileName),
+            future: decryptFileHelper(memoryFileSystem, (snapshot.data[0] as String), (snapshot.data[1] as File), fileName),
             builder: (BuildContext deepContext, AsyncSnapshot<File> innerSnap) {
               if (innerSnap.hasData) {
-                image = Image.memory(innerSnap.data.readAsBytesSync());
-                return imageRenderer(image);
+                var image = Image.memory(innerSnap.data.readAsBytesSync());
+                _decryptedResults = imageRenderer(image);
+                return _decryptedResults;
               } else if (innerSnap.hasError) {
-                return WidgetBubble(
+                _decryptedResults = WidgetBubble(
                   byCurrentUser:  messageData.senderID == currentUser.userID,
                   child: Icon(Icons.error, color: Colors.redAccent),
                 );
-              } else {
+                return _decryptedResults;
+              } else if (innerSnap.connectionState == ConnectionState.waiting) {
                 return SpinKitCubeGrid(color: Color(COLOR_PRIMARY_DARK));
+              } else {
+                return _decryptedResults ?? Container();
               }
             },
           );
         } else if (snapshot.hasError) {
-          processFailure = true;
-          return WidgetBubble(
+          _decryptedResults =  WidgetBubble(
             byCurrentUser:  messageData.senderID == currentUser.userID,
             child: Icon(Icons.error, color: Colors.redAccent),
           );
-        } else {
+          return _decryptedResults;
+        } else if (snapshot.connectionState == ConnectionState.waiting) {
           return WidgetBubble(
             byCurrentUser:  messageData.senderID == currentUser.userID,
             child: CircularProgressIndicator(),
           );
+        } else {
+          return _decryptedResults ?? Container();
         }
       },
     );

@@ -1,3 +1,4 @@
+import 'package:dating/components/ButtonType.dart';
 import 'package:dating/constants.dart';
 import 'package:dating/services/helper.dart';
 import 'package:flutter/material.dart';
@@ -6,11 +7,13 @@ class SecondaryButton extends StatelessWidget {
 
   final String label;
   final VoidCallback onTap;
+  final ButtonType buttonType;
 
   const SecondaryButton({
     Key key,
     this.label,
     this.onTap,
+    this.buttonType = ButtonType.NORMAL,
   }) : super(key: key);
 
   @override
@@ -20,7 +23,7 @@ class SecondaryButton extends StatelessWidget {
         style: TextStyle(
           fontSize: 20,
           fontWeight: FontWeight.bold,
-          color: Color(COLOR_PRIMARY),
+          color: buttonType == ButtonType.NORMAL ? Color(COLOR_PRIMARY) : Colors.redAccent,
         ),
       ),
       onPressed: onTap,
@@ -28,7 +31,7 @@ class SecondaryButton extends StatelessWidget {
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(25.0),
         side: BorderSide(
-          color: isDarkMode(context) ? Colors.white : Colors.black54,
+          color: buttonType == ButtonType.NORMAL ? (isDarkMode(context) ? Colors.white : Colors.black54) : Colors.redAccent,
         ),
       ),
     );

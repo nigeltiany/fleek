@@ -34,13 +34,14 @@ class MatchData with ChangeNotifier {
     });
   }
 
-  void setMatchAsSeen (FleekMatch match) async {
-    await FirebaseFirestore.instance
+  Future<void> setMatchAsSeen (FleekMatch match) async {
+    match.seen = true;
+    return await FirebaseFirestore.instance
       .collection(MATCHES)
       .doc(FirebaseAuth.instance.currentUser.uid)
-      .collection('matches')
+      .collection(MATCHES_SUB_COLLECTION)
       .doc(match.match.userID)
-      .set((match..seen = true).toJson(), SetOptions(merge: true));
+      .set(match.toJson(), SetOptions(merge: true));
   }
 
   void removeCachedMatch(IdentifiableUser user) {
@@ -63,7 +64,7 @@ class MatchData with ChangeNotifier {
     return FirebaseFirestore.instance
       .collection(MATCHES)
       .doc(FirebaseAuth.instance.currentUser.uid)
-      .collection('matches')
+      .collection(MATCHES_SUB_COLLECTION)
       .orderBy('createdAt', descending: true);
   }
 

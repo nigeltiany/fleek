@@ -88,7 +88,7 @@ class _StudentVerificationScreenState extends State<StudentVerificationScreen> {
     return ConstrainedBox(
       constraints: BoxConstraints(minWidth: double.infinity),
       child: Padding(
-        padding: const EdgeInsets.only(top: 32.0, left: 24.0),
+        padding: const EdgeInsets.only(top: 32, left: 24, right: 24),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [

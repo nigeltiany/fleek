@@ -26,7 +26,11 @@ class ConversationData with ChangeNotifier {
 
   }
 
-  List<ConversationModel> get conversations => List.unmodifiable(_conversation.values);
+  List<ConversationModel> get conversations => List.unmodifiable(_conversation.values.toList()..sort(_sorter));
+
+  int _sorter (ConversationModel a, ConversationModel b) {
+    return a.lastMessageDate.compareTo(b.lastMessageDate) * -1;
+  }
 
   void _addConversation(ConversationModel conversationModel) {
     _conversation[conversationModel.id] = conversationModel;

@@ -1,4 +1,7 @@
+import 'dart:io';
+
 import 'package:cached_network_image/cached_network_image.dart';
+import 'package:dating/components/ButtonType.dart';
 import 'package:dating/components/SecondaryButton.dart';
 import 'package:dating/model/User.dart';
 import 'package:dating/services/FirebaseHelper.dart';
@@ -95,8 +98,13 @@ class _UserDetailsScreenState extends State<UserDetailsScreen> {
 
   Widget get _mainContent {
 
+    images.removeWhere((url) => url == appUser.profilePictureURL);
     images.add(appUser.profilePictureURL);
-    images.addAll(appUser.photos.cast<String>());
+    appUser.photos.cast<String>().forEach((String url) {
+      if (!images.contains(url)) {
+        images.add(url);
+      }
+    });
     images.removeWhere((element) => element == null);
 
     num imageViewerHeight = (MediaQuery.of(context).size.height * 0.6) + 28;
@@ -158,7 +166,7 @@ class _UserDetailsScreenState extends State<UserDetailsScreen> {
                     bottom: 0,
                     child: FloatingActionButton(
                       backgroundColor: Color(COLOR_PRIMARY),
-                      child: Icon(Icons.arrow_downward,
+                      child: Icon(Icons.close,
                         size: 30,
                         color: Colors.white,
                       ),
@@ -223,22 +231,18 @@ class _UserDetailsScreenState extends State<UserDetailsScreen> {
                       textAlign: TextAlign.start,
                       style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18),
                     ),
-                    (_pages.length >= 2 ?
-                    SmoothPageIndicator(
+                    (_pages.length >= 2 ? SmoothPageIndicator(
                       controller: gridPageViewController,
-                      // PageController
                       count: _pages.length,
                       effect: JumpingDotEffect(
-                          spacing: 4.0,
-                          radius: 4.0,
-                          dotWidth: 8,
-                          dotHeight: 8.0,
-                          paintStyle: PaintingStyle.fill,
-                          dotColor: Colors.grey, activeDotColor: Color(COLOR_PRIMARY)
+                        spacing: 4.0,
+                        radius: 4.0,
+                        dotWidth: 8,
+                        dotHeight: 8.0,
+                        paintStyle: PaintingStyle.fill,
+                        dotColor: Colors.grey, activeDotColor: Color(COLOR_PRIMARY)
                       ), // your preferred effect
-                    )
-                        : null
-                    )
+                    ) : null),
                   ]),
                 ),
               ),
@@ -260,7 +264,8 @@ class _UserDetailsScreenState extends State<UserDetailsScreen> {
                   child: ConstrainedBox(
                     constraints: const BoxConstraints(minWidth: double.infinity),
                     child: SecondaryButton(
-                      label: "Remove Match",
+                      label: "UN-MATCH",
+                      buttonType: ButtonType.DANGER,
                       onTap: () async {
                         await FireStoreUtils.removeMatch(identifiableUser).catchError((e) => print(e));
                         var cid = normalizedConversationID(FirebaseAuth.instance.currentUser.uid, identifiableUser.userID);
@@ -355,7 +360,10 @@ class _UserDetailsScreenState extends State<UserDetailsScreen> {
         GridView.builder(
           padding: EdgeInsets.only(right: 16, left: 16),
           gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-              crossAxisCount: 3, crossAxisSpacing: 10, mainAxisSpacing: 10),
+            crossAxisCount: 3,
+            crossAxisSpacing: 10,
+            mainAxisSpacing: 10,
+          ),
           itemBuilder: (context, index) => _imageBuilder(elements[index]),
           itemCount: elements.length,
           physics: BouncingScrollPhysics(),
