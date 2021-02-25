@@ -67,21 +67,21 @@ class _FileBubbleState extends State<FileBubble> {
           alignment: Alignment.center,
           children: [
             _decryptedImageFileContent(messageData, mediaURL),
-            isVideo && messageData.videoThumbnail != null ?
-            FloatingActionButton(
-              mini: true,
-              heroTag: messageData.messageID,
-              backgroundColor: Color(COLOR_ACCENT),
-              onPressed: () {
-                push(context, FullScreenVideoViewer(heroTag: messageData.messageID, videoUrl: messageData.url.url));
-              },
-              child: Icon(
-                Icons.play_arrow,
-                color: isDarkMode(context) ? Colors.black : Colors.white,
-              ),
-            )
-                :
-            Container(),
+            // isVideo && messageData.videoThumbnail != null ?
+            // FloatingActionButton(
+            //   mini: true,
+            //   heroTag: messageData.messageID,
+            //   backgroundColor: Color(COLOR_ACCENT),
+            //   onPressed: () {
+            //     push(context, FullScreenVideoViewer(heroTag: messageData.messageID, videoUrl: messageData.url.url));
+            //   },
+            //   child: Icon(
+            //     Icons.play_arrow,
+            //     color: isDarkMode(context) ? Colors.black : Colors.white,
+            //   ),
+            // )
+            //     :
+            // Container(),
           ],
         ),
       ),
