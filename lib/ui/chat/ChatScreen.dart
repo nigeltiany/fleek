@@ -1,7 +1,6 @@
 import 'dart:async';
 import 'dart:io';
 
-import 'package:audio_recorder/audio_recorder.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:dating/components/Avatar.dart';
 import 'package:dating/constants.dart';
@@ -14,6 +13,7 @@ import 'package:dating/ui/chat/AudioBubble.dart';
 import 'package:dating/ui/chat/FileBubble.dart';
 import 'package:dating/ui/chat/TextBubble.dart';
 import 'package:dating/ui/chat/helpers.dart';
+import 'package:flutter_sound/flutter_sound.dart';
 import 'package:mime/mime.dart' show lookupMimeType;
 import 'package:gecies/gecies.dart';
 import 'package:provider/provider.dart';
@@ -27,7 +27,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter/widgets.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:path_provider/path_provider.dart';
-import 'package:permission_handler/permission_handler.dart';
 import 'package:uuid/uuid.dart';
 
 enum RecordingState { HIDDEN, VISIBLE, Recording }
@@ -64,7 +63,7 @@ class _ChatScreenState extends State<ChatScreen> {
 
   String tempPathForAudioMessages;
   AppUser chatWithUser;
-  Recording _recording;
+  FlutterSoundRecorder _soundRecorder = FlutterSoundRecorder();
 
   _ChatScreenState(this.identifiableUser);
 
@@ -687,7 +686,7 @@ class _ChatScreenState extends State<ChatScreen> {
 
   _onSendRecord() async {
 
-    _recording = await AudioRecorder.stop();
+    var _path = await _soundRecorder.stopRecorder();
     audioMessageTimer.cancel();
 
     setState(() {
@@ -695,17 +694,22 @@ class _ChatScreenState extends State<ChatScreen> {
       currentRecordingState = RecordingState.HIDDEN;
     });
 
-    var encryptionResult = await encryptFileAtPath(_recording.path);
+    var encryptionResult = await encryptFileAtPath(_path);
     Url url = await FireStoreUtils.uploadAudioFile(encryptionResult.file, context);
 
     await _sendMessage(encryptionResult.fileSecret.toString(), url);
-    Directory(_recording.path).deleteSync(recursive: true);
+    await _soundRecorder.closeAudioSession();
+    Directory(_path).deleteSync(recursive: true);
 
   }
 
   _onCancelRecording() async {
-    await AudioRecorder.stop();
     audioMessageTimer.cancel();
+    var _path = await _soundRecorder.stopRecorder();
+    if (_path != null) {
+      await Directory(_path).delete(recursive: true);
+    }
+    await _soundRecorder.closeAudioSession();
     setState(() {
       audioMessageTime = 'Start Recording';
       currentRecordingState = RecordingState.VISIBLE;
@@ -713,10 +717,13 @@ class _ChatScreenState extends State<ChatScreen> {
   }
 
   _onStartRecording(BuildContext innerContext) async {
-    if (await AudioRecorder.hasPermissions) {
-      await AudioRecorder.start(path: tempPathForAudioMessages, audioOutputFormat: AudioOutputFormat.AAC);
+    await _soundRecorder.openAudioSession().then((value) {
+      _soundRecorder.startRecorder(
+        codec: Codec.aacADTS,
+        toFile: tempPathForAudioMessages,
+      );
       audioMessageTimer = Timer.periodic(Duration(seconds: 1), (timer) {
-        if (Duration(seconds: audioMessageTimer.tick).inMinutes > 3) {
+        if (Duration(seconds: audioMessageTimer.tick).inMinutes >= 5) {
           _onSendRecord();
         }
         setState(() {
@@ -726,9 +733,9 @@ class _ChatScreenState extends State<ChatScreen> {
       setState(() {
         currentRecordingState = RecordingState.Recording;
       });
-    } else {
-      await [Permission.microphone, Permission.storage].request();
-    }
+    }).catchError((_) {
+      _showAlertDialog(context, "Recording Error", "Unable to create and send a recording");
+    });
   }
 
 }

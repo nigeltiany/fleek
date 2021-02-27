@@ -6,8 +6,7 @@ environment:
   sdk: ">=2.8.0 <3.0.0"
 
 dependencies:
-  audio_recorder:
-    git: https://github.com/jidogoon/audio_recorder.git
+  flutter_sound: ^7.7.0+1
   audioplayers: ^0.17.4
   cached_network_image: ^2.5.0
   cloud_firestore: ^0.14.4
@@ -31,7 +30,6 @@ dependencies:
   new_version: ^0.0.6
   page_view_indicators: ^1.4.1
   path_provider: ^1.6.7
-  permission_handler: ^5.1.0+2
   photo_view: ^0.10.3
   progress_dialog: ^1.2.2
   provider: ^4.3.2+3

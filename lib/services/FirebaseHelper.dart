@@ -466,7 +466,7 @@ sendNotification({ @required String recipientID, @required String notificationTe
   sendNotificationFunc.call<Map<String, String>>({
     "recipient_id": recipientID,
     "notification_text": notificationText,
-    "notification_title": notificationText
+    "notification_title": notificationTitle
   }).catchError((e) {
     throw e;
   });
