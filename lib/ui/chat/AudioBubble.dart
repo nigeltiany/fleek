@@ -61,8 +61,7 @@ class _AudioBubbleState extends State<AudioBubble> {
       _decryptedResults = WidgetBubble(
         byCurrentUser: messageData.senderID == currentUser.userID,
         child: PlayerWidget(
-          bytes: memoryFileSystem.file(fileName).readAsBytesSync(),
-          color: isDarkMode(context) ? Colors.grey[800] : Colors.grey[200],
+          file: memoryFileSystem.file(fileName),
         ),
       );
       return _decryptedResults;
@@ -82,8 +81,7 @@ class _AudioBubbleState extends State<AudioBubble> {
                 _decryptedResults =  WidgetBubble(
                   byCurrentUser: messageData.senderID == currentUser.userID,
                   child: PlayerWidget(
-                    bytes: memoryFileSystem.file(fileName).readAsBytesSync(),
-                    color: isDarkMode(context) ? Colors.grey[800] : Colors.grey[200],
+                    file: memoryFileSystem.file(fileName),
                   ),
                 );
                 return _decryptedResults;

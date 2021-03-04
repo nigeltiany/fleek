@@ -6,8 +6,6 @@ environment:
   sdk: ">=2.8.0 <3.0.0"
 
 dependencies:
-  flutter_sound: ^7.7.0+1
-  audioplayers: ^0.17.4
   cached_network_image: ^2.5.0
   cloud_firestore: ^0.14.4
   cloud_functions: ^0.7.2
@@ -18,6 +16,10 @@ dependencies:
   firebase_storage: ^5.2.0
   file: ^5.2.1
   flutter_secure_storage: ^3.3.5
+  flutter_sound:
+    git:
+      url: git@github.com:nigeltiany/tau.git
+      path: flutter_sound
   flutter_spinkit: ^4.1.2
   flutter_swiper: ^1.1.6
   geoflutterfire: ^2.2.1
