@@ -1,4 +1,4 @@
-.PHONY: release
+.PHONY: release ios
 
 release:
 	-rm -R ./.obf
