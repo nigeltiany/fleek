@@ -1,6 +1,7 @@
 library constants;
 
 const FINISHED_ON_BOARDING = 'finishedOnBoarding';
+const TERMS_ACCEPTED = 'termsAccepted';
 const COLOR_ACCENT = 0xFFfdc244;
 const COLOR_PRIMARY_DARK = 0xFFf6a702;
 const COLOR_PRIMARY = 0xFFfdb827;

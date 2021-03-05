@@ -5,12 +5,15 @@ import 'package:dating/services/FirebaseHelper.dart';
 import 'package:dating/store/KeyPair.dart';
 import 'package:dating/model/User.dart';
 import 'package:dating/services/helper.dart';
+import 'package:dating/ui/auth/AuthScreen.dart';
+import 'package:dating/ui/terms/terms.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:gecies/gecies.dart';
 import 'package:location/location.dart';
 import 'package:provider/provider.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 import '../../constants.dart';
 
@@ -30,9 +33,69 @@ class _SignUpState extends State<SignUpScreen> {
   String username, email, mobile, password;
   String usernameError, emailError, passwordError;
   LocationData signUpLocation;
+  bool termsPopUpShown = false;
+
+  Future<bool> hasAcceptedTermsAndConditions(BuildContext ctx) async {
+    SharedPreferences prefs = await SharedPreferences.getInstance();
+    return (prefs.getBool(TERMS_ACCEPTED) ?? false);
+  }
 
   @override
   Widget build(BuildContext context) {
+    return FutureBuilder<bool>(
+      future: hasAcceptedTermsAndConditions(context),
+      builder: (BuildContext ctx, AsyncSnapshot snapshot) {
+        if (snapshot.connectionState == ConnectionState.waiting) {
+          return Center(
+            child: CircularProgressIndicator(
+              backgroundColor: Colors.white,
+            ),
+          );
+        } else if (snapshot.data == false && !termsPopUpShown) {
+          Future.delayed(Duration.zero, () {
+            showDialog(
+              context: context,
+              barrierDismissible: false,
+              builder: (BuildContext context) {
+                return TermsScreen();
+              },
+            ).then((_) {
+              termsPopUpShown = true;
+              setState(() {});
+            });
+          });
+          return _termsErrorWidget;
+        } else {
+          if (snapshot.data) {
+            return signUpScreen();
+          }
+          Future.delayed(Duration.zero, () => pushReplacement(context, AuthScreen()));
+          return _termsErrorWidget;
+        }
+      },
+    );
+  }
+
+  Widget get _termsErrorWidget {
+    return FutureBuilder(
+      future: Future.delayed(Duration(seconds: 10)),
+      builder: (BuildContext context, _) {
+        return SafeArea(
+          child: Container(
+            child: Center(
+              child: Text("An unexpected error occurred. Terms not accepted. Close app and try again",
+                style: TextStyle(
+                  decoration: TextDecoration.none,
+                ),
+              ),
+            ),
+          ),
+        );
+      },
+    );
+  }
+
+  Scaffold signUpScreen () {
     return Scaffold(
       key: _scaffoldState,
       appBar: AppBar(
@@ -244,6 +307,7 @@ class _SignUpState extends State<SignUpScreen> {
   void dispose() {
     _passwordController.dispose();
     _usernameController.dispose();
+    SharedPreferences.getInstance().then((prefs) => prefs.setBool(TERMS_ACCEPTED, false));
     super.dispose();
   }
 
