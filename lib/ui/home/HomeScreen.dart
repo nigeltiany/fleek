@@ -51,6 +51,7 @@ class _HomeState extends State<HomeScreen> with TickerProviderStateMixin {
     user = context.read<AppUser>();
 
     WidgetsBinding.instance.addPostFrameCallback((_){
+      if (user.banned) return;
       context.read<FleekData>().loadData(user);
       context.read<MatchData>().matchStream.listen((FleekMatch match) async {
         await Future.delayed(Duration(seconds: showingNewMatchPopUp == null ? 3 : 0), () => Future.value(null));
@@ -244,6 +245,7 @@ class _HomeState extends State<HomeScreen> with TickerProviderStateMixin {
         );
       },
     );
+    if (user.banned) return;
     context.read<FleekData>().removeAllUsers();
     context.read<FleekData>().loadData(user);
   }

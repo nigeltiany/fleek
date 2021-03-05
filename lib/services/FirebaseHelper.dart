@@ -275,15 +275,24 @@ class FireStoreUtils {
         viewedUsers.addAll((element.data()["viewedUserIDs"] as List));
       });
 
-      var query = firestore.collection(USERS)
-        .where('settings.showMe', isEqualTo: true) // The person must want to be shown
-        .where('developerAccount', isEqualTo: kDebugMode) // and is not a developer account
-        .where('settings.genderPreference', whereIn: [currentUser.settings.gender.toFirebaseString(), GenderPreference.ALL.toFirebaseString()]) // and likes people of my gender or all people
+      Query query;
+      var construction = firestore.collection(USERS)
+        // match running environment
+        .where('developerAccount', isEqualTo: kDebugMode)
+        // A user not banned
+        // .where('banned', isNotEqualTo: true)
+        // The person must want to be shown
+        .where('settings.showMe', isEqualTo: true)
+        // and wants to see people of my gender or all people
+        .where('settings.genderPreference', whereIn: [currentUser.settings.gender.toFirebaseString(), GenderPreference.ALL.toFirebaseString()])
+        // with a similar search interest as the current user
         .where('settings.searchInterest', isEqualTo: currentUser.settings.searchInterest.toFirebaseString());
 
-      // If I have a preference, add my preference to the query
+      // respecting the current user's gender matching preferences.
       if (currentUser.settings.genderPreference != GenderPreference.ALL) {
-        query = query.where('settings.gender', isEqualTo: currentUser.settings.genderPreference.toFirebaseString());
+        query = construction.where('settings.gender', isEqualTo: currentUser.settings.genderPreference.toFirebaseString());
+      } else {
+        query = construction;
       }
 
       // geo.collection(collectionRef: query).within(
@@ -294,6 +303,7 @@ class FireStoreUtils {
 
       int skippedUserCount = 0;
       int resultSize = 0;
+      print(query.parameters);
 
       StreamSubscription<QuerySnapshot> dataStream;
       dataStream = query.snapshots().listen((value) {

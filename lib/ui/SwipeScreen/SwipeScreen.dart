@@ -59,6 +59,20 @@ class _SwipeScreenState extends State<SwipeScreen> {
 
   @override
   Widget build(BuildContext context) {
+    if (currentUser.banned) {
+      return Column(
+        mainAxisSize: MainAxisSize.max,
+        mainAxisAlignment: MainAxisAlignment.center,
+        crossAxisAlignment: CrossAxisAlignment.center,
+        children: [
+          Icon(Icons.public_off, size: 72, color: Colors.red),
+          Padding(
+            padding: const EdgeInsets.symmetric(vertical: 24, horizontal: 40),
+            child: Text("Your account is banned. Contact hello@confab.im for more information"),
+          ),
+        ],
+      );
+    }
     if (!currentUser.settings.showMe) {
       return Column(
         mainAxisSize: MainAxisSize.max,
