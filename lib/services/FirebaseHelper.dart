@@ -7,6 +7,7 @@ import 'package:cloud_functions/cloud_functions.dart';
 import 'package:dating/constants.dart';
 import 'package:dating/model/ChatVideoContainer.dart';
 import 'package:dating/model/ConversationModel.dart';
+import 'package:dating/model/Flag.dart';
 import 'package:dating/model/Gender.dart';
 import 'package:dating/model/MessageData.dart';
 import 'package:dating/model/Swipe.dart';
@@ -234,6 +235,22 @@ class FireStoreUtils {
     await firestore.collection(USERS).doc(FirebaseAuth.instance.currentUser.uid).set({
       "blockList": FieldValue.arrayUnion([user.userID])
     }, SetOptions(merge: true)).then((document) {
+      isSuccessful = true;
+    });
+
+    return isSuccessful;
+
+  }
+
+  static Future<bool> reportUser(IdentifiableUser user, Flag flag) async {
+
+    bool isSuccessful = false;
+
+    await removeMatch(user);
+
+    await firestore.collection(USER_FLAGS).doc(user.userID)
+      .collection(USER_FLAGS_SUB_COLLECTION).doc()
+      .set(flag.toJson(), SetOptions(merge: true)).then((document) {
       isSuccessful = true;
     });
 

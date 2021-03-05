@@ -1,8 +1,11 @@
 import 'package:cached_network_image/cached_network_image.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:dating/CustomFlutterTinderCard.dart';
 import 'package:dating/components/Avatar.dart';
+import 'package:dating/components/FlagDialog.dart';
 import 'package:dating/components/SecondaryButton.dart';
 import 'package:dating/constants.dart';
+import 'package:dating/model/Flag.dart';
 import 'package:dating/model/User.dart';
 import 'package:dating/services/FirebaseHelper.dart';
 import 'package:dating/services/helper.dart';
@@ -31,6 +34,8 @@ class _SwipeScreenState extends State<SwipeScreen> {
   FleekData fleekData;
   bool superLike = false;
 
+  Map<FlagReason, bool> flagReason;
+
   _SwipeScreenState();
 
   @override
@@ -43,6 +48,13 @@ class _SwipeScreenState extends State<SwipeScreen> {
   @override
   void dispose() {
     super.dispose();
+  }
+
+  initFlagStore() {
+    flagReason = Map<FlagReason, bool>();
+    FlagReason.values.forEach((reason) {
+      flagReason[reason] = false;
+    });
   }
 
   @override
@@ -249,6 +261,11 @@ class _SwipeScreenState extends State<SwipeScreen> {
     }
   }
 
+  Widget flagReasonDialog (BuildContext context) {
+    initFlagStore();
+    return FlagDialog(valueStore: flagReason);
+  }
+
   _onCardSettingsClick(AppUser user) {
 
     showDialog(
@@ -268,6 +285,51 @@ class _SwipeScreenState extends State<SwipeScreen> {
             ),
           ),
           children: [
+            ListTile(
+              title: Text("Report user"),
+              onTap: () async {
+                Navigator.pop(innerContext);
+
+                await showDialog(
+                  context: context,
+                  barrierDismissible: false,
+                  builder: (BuildContext innerContext) {
+                    return flagReasonDialog(context);
+                  }
+                );
+
+                var flag = Flag(
+                  flaggedBy: FirebaseAuth.instance.currentUser.uid,
+                  reasons: flagReason.entries.where((entry) => entry.value).map<FlagReason>((e) => e.key).toList(growable: false),
+                  createdAt: Timestamp.now(),
+                );
+
+                if (flag.reasons.length == 0) {
+                  return;
+                } else if (flag.reasons.length == 1 && flag.reasons[0] == FlagReason.GUT_FEELING) {
+                  await FireStoreUtils.onSwipeLeft(currentUser: currentUser, dislikedUser: user);
+                  fleekData.removeUser(user, currentUser.settings.searchInterest);
+                  return;
+                }
+
+                showProgress(context, 'Reporting user...', false);
+
+                bool isSuccessful = await FireStoreUtils.reportUser(user, flag);
+                var cid = normalizedConversationID(FirebaseAuth.instance.currentUser.uid, user.userID);
+                Provider.of<ConversationData>(context, listen: false).removeConversation(cid);
+                Navigator.pop(context);
+
+                if (isSuccessful) {
+                  await FireStoreUtils.onSwipeLeft(currentUser: currentUser, dislikedUser: user);
+                  fleekData.removeUser(user, currentUser.settings.searchInterest);
+                  Scaffold.of(context).showSnackBar(SnackBar(content: Text
+                    ('${user.userName} has been flagged.'),),);
+                } else {
+                  Scaffold.of(context).showSnackBar(SnackBar(content: Text
+                    ('Couldn\'t flag ${user.userName}, please try again later.'),),);
+                }
+              },
+            ),
             ListTile(
               title: Text("Block user",
                 style: TextStyle(

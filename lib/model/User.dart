@@ -32,6 +32,7 @@ class AppUser with ChangeNotifier implements IdentifiableUser {
   bool _signedIn = false;
   bool _online = false;
   bool _isVip = false;
+  bool _flagged = false;
   bool _developerAccount = kDebugMode;
 
   //Fleek related fields
@@ -59,6 +60,7 @@ class AppUser with ChangeNotifier implements IdentifiableUser {
     _userID = cp.userID ?? _userID;
     _profilePictureURL = cp.profilePictureURL ?? _profilePictureURL;
     _isVip = cp.isVip ?? _isVip;
+    _flagged = cp.flagged ?? _flagged;
     _developerAccount = cp._developerAccount ?? _developerAccount;
 
     //dating app related fields
@@ -102,6 +104,7 @@ class AppUser with ChangeNotifier implements IdentifiableUser {
       ..userID = parsedJson['id']
       ..profilePictureURL = parsedJson['profilePictureURL'] ?? ''
       ..isVip = parsedJson['isVip' ?? false]
+      ..flagged = parsedJson['flagged' ?? false]
       ..developerAccount = parsedJson['developerAccount' ?? kDebugMode]
       ..publicKey = parsedJson['publicKey'] // allow null
 
@@ -129,6 +132,7 @@ class AppUser with ChangeNotifier implements IdentifiableUser {
       "profilePictureURL": this.profilePictureURL,
       'platform': this.platform,
       'isVip': this.isVip,
+      'flagged': this.flagged,
       'developerAccount': this.developerAccount,
 
       // Do NOT write the public key. NEVER WRITE THE PUBLIC KEY
@@ -219,6 +223,13 @@ class AppUser with ChangeNotifier implements IdentifiableUser {
 
   set isVip(bool value) {
     _isVip = value;
+    notifyListeners();
+  }
+
+  bool get flagged => _flagged;
+
+  set flagged(bool value) {
+    _flagged = value;
     notifyListeners();
   }
 
