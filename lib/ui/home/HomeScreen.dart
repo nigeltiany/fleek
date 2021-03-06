@@ -234,11 +234,13 @@ class _HomeState extends State<HomeScreen> with TickerProviderStateMixin {
             child: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
-                GenderSelector(tabController: _genderTabController),
-                SizedBox(height: 24),
+                // Disable Gender switching
+                // GenderSelector(tabController: _genderTabController),
+                // SizedBox(height: 24),
                 OrientationSelector(tabController: _orientationTabController),
                 SizedBox(height: 24),
-                InterestSelector(tabController: _searchInterestController)
+                InterestSelector(tabController: _searchInterestController),
+                SizedBox(height: 24),
               ],
             ),
           ),
