@@ -87,11 +87,25 @@ class _AccountDetailsScreenState extends State<AccountDetailsScreen> {
               title: 'Age',
               subtitle: user.birthDate != null ? '${getUserAge(user.birthDate)}' : '',
               // leading: Icon(Icons.language),
-              onPressed: (BuildContext context) {},
+              onPressed: (BuildContext context) async {
+                var now = DateTime.now();
+                var eighteenYearsAgo = DateTime(now.year - 18, now.month, now.day);
+                var dob = await showDatePicker(
+                  context: context,
+                  initialDate: user.birthDate == null ? eighteenYearsAgo : user.birthDate.toDate(),
+                  firstDate: now.subtract(Duration(days: 365 * 35)),
+                  lastDate: eighteenYearsAgo,
+                );
+                if (dob != null) {
+                  user.birthDate = Timestamp.fromDate(dob);
+                  setState(() {});
+                  FireStoreUtils.updateCurrentUser(user);
+                }
+              },
             ),
             SettingsTile(
               title: 'School',
-              subtitle: user.school,
+              subtitle: "${user.school ?? 'Not set'}",
               // leading: Icon(Icons.language),
               onPressed: (BuildContext context) {},
             ),
