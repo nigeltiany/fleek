@@ -166,8 +166,8 @@ class _UserDetailsScreenState extends State<UserDetailsScreen> {
                     bottom: 0,
                     child: FloatingActionButton(
                       backgroundColor: Color(COLOR_PRIMARY),
-                      child: Icon(Icons.close,
-                        size: 30,
+                      child: Icon(!widget.isMatch ? Icons.chevron_left : Icons.close,
+                        size: 32,
                         color: Colors.white,
                       ),
                       onPressed: () {
@@ -247,7 +247,10 @@ class _UserDetailsScreenState extends State<UserDetailsScreen> {
                 ),
               ),
               Padding(
-                padding: EdgeInsets.only(top: 16, bottom: 8),
+                padding: EdgeInsets.only(
+                  top: 16,
+                  bottom: widget.isMatch ? 8 : 112,
+                ),
                 child: SizedBox(
                   height: appUser.photos.length > 3 ? 260 : 130,
                   width: double.infinity,

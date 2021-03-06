@@ -2,6 +2,8 @@ import 'dart:io';
 
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:dating/components/Avatar.dart';
+import 'package:dating/components/AvatarWithCountDown.dart';
+import 'package:dating/components/MatchCard.dart';
 import 'package:dating/constants.dart';
 import 'package:dating/model/ConversationModel.dart';
 import 'package:dating/model/Match.dart';
@@ -83,11 +85,11 @@ class _ConversationsState extends State<ConversationsScreen> {
   Widget get _matchesList {
     return Consumer<MatchData>(
       builder: (BuildContext context, MatchData md, _) {
-        if (md.matches.isEmpty) {
+        if (md.matches.where((m) => m.createdAt.toDate().add(MATCH_EXPIRATION).difference(DateTime.now()).inSeconds > 0).isEmpty) {
           return SizedBox(
             height: 100,
             child: Center(
-              child: Text('No Matches yet', style: TextStyle(fontSize: 18),),
+              child: Text('No New Matches', style: TextStyle(fontSize: 18),),
             ),
           );
         } else {
@@ -97,34 +99,9 @@ class _ConversationsState extends State<ConversationsScreen> {
               scrollDirection: Axis.horizontal,
               itemCount: md.matches.length,
               itemBuilder: (BuildContext context, int index) {
-                return InkWell(
-                  onLongPress: () => _onMatchLongPress(md.matches[index]),
-                  onTap: () async {
-                    push(context, ChatScreen(identifiableUser: md.matches[index].match));
-                  },
-                  child: Padding(
-                    padding: const EdgeInsets.symmetric(vertical: 8.0, horizontal: 4),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.center,
-                      mainAxisAlignment: MainAxisAlignment.end,
-                      children: [
-                        displayCircleImage(md.matches[index].match.profilePictureURL, 50, false),
-                        Expanded(
-                          child: Container(
-                            width: 76,
-                            child: Padding(
-                              padding: const EdgeInsets.only(top: 8.0, left: 8, right: 8),
-                              child: Text('${md.matches[index].match.userName}',
-                                textAlign: TextAlign.center,
-                                maxLines: 1,
-                                overflow: TextOverflow.fade,
-                              ),
-                            ),
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
+                return MatchCard(
+                  fleekMatch: md.matches[index],
+                  expired: () => Future.delayed(Duration(seconds: 0), () => setState(() {})),
                 );
               },
             ),
@@ -241,15 +218,6 @@ class _ConversationsState extends State<ConversationsScreen> {
         }
         return listItem(snapshot.data);
       },
-    );
-  }
-
-  _onMatchLongPress(FleekMatch fleekMatch) {
-    push(context,
-      UserDetailsScreen(
-        identifiableUser: fleekMatch.match,
-        isMatch: true,
-      ),
     );
   }
 
