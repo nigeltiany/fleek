@@ -1,4 +1,5 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:dating/constants.dart';
 import 'package:dating/model/User.dart';
 import 'package:dating/model/UserPrivateDetails.dart';
 import 'package:dating/services/FirebaseHelper.dart';
@@ -74,6 +75,55 @@ class _AccountDetailsScreenState extends State<AccountDetailsScreen> {
     return SettingsList(
       backgroundColor: Colors.transparent,
       sections: [
+        SettingsSection(
+          title: 'Discovery',
+          tiles: [
+            SettingsTile.switchTile(
+              title: 'Show me on Fleek',
+              // leading: Icon(Icons.fingerprint),
+              switchActiveColor: Color(COLOR_PRIMARY),
+              switchValue: user.settings.showMe,
+              onToggle: (bool value) async {
+                user.settings.showMe = value;
+                await FireStoreUtils.updateCurrentUser(user);
+                setState(() {});
+              },
+            ),
+            // SettingsTile(
+            //   title: 'Distance Radius',
+            //   subtitle: '3 KM',
+            //   // leading: Icon(Icons.language),
+            //   onPressed: (BuildContext context) {},
+            // ),
+          ],
+        ),
+        SettingsSection(
+          title: 'Notifications',
+          tiles: [
+            SettingsTile.switchTile(
+              title: 'New matches',
+              // leading: Icon(Icons.fingerprint),
+              switchActiveColor: Color(COLOR_PRIMARY),
+              switchValue: user.settings.pushNewMatchesEnabled,
+              onToggle: (bool value) async {
+                user.settings.pushNewMatchesEnabled = value;
+                await FireStoreUtils.updateCurrentUser(user);
+                setState(() {});
+              },
+            ),
+            SettingsTile.switchTile(
+              title: 'New Messages',
+              // leading: Icon(Icons.fingerprint),
+              switchActiveColor: Color(COLOR_PRIMARY),
+              switchValue: user.settings.pushNewMessages,
+              onToggle: (bool value) async {
+                user.settings.pushNewMessages = value;
+                await FireStoreUtils.updateCurrentUser(user);
+                setState(() {});
+              },
+            ),
+          ],
+        ),
         SettingsSection(
           title: 'Public Info',
           tiles: [

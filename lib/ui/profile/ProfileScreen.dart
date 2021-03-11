@@ -172,8 +172,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
           borderRadius: BorderRadius.circular(12),
           child: CachedNetworkImage(
             fit: BoxFit.cover,
-            imageUrl:
-            user.profilePictureURL == DEFAULT_AVATAR_URL ? '' : url,
+            imageUrl: url,
             placeholder: (context, imageUrl) {
               return Icon(
                 Icons.hourglass_empty,

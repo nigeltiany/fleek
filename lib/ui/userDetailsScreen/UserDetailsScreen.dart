@@ -393,7 +393,7 @@ class _UserDetailsScreenState extends State<UserDetailsScreen> {
           borderRadius: BorderRadius.circular(12),
           child: CachedNetworkImage(
             fit: BoxFit.cover,
-            imageUrl: appUser.profilePictureURL == DEFAULT_AVATAR_URL ? '' : url,
+            imageUrl: url ?? '',
             placeholder: (context, imageUrl) {
               return Icon(
                 Icons.hourglass_empty,
@@ -417,7 +417,7 @@ class _UserDetailsScreenState extends State<UserDetailsScreen> {
   Widget _buildImage(int index) {
     return CachedNetworkImage(
       fit: BoxFit.cover,
-      imageUrl: appUser.profilePictureURL == DEFAULT_AVATAR_URL ? '' : images[index],
+      imageUrl: images[index],
       placeholder: (context, imageUrl) {
         return Icon(
           Icons.hourglass_empty,

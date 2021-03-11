@@ -203,6 +203,9 @@ class FireStoreUtils {
   }
 
   static Future<void> updateChannel(ConversationModel conversationModel) async {
+    if (conversationModel.createdAt == null) {
+      conversationModel.createdAt = Timestamp.now();
+    }
     await firestore.collection(MATCH_CONVERSATIONS).doc(conversationModel.id).set(conversationModel.toJson(), SetOptions(merge: true));
   }
 

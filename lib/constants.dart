@@ -23,5 +23,4 @@ const MINUTE_MILLIS = 60 * SECOND_MILLIS;
 const HOUR_MILLIS = 60 * MINUTE_MILLIS;
 const SWIPE_COUNT = 'user_swipe_counts';
 const MATCH_EXPIRATION = Duration(days: 3);
-
-const DEFAULT_AVATAR_URL = 'https://www.iosapptemplates.com/wp-content/uploads/2019/06/empty-avatar.jpg';
+const CONVERSATION_EXPIRATION = Duration(days: 12);

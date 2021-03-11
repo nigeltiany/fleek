@@ -10,6 +10,7 @@ dependencies:
   cloud_firestore: ^0.14.4
   cloud_functions: ^0.7.2
   cryptography: ^1.4.1
+  cupertino_icons: ^1.0.0
   firebase_auth: ^0.18.4+1
   firebase_core: ^0.5.3
   firebase_messaging: ^6.0.16
@@ -21,6 +22,7 @@ dependencies:
       url: git@github.com:nigeltiany/tau.git
       path: flutter_sound
   flutter_spinkit: ^4.1.2
+  flutter_svg: ^0.18.1
   flutter_swiper: ^1.1.6
   geoflutterfire: ^2.2.1
   http: ^0.12.2
@@ -49,10 +51,6 @@ dependencies:
       url: git@github.com:nigeltiany/gecies.git
       ref: 70f63841f4912bd8da9734d372cab121356a161d
 
-  flutter:
-    sdk: flutter
-  cupertino_icons: ^1.0.0
-
 dev_dependencies:
   flutter_launcher_icons: ^0.8.1
   flutter_test:
@@ -67,3 +65,4 @@ flutter:
   uses-material-design: true
   assets:
     - assets/images/
+    - assets/icons/

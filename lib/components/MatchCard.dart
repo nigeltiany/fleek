@@ -1,5 +1,6 @@
 import 'dart:async';
 
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:dating/constants.dart';
 import 'package:dating/model/Match.dart';
 import 'package:dating/services/helper.dart';
@@ -128,7 +129,7 @@ class _MatchCardState extends State<MatchCard> {
   }
 
   Duration _durationLeft(FleekMatch match) {
-    var createdAt = fleekMatch.createdAt.toDate();
+    var createdAt = (match.createdAt ?? Timestamp.now()).toDate();
     return createdAt.add(MATCH_EXPIRATION).difference(DateTime.now());
   }
 

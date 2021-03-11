@@ -17,6 +17,7 @@ import 'package:dating/ui/profile/ProfileScreen.dart';
 import 'package:dating/ui/settings/SettingsScreen.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_svg/flutter_svg.dart';
 import 'package:provider/provider.dart';
 
 import '../../constants.dart';
@@ -124,13 +125,13 @@ class _HomeState extends State<HomeScreen> with TickerProviderStateMixin {
 
   Widget _leadingWidgetIcon() {
     switch (_currentIndex) {
-      case 0:
-        return IconButton(
-          icon: Icon(Icons.settings, color: Colors.grey),
-          onPressed: () {
-            push(context, SettingsScreen());
-          },
-        );
+      // case 3:
+      //   return IconButton(
+      //     icon: Icon(Icons.settings, color: Colors.grey),
+      //     onPressed: () {
+      //       push(context, SettingsScreen());
+      //     },
+      //   );
       case 1:
         // TODO: Return heart icon with unseen matches count
         return Container();
@@ -141,7 +142,7 @@ class _HomeState extends State<HomeScreen> with TickerProviderStateMixin {
 
   Iterable<Widget> _trailingWidgetIcon () {
     Widget button;
-    if (_currentIndex == 0) {
+    if (_currentIndex == 3) {
       button = IconButton(
         icon: Icon(Icons.account_circle_rounded, color: Colors.grey),
         onPressed: () {
@@ -157,6 +158,13 @@ class _HomeState extends State<HomeScreen> with TickerProviderStateMixin {
       button = Container();
     }
     return [button];
+  }
+
+  Color get _iconColor {
+    if (isDarkMode(context)) {
+      return Colors.white;
+    }
+    return Colors.black;
   }
 
   @override
@@ -183,9 +191,10 @@ class _HomeState extends State<HomeScreen> with TickerProviderStateMixin {
             body: IndexedStack(
               index: _currentIndex,
               children: [
-                ProfileScreen(),
+                Container(color: Colors.yellow),
                 SwipeScreen(),
                 ConversationsScreen(),
+                ProfileScreen(),
               ],
             ),
             bottomNavigationBar: BottomNavigationBar(
@@ -202,18 +211,23 @@ class _HomeState extends State<HomeScreen> with TickerProviderStateMixin {
               items: [
                 BottomNavigationBarItem(
                   label: "",
-                  icon: Icon(Icons.person),
-                  activeIcon: Icon(Icons.person, size: 40),
+                  icon: SvgPicture.asset("assets/icons/user.svg", width: 24, height: 24, color: _iconColor),
+                  activeIcon: SvgPicture.asset("assets/icons/user.svg", width: 32, height: 32, color: _iconColor),
                 ),
                 BottomNavigationBarItem(
                   label: "",
-                  icon: _logo(),
-                  activeIcon: _logo(active: true),
+                  icon: SvgPicture.asset("assets/icons/swipe_cards.svg", width: 24, height: 24, color: _iconColor),
+                  activeIcon: SvgPicture.asset("assets/icons/swipe_cards.svg", width: 32, height: 32, color: _iconColor),
                 ),
                 BottomNavigationBarItem(
                   label: "",
-                  icon: Icon(Icons.forum),
-                  activeIcon: Icon(Icons.forum, size: 40),
+                  icon: SvgPicture.asset("assets/icons/love_bubble.svg", width: 24, height: 24, color: _iconColor),
+                  activeIcon: SvgPicture.asset("assets/icons/love_bubble.svg", width: 32, height: 32, color: _iconColor),
+                ),
+                BottomNavigationBarItem(
+                  label: "",
+                  icon: SvgPicture.asset("assets/icons/settings.svg", width: 24, height: 24, color: _iconColor),
+                  activeIcon: SvgPicture.asset("assets/icons/settings.svg", width: 32, height: 32, color: _iconColor),
                 )
               ],
             ),

@@ -5,12 +5,14 @@ import 'MessageData.dart';
 class ConversationModel {
   String id = '';
   String lastSenderID = '';
+  Timestamp createdAt;
   Timestamp lastMessageDate = Timestamp.now();
   Content lastMessage = Content(content: {});
   List<dynamic> participantIDs = [];
 
   ConversationModel({
     this.id,
+    this.createdAt,
     this.lastSenderID,
     this.lastMessage,
     this.lastMessageDate,
@@ -27,6 +29,7 @@ class ConversationModel {
       id: parsedJson['id'] ?? '',
       lastSenderID: parsedJson['creatorID'] ?? parsedJson['creator_id'] ?? '',
       lastMessage: Content(content: content),
+      createdAt: parsedJson['createdAt'] ?? null,
       lastMessageDate: parsedJson['lastMessageDate'] ?? Timestamp.now(),
       participantIDs: parsedJson['participantIDs']
     );
@@ -36,6 +39,7 @@ class ConversationModel {
     return {
       "id": this.id,
       "creatorID": this.lastSenderID,
+      "createdAt": this.createdAt,
       "lastMessage": this.lastMessage.toJson(),
       "lastMessageDate": this.lastMessageDate,
       "participantIDs": this.participantIDs

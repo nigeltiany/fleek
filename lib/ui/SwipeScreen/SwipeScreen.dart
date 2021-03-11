@@ -145,7 +145,7 @@ class _SwipeScreenState extends State<SwipeScreen> {
                     width: double.infinity,
                     height: double.infinity,
                     fit: BoxFit.cover,
-                    imageUrl: fleekUser.profilePictureURL == DEFAULT_AVATAR_URL ? '' : fleekUser.profilePictureURL,
+                    imageUrl: fleekUser.profilePictureURL,
                     placeholder: (context, imageUrl) {
                       return Icon(
                         Icons.account_circle,
