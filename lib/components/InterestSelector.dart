@@ -39,6 +39,7 @@ class _InterestSelectorState extends State<InterestSelector> {
   @override
   Widget build(BuildContext context) {
     return Column(
+      mainAxisSize: MainAxisSize.min,
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text("Looking for",
@@ -48,49 +49,52 @@ class _InterestSelectorState extends State<InterestSelector> {
           ),
         ),
         SizedBox(height: 12,),
-        TabBar(
-          controller: tabController,
-          unselectedLabelColor: Color(COLOR_PRIMARY),
-          indicatorSize: TabBarIndicatorSize.tab,
-          indicator: BoxDecoration(
-              gradient: LinearGradient(
-                colors: [Color(COLOR_PRIMARY_DARK), Color(COLOR_PRIMARY)],
+        Flexible(
+          fit: FlexFit.loose,
+          child: TabBar(
+            controller: tabController,
+            unselectedLabelColor: Color(COLOR_PRIMARY),
+            indicatorSize: TabBarIndicatorSize.tab,
+            indicator: BoxDecoration(
+                gradient: LinearGradient(
+                  colors: [Color(COLOR_PRIMARY_DARK), Color(COLOR_PRIMARY)],
+                ),
+                borderRadius: BorderRadius.circular(50),
+                color: Color(COLOR_PRIMARY_DARK)
+            ),
+            tabs: [
+              Tab(
+                child: Align(
+                  alignment: Alignment.center,
+                  child: Text("Dates",
+                    style: TextStyle(
+                      color: isDarkMode(context) ? (activeTabIndex == 0 ? Colors.white : Color(COLOR_PRIMARY_DARK)) : Colors.black,
+                    ),
+                  ),
+                ),
               ),
-              borderRadius: BorderRadius.circular(50),
-              color: Color(COLOR_PRIMARY_DARK)
+              Tab(
+                child: Align(
+                  alignment: Alignment.center,
+                  child: Text("Friends",
+                    style: TextStyle(
+                      color: isDarkMode(context) ? (activeTabIndex == 1 ? Colors.white : Color(COLOR_PRIMARY_DARK)) : Colors.black,
+                    ),
+                  ),
+                ),
+              ),
+              Tab(
+                child: Align(
+                  alignment: Alignment.center,
+                  child: Text("Roommates",
+                    style: TextStyle(
+                      color: isDarkMode(context) ? (activeTabIndex == 2 ? Colors.white : Color(COLOR_PRIMARY_DARK)) : Colors.black,
+                    ),
+                  ),
+                ),
+              ),
+            ],
           ),
-          tabs: [
-            Tab(
-              child: Align(
-                alignment: Alignment.center,
-                child: Text("Dates",
-                  style: TextStyle(
-                    color: isDarkMode(context) ? (activeTabIndex == 0 ? Colors.white : Color(COLOR_PRIMARY_DARK)) : Colors.black,
-                  ),
-                ),
-              ),
-            ),
-            Tab(
-              child: Align(
-                alignment: Alignment.center,
-                child: Text("Friends",
-                  style: TextStyle(
-                    color: isDarkMode(context) ? (activeTabIndex == 1 ? Colors.white : Color(COLOR_PRIMARY_DARK)) : Colors.black,
-                  ),
-                ),
-              ),
-            ),
-            Tab(
-              child: Align(
-                alignment: Alignment.center,
-                child: Text("Roommates",
-                  style: TextStyle(
-                    color: isDarkMode(context) ? (activeTabIndex == 2 ? Colors.white : Color(COLOR_PRIMARY_DARK)) : Colors.black,
-                  ),
-                ),
-              ),
-            ),
-          ],
         ),
       ],
     );
