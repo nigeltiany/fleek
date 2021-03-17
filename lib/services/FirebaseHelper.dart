@@ -291,7 +291,7 @@ class FireStoreUtils {
         // match running environment
         .where('developerAccount', isEqualTo: kDebugMode)
         // A user not banned
-        // .where('banned', isNotEqualTo: true)
+        .where('banned', isNotEqualTo: true)
         // The person must want to be shown
         .where('settings.showMe', isEqualTo: true)
         // and wants to see people of my gender or all people
