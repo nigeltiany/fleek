@@ -13,6 +13,7 @@ class ConversationData with ChangeNotifier {
   Map<String, ConversationModel> _conversation;
   // ignore: cancel_subscriptions
   StreamSubscription<QuerySnapshot> _streamSubscription;
+  List<ConversationModel> _conversations = [];
 
   ConversationData() {
 
@@ -26,7 +27,11 @@ class ConversationData with ChangeNotifier {
 
   }
 
-  List<ConversationModel> get conversations => List.unmodifiable(_conversation.values.toList()..sort(_sorter));
+  List<ConversationModel> get conversations => _conversations;
+
+  ConversationModel getConversation(String id) {
+    return _conversation[id];
+  }
 
   int _sorter (ConversationModel a, ConversationModel b) {
     return a.lastMessageDate.compareTo(b.lastMessageDate) * -1;
@@ -34,6 +39,14 @@ class ConversationData with ChangeNotifier {
 
   void _addConversation(ConversationModel conversationModel) {
     _conversation[conversationModel.id] = conversationModel;
+    var index = _conversations.indexWhere((c) => c.id == conversationModel.id);
+    if (index > -1) {
+      _conversations.replaceRange(index, index + 1, [conversationModel]);
+    } else {
+      _conversations.add(conversationModel);
+    }
+    _conversations.sort(_sorter);
+
     notifyListeners();
   }
 

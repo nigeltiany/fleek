@@ -52,8 +52,6 @@ class _ChatScreenState extends State<ChatScreen> {
   final IdentifiableUser identifiableUser;
   final ImagePicker _imagePicker = ImagePicker();
   TextEditingController _messageController = new TextEditingController();
-  final FireStoreUtils ddddd = FireStoreUtils();
-  TextEditingController _groupNameController = TextEditingController();
   RecordingState currentRecordingState = RecordingState.HIDDEN;
   Timer audioMessageTimer;
   String audioMessageTime = 'Start Recording';
@@ -65,6 +63,8 @@ class _ChatScreenState extends State<ChatScreen> {
   AppUser chatWithUser;
   FlutterSoundRecorder _soundRecorder = FlutterSoundRecorder();
 
+  ChatData chatData;
+
   _ChatScreenState(this.identifiableUser);
 
   @override
@@ -74,26 +74,28 @@ class _ChatScreenState extends State<ChatScreen> {
     currentUser = context.read<AppUser>();
     currentUsersEncrypter = context.read<EncrypterState>().encrypter;
 
-    context.read<ChatData>().fetchStateStream.listen((fetching) {
+    chatData = context.read<ChatData>();
+    chatData.fetchStateStream.listen((fetching) {
       _fetchingMessages = fetching;
     });
-    context.read<ChatData>().chatHasMoreStateStream.listen((hasMore) {
+    chatData.chatHasMoreStateStream.listen((hasMore) {
       _hasMoreMessages = hasMore;
     });
     _chatScrollController.addListener(() {
       if (_chatScrollController.position.extentBefore + 80 >= _chatScrollController.position.maxScrollExtent && !_fetchingMessages && _hasMoreMessages) {
         if (chatWithUser != null) {
-          context.read<ChatData>().scrollFetch(chatWithUser);
+          chatData.scrollFetch(chatWithUser);
         }
       }
     });
+    FireStoreUtils.updateLastViewed(normalizedConversationID(currentUser.userID, identifiableUser.userID));
   }
 
   @override
   void dispose() {
     super.dispose();
     _messageController.dispose();
-    _groupNameController.dispose();
+    chatData.activeChatDone();
   }
 
   Iterable<Widget> get _actions {
@@ -553,16 +555,21 @@ class _ChatScreenState extends State<ChatScreen> {
     if (content.isEmpty) {
       return;
     }
+
+    var now = Timestamp.now();
     
     ConversationModel conversationModel = ConversationModel(
-      lastSenderID: currentUser.userID,
+      creatorID: currentUser.userID,
       id: normalizedConversationID(currentUser.userID, chatWithUser.userID),
       participantIDs: List.unmodifiable([currentUser.userID, chatWithUser.userID]),
-      lastMessageDate: Timestamp.now(),
+      lastMessageDate: now,
+      lastViewedDate: {
+        "${currentUser.userID}": now,
+      }
     );
 
     MessageData message = MessageData(
-      created: Timestamp.now(),
+      created: now,
       content: Content(content: Map<String, String>()),
       recipientID: chatWithUser.userID,
       recipientProfilePictureURL: chatWithUser.profilePictureURL,

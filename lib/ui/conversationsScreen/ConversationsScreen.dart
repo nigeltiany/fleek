@@ -101,8 +101,8 @@ class _ConversationsState extends State<ConversationsScreen> {
   Widget get _conversationsList {
     return Consumer<ConversationData>(
       builder: (context, conversationData, _) {
-        var conversations = conversationData.conversations.where((c) => c.createdAt.toDate().add(CONVERSATION_EXPIRATION).difference(DateTime.now()).inSeconds > 0);
-        if (conversations.isEmpty) {
+        // var conversations = conversationData.conversations.where((c) => c.createdAt.toDate().add(CONVERSATION_EXPIRATION).difference(DateTime.now()).inSeconds > 0);
+        if (conversationData.conversations.isEmpty) {
           return Center(
             child: Text(
               'No Conversations found.',
@@ -113,12 +113,13 @@ class _ConversationsState extends State<ConversationsScreen> {
         return ListView.builder(
           physics: NeverScrollableScrollPhysics(),
           shrinkWrap: true,
-          itemCount: conversations.length,
+          itemCount: conversationData.conversations.length,
           itemBuilder: (context, index) {
             return ConversationTile(
-              canExpire: true,
-              conversationModel: conversations.elementAt(index),
-              expired: () => Future.delayed(Duration(seconds: 0), () => setState(() {})),
+              key: Key(conversationData.conversations[index].id),
+              canExpire: false,
+              conversationModel: conversationData.conversations[index],
+              // expired: () => Future.delayed(Duration(seconds: 0), () => setState(() {})),
             );
           },
         );

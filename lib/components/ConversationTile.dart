@@ -10,6 +10,7 @@ import 'package:dating/model/MessageData.dart';
 import 'package:dating/model/User.dart';
 import 'package:dating/services/FirebaseHelper.dart';
 import 'package:dating/services/helper.dart';
+import 'package:dating/store/ChatData.dart';
 import 'package:dating/store/ConversationData.dart';
 import 'package:dating/store/KeyPair.dart';
 import 'package:dating/ui/chat/ChatScreen.dart';
@@ -137,7 +138,7 @@ class _ConversationTileState extends State<ConversationTile> {
               subtitle: SizedBox(width: double.maxFinite, height: 11),
             ),
           );
-        } else if (!snapshot.hasData || snapshot.data != null || snapshot.hasError) {
+        } else if (!snapshot.hasData || snapshot.data == null || snapshot.hasError) {
           return Container();
         }
         return _listItem(snapshot.data);
@@ -152,41 +153,36 @@ class _ConversationTileState extends State<ConversationTile> {
         onTap: () {
           push(context, ChatScreen(identifiableUser: user));
         },
-        child: ListTile(
-          isThreeLine: true,
-          leading: Avatar(user),
-          title: Text(
-            '${user.userName}',
-            style: TextStyle(
-              fontSize: 17,
-              color: isDarkMode(context) ? Colors.white : Colors.black,
-              fontFamily: Platform.isIOS ? 'sanFran' : 'Roboto',
-            ),
-          ),
-          subtitle: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              _lastMessage(conversationModel),
-              // Text('• ${formatTimestamp(conversationModel.lastMessageDate.seconds)}',
-              //   textAlign: TextAlign.right,
-              //   style: TextStyle(
-              //     fontSize: 11
-              //   ),
-              // )
-            ],
-          ),
-          trailing: !widget.canExpire ? null : Container(
-            width: 20,
-            height: double.maxFinite,
-            child: Center(
-              child: SizedBox(
-                height: 16,
-                width: 16,
-                child: ConversationTimer(createdAt: conversationModel.createdAt),
+        child: Consumer<ConversationData>(
+          builder: (BuildContext ctx, ConversationData d, _) {
+            var model = d.getConversation(conversationModel.id);
+            return ListTile(
+              isThreeLine: true,
+              leading: Avatar(user),
+              title: Text(
+                '${user.userName}',
+                style: TextStyle(
+                  fontSize: 17,
+                  color: isDarkMode(context) ? Colors.white : Colors.black,
+                  fontFamily: Platform.isIOS ? 'sanFran' : 'Roboto',
+                ),
               ),
-            ),
-          ),
-        ),
+              subtitle: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  _lastMessage(model),
+                  // Text('• ${formatTimestamp(conversationModel.lastMessageDate.seconds)}',
+                  //   textAlign: TextAlign.right,
+                  //   style: TextStyle(
+                  //     fontSize: 11
+                  //   ),
+                  // ),
+                ],
+              ),
+              trailing: !widget.canExpire ? _newMessageIndicator(model) : _stackedIndicator(model),
+            );
+          },
+        )
       );
     };
 
@@ -205,6 +201,48 @@ class _ConversationTileState extends State<ConversationTile> {
         }
         return _widget();
       }
+    );
+  }
+
+  Widget _stackedIndicator (ConversationModel model) {
+    return Container(
+      width: 24,
+      height: double.maxFinite,
+      child: Center(
+        child: SizedBox(
+          height: 24,
+          width: 24,
+          child: Stack(
+            alignment: Alignment.center,
+            children: [
+              _newMessageIndicator(model),
+              ConversationTimer(createdAt: conversationModel.createdAt)
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _newMessageIndicator (ConversationModel model) {
+    if (model.lastViewedDate.containsKey(currentUser.userID)) {
+      if (model.lastViewedDate[currentUser.userID].compareTo(model.lastMessageDate) > -1) {
+        return Container(width: 0, height: 0);
+      }
+    }
+    return Container(
+      width: 24,
+      height: double.maxFinite,
+      child: Center(
+        child: Container(
+          width: 12,
+          height: 12,
+          decoration: BoxDecoration(
+            color: Color(COLOR_PRIMARY),
+            borderRadius: BorderRadius.all(Radius.circular(8))
+          ),
+        ),
+      ),
     );
   }
 

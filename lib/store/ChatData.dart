@@ -68,6 +68,13 @@ class ChatData with ChangeNotifier {
     _getListenToMessages(appUser, fetchPrevious: _activeConversationMessages.length < MAX_FETCH_COUNT);
   }
 
+  void activeChatDone () {
+    _earliestFirstMessage = null;
+    if (_currentChatStream != null) {
+      _currentChatStream.cancel();
+    }
+  }
+
   void _addMessage(MessageData messageData) {
     var conversationID = normalizedConversationID(messageData.senderID, messageData.recipientID);
     if (!_conversations.containsKey(conversationID)) {

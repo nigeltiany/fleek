@@ -142,7 +142,7 @@ class _HomeState extends State<HomeScreen> with TickerProviderStateMixin {
 
   Iterable<Widget> _trailingWidgetIcon () {
     Widget button;
-    if (_currentIndex == 3) {
+    if (_currentIndex == 0) {
       button = IconButton(
         icon: Icon(Icons.account_circle_rounded, color: Colors.grey),
         onPressed: () {
@@ -191,10 +191,9 @@ class _HomeState extends State<HomeScreen> with TickerProviderStateMixin {
             body: IndexedStack(
               index: _currentIndex,
               children: [
-                Container(color: Colors.yellow),
+                ProfileScreen(),
                 SwipeScreen(),
                 ConversationsScreen(),
-                ProfileScreen(),
               ],
             ),
             bottomNavigationBar: BottomNavigationBar(
@@ -224,11 +223,6 @@ class _HomeState extends State<HomeScreen> with TickerProviderStateMixin {
                   icon: SvgPicture.asset("assets/icons/love_bubble.svg", width: 24, height: 24, color: _iconColor),
                   activeIcon: SvgPicture.asset("assets/icons/love_bubble.svg", width: 32, height: 32, color: _iconColor),
                 ),
-                BottomNavigationBarItem(
-                  label: "",
-                  icon: SvgPicture.asset("assets/icons/settings.svg", width: 24, height: 24, color: _iconColor),
-                  activeIcon: SvgPicture.asset("assets/icons/settings.svg", width: 32, height: 32, color: _iconColor),
-                )
               ],
             ),
           );

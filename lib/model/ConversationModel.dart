@@ -4,19 +4,21 @@ import 'MessageData.dart';
 
 class ConversationModel {
   String id = '';
-  String lastSenderID = '';
+  String creatorID = '';
   Timestamp createdAt;
   Timestamp lastMessageDate = Timestamp.now();
+  Map<String, Timestamp> lastViewedDate = {};
   Content lastMessage = Content(content: {});
   List<dynamic> participantIDs = [];
 
   ConversationModel({
     this.id,
     this.createdAt,
-    this.lastSenderID,
+    this.creatorID,
     this.lastMessage,
     this.lastMessageDate,
-    this.participantIDs
+    this.participantIDs,
+    this.lastViewedDate
   });
 
   factory ConversationModel.fromJson(Map<String, dynamic> parsedJson) {
@@ -25,24 +27,31 @@ class ConversationModel {
       content = Map<String, dynamic>.from(parsedJson["lastMessage"]).map((key, value) => MapEntry(key, value?.toString()));
     }
 
+    Map<String, Timestamp> lastViewTimestamps = Map<String, Timestamp>();
+    if (parsedJson.containsKey('lastViewedDate')) {
+      lastViewTimestamps = Map<String, dynamic>.from(parsedJson["lastViewedDate"]).map((key, value) => MapEntry(key, value as Timestamp));
+    }
+
     return ConversationModel(
       id: parsedJson['id'] ?? '',
-      lastSenderID: parsedJson['creatorID'] ?? parsedJson['creator_id'] ?? '',
+      creatorID: parsedJson['creatorID'] ?? parsedJson['creator_id'] ?? '',
       lastMessage: Content(content: content),
       createdAt: parsedJson['createdAt'] ?? null,
       lastMessageDate: parsedJson['lastMessageDate'] ?? Timestamp.now(),
-      participantIDs: parsedJson['participantIDs']
+      participantIDs: parsedJson['participantIDs'],
+      lastViewedDate: lastViewTimestamps
     );
   }
 
   Map<String, dynamic> toJson() {
     return {
       "id": this.id,
-      "creatorID": this.lastSenderID,
+      "creatorID": this.creatorID,
       "createdAt": this.createdAt,
       "lastMessage": this.lastMessage.toJson(),
       "lastMessageDate": this.lastMessageDate,
-      "participantIDs": this.participantIDs
+      "participantIDs": this.participantIDs,
+      "lastViewedDate": this.lastViewedDate
     };
   }
 }

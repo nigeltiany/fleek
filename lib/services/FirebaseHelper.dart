@@ -209,6 +209,14 @@ class FireStoreUtils {
     await firestore.collection(MATCH_CONVERSATIONS).doc(conversationModel.id).set(conversationModel.toJson(), SetOptions(merge: true));
   }
 
+  static Future<void> updateLastViewed(String conversationID) async {
+    await firestore.collection(MATCH_CONVERSATIONS).doc(conversationID).set({
+      "lastViewedDate": {
+        "${FirebaseAuth.instance.currentUser.uid}": Timestamp.now(),
+      }
+    }, SetOptions(merge: true));
+  }
+
   static Future<void> removeMatch(IdentifiableUser user) async {
 
     await firestore.collection(MATCH_CONVERSATIONS)
@@ -306,7 +314,6 @@ class FireStoreUtils {
 
       int skippedUserCount = 0;
       int resultSize = 0;
-      print(query.parameters);
 
       StreamSubscription<QuerySnapshot> dataStream;
       dataStream = query.snapshots().listen((value) {
