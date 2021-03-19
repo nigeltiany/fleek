@@ -1,6 +1,9 @@
 import 'dart:async';
+import 'dart:ui';
 
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:dating/components/ButtonType.dart';
+import 'package:dating/components/SecondaryButton.dart';
 import 'package:dating/model/Notification.dart';
 import 'package:dating/model/UserPrivateDetails.dart';
 import 'package:dating/store/ChatData.dart';
@@ -21,12 +24,14 @@ import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
+import 'package:launch_review/launch_review.dart';
 // import 'package:in_app_purchase/in_app_purchase.dart';
 import 'package:native_updater/native_updater.dart';
 import 'package:new_version/new_version.dart';
 import 'package:provider/provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:firebase_core/firebase_core.dart';
+import 'package:version/version.dart';
 
 import 'constants.dart' as Constants;
 import 'model/User.dart';
@@ -35,6 +40,13 @@ void main() async {
   // InAppPurchaseConnection.enablePendingPurchases();
   WidgetsFlutterBinding.ensureInitialized();
   await Firebase.initializeApp();
+
+  // Disable persistence to get the latest data from firestore
+  FirebaseFirestore.instance.settings = Settings(
+    persistenceEnabled: false, // !important
+    sslEnabled: true,
+  );
+
   runApp(
     MyApp(
       store: Store(),
@@ -42,6 +54,26 @@ void main() async {
     )
   );
 }
+
+var _lightTheme = ThemeData(
+  colorScheme: ColorScheme.light(primary: Color(Constants.COLOR_PRIMARY)),
+  accentColor: Color(Constants.COLOR_PRIMARY),
+  primaryColor: Color(Constants.COLOR_PRIMARY),
+  brightness: Brightness.light,
+  bottomSheetTheme: BottomSheetThemeData(
+    backgroundColor: Colors.white.withOpacity(0.9)
+  ),
+);
+
+var _darkTheme = ThemeData(
+    colorScheme: ColorScheme.dark(primary: Color(Constants.COLOR_PRIMARY)),
+    accentColor: Color(Constants.COLOR_PRIMARY),
+    primaryColor: Color(Constants.COLOR_PRIMARY),
+    bottomSheetTheme: BottomSheetThemeData(
+      backgroundColor: Colors.black12.withOpacity(0.3)
+    ),
+    brightness: Brightness.dark
+);
 
 class MyApp extends StatefulWidget {
 
@@ -76,25 +108,69 @@ class MyAppState extends State<MyApp> with WidgetsBindingObserver {
       future: newVersion.getVersionStatus(),
       builder: (BuildContext context, AsyncSnapshot<VersionStatus> snapshot) {
         if (snapshot.hasData) {
+          // canUpdate only checks for string equality
           if (snapshot.data.canUpdate) {
-            NativeUpdater.displayUpdateAlert(context,
-              forceUpdate: true,
-              iOSUpdateButtonLabel: 'Upgrade',
-              iOSCloseButtonLabel: 'Exit',
-            );
-            return Container(color: Color(Constants.COLOR_PRIMARY_DARK));
-          } else {
-            return _app();
+            var localVersion = Version.parse(snapshot.data.localVersion);
+            var storeVersion = Version.parse(snapshot.data.storeVersion);
+            if ((localVersion > storeVersion) || (localVersion.major == storeVersion.major && localVersion.minor == storeVersion.minor)) {
+              return _app();
+            }
+            return _updateRequired();
           }
+          return _app();
         } else if (snapshot.connectionState == ConnectionState.waiting) {
           return Container(
             color: Color(Constants.COLOR_PRIMARY_DARK),
-            child: Center(child: CircularProgressIndicator()),
+            child: Center(
+              child: CircularProgressIndicator(
+                backgroundColor: Color(Constants.COLOR_PRIMARY_DARK),
+                valueColor: AlwaysStoppedAnimation<Color>(Colors.black),
+              ),
+            ),
           );
         } else {
           return _app();
         }
       },
+    );
+  }
+
+  MaterialApp _updateRequired () {
+    return MaterialApp(
+      debugShowCheckedModeBanner: false,
+      theme: _lightTheme,
+      darkTheme: _darkTheme,
+      home: Scaffold(
+        body: Column(
+          mainAxisSize: MainAxisSize.max,
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(Icons.system_update, color: Color(Constants.COLOR_PRIMARY_DARK), size: 128,),
+            Padding(
+              padding: const EdgeInsets.symmetric(vertical: 24, horizontal: 32),
+              child: Text("There is a new version of fleek available. \nKindly update to the latest version.",
+                style: TextStyle(
+                  decoration: TextDecoration.none,
+                  fontSize: 18,
+                  color: Color(Constants.COLOR_PRIMARY_DARK)
+                ),
+              ),
+            ),
+            ConstrainedBox(
+              constraints: BoxConstraints(minWidth: double.infinity),
+              child: Padding(
+                padding: const EdgeInsets.only(right: 32.0, left: 32.0),
+                child: SecondaryButton(
+                  label: "Update",
+                  onTap: () {
+                    LaunchReview.launch();
+                  },
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
     );
   }
 
@@ -114,24 +190,8 @@ class MyAppState extends State<MyApp> with WidgetsBindingObserver {
       child: MaterialApp(
         title: 'Fleek',
         navigatorKey: _navigatorKey,
-        theme: ThemeData(
-          colorScheme: ColorScheme.light(primary: Color(Constants.COLOR_PRIMARY)),
-          accentColor: Color(Constants.COLOR_PRIMARY),
-          primaryColor: Color(Constants.COLOR_PRIMARY),
-          brightness: Brightness.light,
-          bottomSheetTheme: BottomSheetThemeData(
-            backgroundColor: Colors.white.withOpacity(0.9)
-          ),
-        ),
-        darkTheme: ThemeData(
-          colorScheme: ColorScheme.dark(primary: Color(Constants.COLOR_PRIMARY)),
-          accentColor: Color(Constants.COLOR_PRIMARY),
-          primaryColor: Color(Constants.COLOR_PRIMARY),
-          bottomSheetTheme: BottomSheetThemeData(
-            backgroundColor: Colors.black12.withOpacity(0.3)
-          ),
-          brightness: Brightness.dark
-        ),
+        theme: _lightTheme,
+        darkTheme: _darkTheme,
         debugShowCheckedModeBanner: false,
         color: Color(Constants.COLOR_PRIMARY),
         home: OnBoarding()
@@ -287,7 +347,8 @@ class OnBoardingState extends State<OnBoarding> {
           if (snapshot.connectionState == ConnectionState.waiting) {
             return Center(
               child: CircularProgressIndicator(
-                backgroundColor: Colors.white,
+                backgroundColor: Color(Constants.COLOR_PRIMARY_DARK),
+                valueColor: AlwaysStoppedAnimation<Color>(Colors.black),
               ),
             );
           }

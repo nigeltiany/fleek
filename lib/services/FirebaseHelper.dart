@@ -288,12 +288,9 @@ class FireStoreUtils {
         }
       });
 
-      Query query;
-      var construction = firestore.collection(USERS)
-        // match running environment
-        .where('developerAccount', isEqualTo: currentUser.developerAccount)
+      Query query = firestore.collection(USERS)
         // A user not banned
-        .where('banned', isNotEqualTo: true)
+        .where('banned', isEqualTo: false)
         // The person must want to be shown
         .where('settings.showMe', isEqualTo: true)
         // and wants to see people of my gender or all people
@@ -303,10 +300,21 @@ class FireStoreUtils {
 
       // respecting the current user's gender matching preferences.
       if (currentUser.settings.genderPreference != GenderPreference.ALL) {
-        query = construction.where('settings.gender', isEqualTo: currentUser.settings.genderPreference.toFirebaseString());
-      } else {
-        query = construction;
+        query = query.where('settings.gender', isEqualTo: currentUser.settings.genderPreference.toFirebaseString());
       }
+
+      // Check if this is a review account to avoid apple store review metadata rejections
+      // This is needed because currentUser.developerAccount maybe false in certain environments
+      if (REVIEW_ACCOUNT_IDS.contains(currentUser.userID) || currentUser.developerAccount) {
+        query = query.where('developerAccount', isEqualTo: true);
+      } else {
+        // Hide fake developer profiles from other users
+        query = query.where('developerAccount', isEqualTo: false);
+      }
+
+      int skippedUserCount = 0;
+      int resultSize = 0;
+      StreamSubscription<QuerySnapshot> dataStream;
 
       // geo.collection(collectionRef: query).within(
       //   center: currentUser.location,
@@ -314,10 +322,6 @@ class FireStoreUtils {
       //   field: 'location',
       // ).listen((value) {
 
-      int skippedUserCount = 0;
-      int resultSize = 0;
-
-      StreamSubscription<QuerySnapshot> dataStream;
       dataStream = query.snapshots().listen((value) {
 
         if (value.docs.isEmpty) {

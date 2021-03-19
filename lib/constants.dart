@@ -6,6 +6,7 @@ const COLOR_ACCENT = 0xFFfdc244;
 const COLOR_PRIMARY_DARK = 0xFFf6a702;
 const COLOR_PRIMARY = 0xFFfdb827;
 const DARK_MODE_SCAFFOLD = 0xFF303030;
+const REVIEW_ACCOUNT_IDS = ["rtKyhqTN7Kd9JBGA4uMf2vfSwyB2"];
 const USERS = 'users';
 const USERS_PRIVATE = 'users_private';
 const USER_FLAGS = 'users_flags';
