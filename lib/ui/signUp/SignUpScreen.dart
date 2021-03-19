@@ -10,6 +10,7 @@ import 'package:dating/services/helper.dart';
 import 'package:dating/ui/auth/AuthScreen.dart';
 import 'package:dating/ui/terms/terms.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:gecies/gecies.dart';
@@ -282,6 +283,9 @@ class _SignUpState extends State<SignUpScreen> {
 
       user.userID = result.user.uid;
       user.userName = _usernameController.text.trim();
+      if (kDebugMode) {
+        user.developerAccount = true;
+      }
       await FireStoreUtils.updateCurrentUser(user);
 
       Navigator.of(context).pop(); // Close Dialog

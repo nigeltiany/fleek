@@ -3,6 +3,7 @@ import 'dart:io';
 import 'package:cloud_firestore/cloud_firestore.dart' as Firestore;
 import 'package:dating/model/ProfileSettings.dart';
 import 'package:dating/model/UserLocation.dart';
+import 'package:flutter/material.dart';
 import 'package:flutter/foundation.dart';
 
 abstract class IdentifiableUser {
@@ -33,7 +34,7 @@ class AppUser with ChangeNotifier implements IdentifiableUser {
   bool _online = false;
   bool _isVip = false;
   bool _banned = false;
-  bool _developerAccount = kDebugMode;
+  bool _developerAccount = false;
 
   //Fleek related fields
   UserLocation _location;
@@ -103,9 +104,9 @@ class AppUser with ChangeNotifier implements IdentifiableUser {
       ..settings = Settings.fromJson(parsedJson['settings'] ?? Settings().toJson())
       ..userID = parsedJson['id']
       ..profilePictureURL = parsedJson['profilePictureURL'] ?? ''
-      ..isVip = parsedJson['isVip' ?? false]
-      ..banned = parsedJson['banned' ?? false]
-      ..developerAccount = parsedJson['developerAccount' ?? kDebugMode]
+      ..isVip = parsedJson['isVip'] ?? false
+      ..banned = parsedJson['banned'] ?? false
+      ..developerAccount = parsedJson['developerAccount'] ?? kDebugMode
       ..publicKey = parsedJson['publicKey'] // allow null
 
       //dating app related fields

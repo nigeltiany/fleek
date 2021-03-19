@@ -291,7 +291,7 @@ class FireStoreUtils {
       Query query;
       var construction = firestore.collection(USERS)
         // match running environment
-        .where('developerAccount', isEqualTo: kDebugMode)
+        .where('developerAccount', isEqualTo: currentUser.developerAccount)
         // A user not banned
         .where('banned', isNotEqualTo: true)
         // The person must want to be shown

@@ -3,7 +3,7 @@
 release:
 	-rm -R ./.obf
 	flutter clean
-	flutter build appbundle --obfuscate --split-debug-info=./.obf
+	flutter build appbundle --release --obfuscate --split-debug-info=./.obf
 
 ios:
 	flutter clean \
