@@ -25,17 +25,17 @@
 	<key>LSRequiresIPhoneOS</key>
 	<true/>
 	<key>NSCameraUsageDescription</key>
-	<string>$(PRODUCT_NAME) would like to use your camera</string>
+	<string>Fleek would like to use your camera to facilitate photo sharing with users you choose to share photos with or setup your profile</string>
 	<key>NSLocationAlwaysUsageDescription</key>
-	<string>$(PRODUCT_NAME) would like to access your location for user recommendations.</string>
+	<string>Fleek would like to access your location for user recommendations.</string>
 	<key>NSLocationWhenInUseUsageDescription</key>
-	<string>$(PRODUCT_NAME) would like to use your location</string>
+	<string>Fleek would like to use your location to show you users nearby.</string>
 	<key>NSMicrophoneUsageDescription</key>
-	<string>$(PRODUCT_NAME) would like to access your microphone for sending audio messages.</string>
+	<string>Fleek would like to access your microphone for sending private audio messages to people you choose to share audio messages with.</string>
 	<key>NSPhotoLibraryAddUsageDescription</key>
-	<string>$(PRODUCT_NAME) would like to access your photos for messaging other users.</string>
+	<string>Fleek would like to access your photos. Photos are used to create your profile or you can share them privately when messaging</string>
 	<key>NSPhotoLibraryUsageDescription</key>
-	<string>$(PRODUCT_NAME) would like access to your photo gallery</string>
+	<string>Fleek would like access to your photo gallery. Photos are used to create your profile or you can share them privately when messaging.</string>
 	<key>UIBackgroundModes</key>
 	<array>
 		<string>fetch</string>
