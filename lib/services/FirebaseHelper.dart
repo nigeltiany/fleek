@@ -283,7 +283,9 @@ class FireStoreUtils {
       var viewedUsersRef = await firestore.collectionGroup("${currentUser.settings.searchInterest.toFirebaseString()}::VIEWED_USERS_FOR::${currentUser.userID}").get();
       var viewedUsers = List();
       viewedUsersRef.docs.forEach((element) {
-        viewedUsers.addAll((element.data()["viewedUserIDs"] as List));
+        if (element.data()["viewedUserIDs"] != null) {
+          viewedUsers.addAll((element.data()["viewedUserIDs"] as List));
+        }
       });
 
       Query query;
