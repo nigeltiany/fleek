@@ -552,7 +552,7 @@ class _ChatScreenState extends State<ChatScreen> {
 
   _sendMessage(String content, Url url) async {
 
-    if (content.isEmpty) {
+    if (content.trim().isEmpty) {
       return;
     }
 
