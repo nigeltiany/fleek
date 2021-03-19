@@ -428,26 +428,28 @@ class FireStoreUtils {
     });
   }
 
-  static Future<bool> incrementSwipe() async {
+  static Future<SwipeCounter> getSwipeCounter() async {
+
     DocumentReference documentReference = firestore.collection(SWIPE_COUNT).doc(FirebaseAuth.instance.currentUser.uid);
 
     DocumentSnapshot validationDocumentSnapshot = await documentReference.get();
 
     if (validationDocumentSnapshot != null && validationDocumentSnapshot.exists) {
-      // TODO: set max number of swipes when payments are implemented
-      if ((validationDocumentSnapshot['count'] ?? 1) < double.infinity) {
-        // await firestore.doc(documentReference.path).update({'count': validationDocumentSnapshot['count'] + 1});
-        return true;
-      } else {
-        return _shouldResetCounter(validationDocumentSnapshot);
+      var counter =  SwipeCounter.fromJson(validationDocumentSnapshot.data());
+      DateTime from = DateTime.fromMillisecondsSinceEpoch(counter.createdAt.millisecondsSinceEpoch);
+      Duration diff = from.difference(DateTime.now()).abs();
+      if (diff.inHours >= FleekData.HOURS_SWIPE_THROTTLE) {
+        counter.createdAt = Timestamp.now();
+        counter.count = 0;
       }
+      return counter;
     } else {
-      await firestore.doc(documentReference.path).set(SwipeCounter(
-        authorID: FirebaseAuth.instance.currentUser.uid,
+      var counter = SwipeCounter(
         createdAt: Timestamp.now(),
-        count: 1,
-      ).toJson());
-      return true;
+        count: 0,
+      );
+      await firestore.doc(documentReference.path).set(counter.toJson());
+      return counter;
     }
 
   }
@@ -479,21 +481,6 @@ class FireStoreUtils {
       url: url,
     );
 
-  }
-
-  static Future<bool> _shouldResetCounter(DocumentSnapshot documentSnapshot) async {
-    SwipeCounter counter = SwipeCounter.fromJson(documentSnapshot.data());
-    DateTime now = DateTime.now();
-    DateTime from = DateTime.fromMillisecondsSinceEpoch(counter.createdAt.millisecondsSinceEpoch);
-    Duration diff = now.difference(from);
-    if (diff.inDays > 0) {
-      counter.count = 1;
-      counter.createdAt = Timestamp.now();
-      await firestore.collection(SWIPE_COUNT).doc(counter.authorID).update(counter.toJson());
-      return true;
-    } else {
-      return false;
-    }
   }
 
 }

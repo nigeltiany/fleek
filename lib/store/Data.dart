@@ -1,13 +1,19 @@
 import 'dart:async';
 
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:dating/constants.dart';
 import 'package:dating/model/SearchInterests.dart';
+import 'package:dating/model/SwipeCounterModel.dart';
 import 'package:dating/model/User.dart';
 import 'package:dating/services/FirebaseHelper.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/foundation.dart';
 
 class FleekData with ChangeNotifier {
 
   static int MAX_FETCH_COUNT = 25;
+
+  static int HOURS_SWIPE_THROTTLE = 4;
 
   StreamController<AppUser> _streamController;
 
@@ -17,6 +23,10 @@ class FleekData with ChangeNotifier {
   Stream<AppUser> get stream => _stream;
 
   int _recentlyFetchedCount;
+
+  SwipeCounter _swipeCounter;
+
+  SwipeCounter get swipeCounter => _swipeCounter;
 
   int get recentlyFetchedCount => _recentlyFetchedCount;
 
@@ -55,9 +65,42 @@ class FleekData with ChangeNotifier {
     notifyListeners();
   }
 
+  SwipeCounter get _defaultCounter {
+    return SwipeCounter(
+      count: 0,
+      createdAt: Timestamp.now(),
+    );
+  }
+
+  void resetSwipeCounter() {
+    _swipeCounter = _defaultCounter;
+    notifyListeners();
+  }
+
   void loadData (AppUser currentUser) {
     fetchingData = true;
-    FireStoreUtils.getFleekUsers(currentUser, this);
+    if (_swipeCounter == null) {
+      FireStoreUtils.getSwipeCounter().then((counter) {
+        _swipeCounter = counter;
+        notifyListeners();
+        FireStoreUtils.getFleekUsers(currentUser, this);
+      }).catchError((_) {
+        _swipeCounter = _defaultCounter;
+        notifyListeners();
+        FireStoreUtils.getFleekUsers(currentUser, this);
+      });
+    } else {
+      FireStoreUtils.getFleekUsers(currentUser, this);
+    }
+  }
+
+  void incrementSwipeCount() {
+    if (_swipeCounter == null) {
+      _swipeCounter = _defaultCounter;
+    }
+    _swipeCounter.count += 1;
+    notifyListeners();
+    FireStoreUtils.firestore.collection(SWIPE_COUNT).doc(FirebaseAuth.instance.currentUser.uid).set(_swipeCounter.toJson(), SetOptions(merge: true));
   }
 
   void _populateRecentlyViewed(SearchInterest searchInterest, String userID) {
@@ -109,6 +152,21 @@ class FleekData with ChangeNotifier {
     _previousLeftSwipedUser = null;
     notifyListeners();
     await FireStoreUtils.undo(id, searchInterest);
+  }
+
+  bool get maxHourlyCountExceeded {
+    if (_swipeCounter == null) {
+      _swipeCounter = _defaultCounter;
+    }
+    if (_swipeCounter.count < 40) {
+      return false;
+    }
+    DateTime from = DateTime.fromMillisecondsSinceEpoch(_swipeCounter.createdAt.millisecondsSinceEpoch);
+    Duration diff = from.difference(DateTime.now()).abs();
+    if (diff.inHours >= HOURS_SWIPE_THROTTLE) {
+      return false;
+    }
+    return true;
   }
 
 }

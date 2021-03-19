@@ -4,6 +4,7 @@ import 'package:dating/CustomFlutterTinderCard.dart';
 import 'package:dating/components/Avatar.dart';
 import 'package:dating/components/FlagDialog.dart';
 import 'package:dating/components/SecondaryButton.dart';
+import 'package:dating/components/SwipeThrottle.dart';
 import 'package:dating/constants.dart';
 import 'package:dating/model/Flag.dart';
 import 'package:dating/model/User.dart';
@@ -123,7 +124,12 @@ class _SwipeScreenState extends State<SwipeScreen> {
             ),
           );
         } else {
-          return _asyncCards(context);
+          return Stack(
+            children: [
+              _asyncCards(context),
+              SwipeThrottle(),
+            ],
+          );
         }
       }
     );
@@ -412,10 +418,12 @@ class _SwipeScreenState extends State<SwipeScreen> {
                   swipeCompleteCallback: (CardSwipeOrientation orientation, int index) async {
                     bool sl = superLike;
                     superLike = false;
-                    // if (orientation == CardSwipeOrientation.LEFT || orientation == CardSwipeOrientation.RIGHT) {
+
+                    // Ignores incomplete swipes;
+                    if (orientation == CardSwipeOrientation.LEFT || orientation == CardSwipeOrientation.RIGHT) {
                       // bool isValidSwipe = currentUser.isVip != null && currentUser.isVip ? true :
                       AppUser swipedUser = fleekData.users.elementAt(index);
-                      await FireStoreUtils.incrementSwipe();
+                      fleekData.incrementSwipeCount();
                       if (orientation == CardSwipeOrientation.RIGHT) {
                         await FireStoreUtils.onSwipeRight(currentUser: currentUser, likedUser: swipedUser, superLike: sl);
                         fleekData.removeUser(fleekData.users.elementAt(index), currentUser.settings.searchInterest);
@@ -427,7 +435,7 @@ class _SwipeScreenState extends State<SwipeScreen> {
                       if (fleekData.users.length < 5 && fleekData.recentlyFetchedCount >= FleekData.MAX_FETCH_COUNT) {
                         fleekData.loadData(currentUser);
                       }
-                    // }
+                    }
                   },
                 ),
               ),

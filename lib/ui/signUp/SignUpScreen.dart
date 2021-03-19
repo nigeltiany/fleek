@@ -1,3 +1,5 @@
+import 'dart:io';
+
 import 'package:dating/components/PrimaryButton.dart';
 import 'package:dating/components/FormInput.dart';
 import 'package:cloud_functions/cloud_functions.dart';
@@ -42,38 +44,41 @@ class _SignUpState extends State<SignUpScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return FutureBuilder<bool>(
-      future: hasAcceptedTermsAndConditions(context),
-      builder: (BuildContext ctx, AsyncSnapshot snapshot) {
-        if (snapshot.connectionState == ConnectionState.waiting) {
-          return Center(
-            child: CircularProgressIndicator(
-              backgroundColor: Colors.white,
-            ),
-          );
-        } else if (snapshot.data == false && !termsPopUpShown) {
-          Future.delayed(Duration.zero, () {
-            showDialog(
-              context: context,
-              barrierDismissible: false,
-              builder: (BuildContext context) {
-                return TermsScreen();
-              },
-            ).then((_) {
-              termsPopUpShown = true;
-              setState(() {});
+    if (Platform.isIOS) {
+      return FutureBuilder<bool>(
+        future: hasAcceptedTermsAndConditions(context),
+        builder: (BuildContext ctx, AsyncSnapshot snapshot) {
+          if (snapshot.connectionState == ConnectionState.waiting) {
+            return Center(
+              child: CircularProgressIndicator(
+                backgroundColor: Colors.white,
+              ),
+            );
+          } else if (snapshot.data == false && !termsPopUpShown) {
+            Future.delayed(Duration.zero, () {
+              showDialog(
+                context: context,
+                barrierDismissible: false,
+                builder: (BuildContext context) {
+                  return TermsScreen();
+                },
+              ).then((_) {
+                termsPopUpShown = true;
+                setState(() {});
+              });
             });
-          });
-          return _termsErrorWidget;
-        } else {
-          if (snapshot.data) {
-            return signUpScreen();
+            return _termsErrorWidget;
+          } else {
+            if (snapshot.data) {
+              return signUpScreen();
+            }
+            Future.delayed(Duration.zero, () => pushReplacement(context, AuthScreen()));
+            return _termsErrorWidget;
           }
-          Future.delayed(Duration.zero, () => pushReplacement(context, AuthScreen()));
-          return _termsErrorWidget;
-        }
-      },
-    );
+        },
+      );
+    }
+    return signUpScreen();
   }
 
   Widget get _termsErrorWidget {

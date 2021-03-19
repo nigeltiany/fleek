@@ -10,6 +10,7 @@
 .buildlog/
 .history
 .svn/
+.obf
 
 # IntelliJ related
 *.iml
