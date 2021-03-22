@@ -201,12 +201,6 @@ class _AccountDetailsScreenState extends State<AccountDetailsScreen> {
             SettingsTile(
               title: "Logout",
               onPressed: (_) async {
-                user.signedIn = false;
-                user.settings.showMe = false;
-                user.lastOnlineTimestamp = Timestamp.now();
-                await FireStoreUtils.updateCurrentUser(user);
-                await FirebaseAuth.instance.signOut();
-                user.reset();
 
                 List<DataStore> _store = [
                   context.read<ChatData>(),
@@ -217,6 +211,13 @@ class _AccountDetailsScreenState extends State<AccountDetailsScreen> {
                   store.closeFirebaseStreams();
                   store.clearData();
                 });
+
+                user.signedIn = false;
+                user.settings.showMe = false;
+                user.lastOnlineTimestamp = Timestamp.now();
+                await FireStoreUtils.updateCurrentUser(user);
+                await FirebaseAuth.instance.signOut();
+                user.reset();
 
                 pushAndRemoveUntil(context, AuthScreen(), false);
               },
