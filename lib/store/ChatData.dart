@@ -5,10 +5,11 @@ import 'package:dating/constants.dart';
 import 'package:dating/model/MessageData.dart';
 import 'package:dating/model/User.dart';
 import 'package:dating/services/helper.dart';
+import 'package:dating/store/Store.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 
-class ChatData with ChangeNotifier {
+class ChatData with ChangeNotifier implements DataStore {
 
   static int MAX_FETCH_COUNT = 25;
   
@@ -162,6 +163,18 @@ class ChatData with ChangeNotifier {
         _addMessage(MessageData.fromJson(document.data()));
       });
     });
+  }
+
+  @override
+  void clearData() {
+    _conversations = Map<String, Map<String, MessageData>>();
+    _fetchState = Map<String, bool>();
+    notifyListeners();
+  }
+
+  @override
+  void closeFirebaseStreams() {
+    _currentChatStream?.cancel();
   }
 
 }

@@ -37,3 +37,10 @@ class Store {
   }
 
 }
+
+abstract class DataStore {
+
+  void closeFirebaseStreams();
+  void clearData();
+
+}

@@ -4,6 +4,11 @@ import 'package:dating/model/User.dart';
 import 'package:dating/model/UserPrivateDetails.dart';
 import 'package:dating/services/FirebaseHelper.dart';
 import 'package:dating/services/helper.dart';
+import 'package:dating/store/ChatData.dart';
+import 'package:dating/store/ConversationData.dart';
+import 'package:dating/store/Data.dart';
+import 'package:dating/store/MatchData.dart';
+import 'package:dating/store/Store.dart';
 import 'package:dating/ui/auth/AuthScreen.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
@@ -202,6 +207,17 @@ class _AccountDetailsScreenState extends State<AccountDetailsScreen> {
                 await FireStoreUtils.updateCurrentUser(user);
                 await FirebaseAuth.instance.signOut();
                 user.reset();
+
+                List<DataStore> _store = [
+                  context.read<ChatData>(),
+                  context.read<ConversationData>(),
+                  context.read<FleekData>(),
+                  context.read<MatchData>(),
+                ]..forEach((store) {
+                  store.closeFirebaseStreams();
+                  store.clearData();
+                });
+
                 pushAndRemoveUntil(context, AuthScreen(), false);
               },
             ),

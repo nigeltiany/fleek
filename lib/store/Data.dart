@@ -6,10 +6,11 @@ import 'package:dating/model/SearchInterests.dart';
 import 'package:dating/model/SwipeCounterModel.dart';
 import 'package:dating/model/User.dart';
 import 'package:dating/services/FirebaseHelper.dart';
+import 'package:dating/store/Store.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/foundation.dart';
 
-class FleekData with ChangeNotifier {
+class FleekData with ChangeNotifier implements DataStore {
 
   static int MAX_FETCH_COUNT = 25;
 
@@ -167,6 +168,21 @@ class FleekData with ChangeNotifier {
       return false;
     }
     return true;
+  }
+
+  @override
+  void clearData() {
+    _recentlyRemovedUserIDs = Map<SearchInterest, Set<String>>();
+    _streamController = StreamController<AppUser>();
+    _swipeCounter = null;
+    _recentlyFetchedCount = 0;
+    _previousLeftSwipedUser = null;
+    _fetchingData = false;
+    notifyListeners();
+  }
+
+  @override
+  void closeFirebaseStreams() {
   }
 
 }

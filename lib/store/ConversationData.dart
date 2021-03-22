@@ -4,10 +4,11 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:dating/constants.dart';
 import 'package:dating/model/ConversationModel.dart';
 import 'package:dating/model/User.dart';
+import 'package:dating/store/Store.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 
-class ConversationData with ChangeNotifier {
+class ConversationData with ChangeNotifier implements DataStore {
 
   Map<String, AppUser> _conversationUsers;
   Map<String, ConversationModel> _conversation;
@@ -81,6 +82,19 @@ class ConversationData with ChangeNotifier {
           _addConversation(ConversationModel.fromJson(doc.data()));
         });
     });
+  }
+
+  @override
+  void clearData() {
+    _conversation = Map<String, ConversationModel>();
+    _conversationUsers = Map<String, AppUser>();
+    _conversations = [];
+    notifyListeners();
+  }
+
+  @override
+  void closeFirebaseStreams() {
+    _streamSubscription?.cancel();
   }
 
 }

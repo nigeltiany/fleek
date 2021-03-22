@@ -5,10 +5,11 @@ import 'package:dating/constants.dart';
 import 'package:dating/model/Match.dart';
 import 'package:dating/model/User.dart';
 import 'package:dating/store/ConversationData.dart';
+import 'package:dating/store/Store.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 
-class MatchData with ChangeNotifier {
+class MatchData with ChangeNotifier implements DataStore {
 
   Map<String, FleekMatch> _matchDataStore;
   List<FleekMatch> _matches;
@@ -87,6 +88,17 @@ class MatchData with ChangeNotifier {
         });
       }
     });
+  }
+
+  @override
+  void clearData() {
+    _matches = List<FleekMatch>();
+    _matchDataStore = Map<String, FleekMatch>();
+  }
+
+  @override
+  void closeFirebaseStreams() {
+    _streamSubscription?.cancel();
   }
 
 }
