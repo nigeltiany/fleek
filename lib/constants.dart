@@ -18,6 +18,7 @@ const SWIPES_SUB_COLLECTION = 'swipes';
 const MATCH_CONVERSATIONS = "match_conversations";
 const CONVERSATION_MESSAGES = 'conversation_messages';
 const VERIFICATIONS = 'student_verification';
+const VERIFICATIONS_V2 = 'student_verification_v2';
 const USER_PROFILE_SETUP = 'user_profile_setup';
 const SECOND_MILLIS = 1000;
 const MINUTE_MILLIS = 60 * SECOND_MILLIS;

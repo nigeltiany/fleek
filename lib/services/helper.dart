@@ -325,7 +325,7 @@ Future<void> goToNextScreenAfterAuth (BuildContext context) async {
   var contextUser = context.read<AppUser>();
   var keyPair = context.read<KeyPair>();
   var encrypterState = context.read<EncrypterState>();
-  var verificationSnap = await FireStoreUtils.firestore.collection(VERIFICATIONS).doc(uid).get();
+  var verificationSnap = await FireStoreUtils.firestore.collection(VERIFICATIONS_V2).doc(uid).get();
 
   if (verificationSnap.exists) {
     if (StudentStatus.fromJson(verificationSnap.data()).verified) {

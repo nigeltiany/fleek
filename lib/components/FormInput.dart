@@ -13,6 +13,8 @@ class FormInput extends StatelessWidget {
   final VoidCallback onTap;
   final bool readOnly;
   final Widget suffix;
+  final Widget suffixIcon;
+  final BoxConstraints suffixIconConstraints;
 
   const FormInput({
     Key key, 
@@ -25,6 +27,8 @@ class FormInput extends StatelessWidget {
     this.textInputAction,
     this.readOnly = false,
     this.suffix,
+    this.suffixIcon,
+    this.suffixIconConstraints
   }) : super(key: key);
   
   @override
@@ -53,6 +57,8 @@ class FormInput extends StatelessWidget {
             contentPadding: this.type == TextInputType.multiline ? EdgeInsets.symmetric(horizontal: 16, vertical: 14) : EdgeInsets.only(left: 16, right: 16),
             hintText: label,
             suffix: this.suffix,
+            suffixIcon: this.suffixIcon,
+            suffixIconConstraints: this.suffixIconConstraints,
             focusedBorder: OutlineInputBorder(
               borderRadius: BorderRadius.circular(25.0),
               borderSide: BorderSide(

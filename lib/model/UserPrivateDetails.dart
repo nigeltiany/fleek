@@ -7,7 +7,15 @@ class UserPrivateDetails {
   String studentEmail;
   String phoneNumber;
 
-  UserPrivateDetails();
+  UserPrivateDetails({
+    this.userID,
+    this.firstName,
+    this.lastName,
+    this.fcmToken,
+    this.email,
+    this.studentEmail,
+    this.phoneNumber
+  });
 
   factory UserPrivateDetails.fromJson(Map<String, dynamic> parsedJson) {
     return UserPrivateDetails()

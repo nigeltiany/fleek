@@ -47,10 +47,13 @@ void main() async {
     sslEnabled: true,
   );
 
+  var sharedPreferences = await SharedPreferences.getInstance();
+
   runApp(
     MyApp(
       store: Store(),
       secureStorage: FlutterSecureStorage(),
+      sharedPreferences: sharedPreferences,
     )
   );
 }
@@ -79,11 +82,13 @@ class MyApp extends StatefulWidget {
 
   final Store store;
   final FlutterSecureStorage secureStorage;
+  final SharedPreferences sharedPreferences;
 
   const MyApp({
     Key key,
     @required this.store,
     @required this.secureStorage,
+    @required this.sharedPreferences,
   }) : super(key: key);
 
   @override
@@ -182,10 +187,11 @@ class MyAppState extends State<MyApp> with WidgetsBindingObserver {
         ChangeNotifierProvider<ChatData>.value(value: store.chatData),
         ChangeNotifierProvider<ConversationData>.value(value: store.conversationData),
         ChangeNotifierProvider<MatchData>.value(value: store.matchData),
-        Provider<FlutterSecureStorage>.value(value: secureStorage),
         ChangeNotifierProvider<KeyPair>.value(value: KeyPair()),
         ChangeNotifierProvider<EncrypterState>.value(value: EncrypterState(null)),
+        Provider<FlutterSecureStorage>.value(value: secureStorage),
         Provider<MemoryFileSystem>.value(value: MemoryFileSystem()),
+        Provider<SharedPreferences>.value(value: widget.sharedPreferences),
       ],
       child: MaterialApp(
         title: 'Fleek',

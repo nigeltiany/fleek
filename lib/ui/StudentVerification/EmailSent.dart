@@ -10,11 +10,13 @@ class EmailSent extends StatelessWidget {
 
   final StudentStatus status;
   final Function resendEmail;
+  final String studentEmail;
 
   const EmailSent({
     Key key,
     @required this.status,
     @required this.resendEmail,
+    @required this.studentEmail,
   }) : super(key: key);
 
   @override
@@ -66,7 +68,7 @@ class EmailSent extends StatelessWidget {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text("We sent you an email at: ", style: style),
-            Text("${status.studentEmail}", 
+            Text("$studentEmail",
               style: TextStyle(
                 color: Color(COLOR_PRIMARY_DARK),
                 fontSize: style.fontSize,
