@@ -68,10 +68,6 @@ class _StudentVerificationScreenState extends State<StudentVerificationScreen> {
     sharedPreferences = context.read<SharedPreferences>();
     _schoolController.text = "North Carolina A&T University";
 
-    _firstNameController.text = "Name";
-    _lastNameController.text = "Name";
-    _emailController.text = "ntiany";
-
     if (sharedPreferences.containsKey(VERIFICATION_ID_KEY)) {
       var args = sharedPreferences.getString(VERIFICATION_ID_KEY).split("::");
       if (args.length < 2) return;
