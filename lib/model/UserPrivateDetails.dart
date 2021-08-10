@@ -6,6 +6,7 @@ class UserPrivateDetails {
   String email;
   String studentEmail;
   String phoneNumber;
+  bool verified = true;
 
   UserPrivateDetails({
     this.userID,
@@ -14,7 +15,8 @@ class UserPrivateDetails {
     this.fcmToken,
     this.email,
     this.studentEmail,
-    this.phoneNumber
+    this.phoneNumber,
+    this.verified,
   });
 
   factory UserPrivateDetails.fromJson(Map<String, dynamic> parsedJson) {
@@ -25,7 +27,8 @@ class UserPrivateDetails {
       ..fcmToken = parsedJson["fcmToken"]
       ..email = parsedJson["email"]
       ..studentEmail = parsedJson["studentEmail"]
-      ..phoneNumber = parsedJson["phoneNumber"];
+      ..phoneNumber = parsedJson["phoneNumber"]
+      ..verified = parsedJson["verified"] ?? false;
   }
 
   Map<String, dynamic> toJson() {
@@ -37,6 +40,7 @@ class UserPrivateDetails {
       "email": this.email,
       "studentEmail": this.studentEmail,
       "phoneNumber": this.phoneNumber,
+      "verified": this.verified,
     };
   }
 
