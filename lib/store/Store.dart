@@ -2,6 +2,7 @@ import 'package:dating/model/User.dart';
 import 'package:dating/store/ChatData.dart';
 import 'package:dating/store/ConversationData.dart';
 import 'package:dating/store/Data.dart';
+import 'package:dating/store/LikeData.dart';
 import 'package:dating/store/MatchData.dart';
 
 class Store {
@@ -21,6 +22,9 @@ class Store {
   MatchData _matchData;
   MatchData get matchData => _matchData;
 
+  LikeData _likeData;
+  LikeData get likeData => _likeData;
+
 
   static final Store _singleton = Store._internal();
 
@@ -33,7 +37,12 @@ class Store {
     _fleekData = FleekData();
     _chatData = ChatData();
     _conversationData = ConversationData();
-    _matchData = MatchData(_conversationData);
+    _matchData = MatchData();
+    _likeData = LikeData();
+  }
+
+  void rebuild() {
+    Store._internal();
   }
 
 }

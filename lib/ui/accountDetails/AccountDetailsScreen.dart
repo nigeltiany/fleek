@@ -7,14 +7,17 @@ import 'package:dating/services/helper.dart';
 import 'package:dating/store/ChatData.dart';
 import 'package:dating/store/ConversationData.dart';
 import 'package:dating/store/Data.dart';
+import 'package:dating/store/LikeData.dart';
 import 'package:dating/store/MatchData.dart';
 import 'package:dating/store/Store.dart';
+import 'package:dating/ui/StudentVerification/StudentVerification.dart';
 import 'package:dating/ui/auth/AuthScreen.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/widgets.dart';
 import 'package:provider/provider.dart';
 import 'package:settings_ui/settings_ui.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 class AccountDetailsScreen extends StatefulWidget {
   final AppUser user;
@@ -203,14 +206,17 @@ class _AccountDetailsScreenState extends State<AccountDetailsScreen> {
               onPressed: (_) async {
 
                 List<DataStore> _store = [
-                  context.read<ChatData>(),
-                  context.read<ConversationData>(),
-                  context.read<FleekData>(),
-                  context.read<MatchData>(),
+                  Provider.of<ChatData>(context, listen: false),
+                  Provider.of<ConversationData>(context, listen: false),
+                  Provider.of<FleekData>(context, listen: false),
+                  Provider.of<MatchData>(context, listen: false),
+                  Provider.of<LikeData>(context, listen: false),
                 ]..forEach((store) {
                   store.closeFirebaseStreams();
                   store.clearData();
                 });
+
+                Provider.of<SharedPreferences>(context, listen: false).remove(VERIFICATION_ID_KEY);
 
                 user.signedIn = false;
                 user.settings.showMe = false;
@@ -218,6 +224,8 @@ class _AccountDetailsScreenState extends State<AccountDetailsScreen> {
                 await FireStoreUtils.updateCurrentUser(user);
                 await FirebaseAuth.instance.signOut();
                 user.reset();
+
+                Provider.of<Store>(context, listen: false).rebuild();
 
                 pushAndRemoveUntil(context, AuthScreen(), false);
               },

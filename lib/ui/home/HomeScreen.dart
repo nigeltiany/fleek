@@ -1,5 +1,6 @@
 import 'package:dating/components/GenderSelector.dart';
 import 'package:dating/components/InterestSelector.dart';
+import 'package:dating/components/LikesButton.dart';
 import 'package:dating/components/OrientationSelector.dart';
 import 'package:dating/model/Gender.dart';
 import 'package:dating/model/Match.dart';
@@ -111,7 +112,6 @@ class _HomeState extends State<HomeScreen> with TickerProviderStateMixin {
     [_genderTabController, _orientationTabController, _searchInterestController].forEach((controller) {
       controller.dispose();
     });
-    context.read<FleekData>().clean();
     super.dispose();
   }
 
@@ -133,8 +133,7 @@ class _HomeState extends State<HomeScreen> with TickerProviderStateMixin {
       //     },
       //   );
       case 1:
-        // TODO: Return heart icon with unseen matches count
-        return Container();
+        return LikesButton();
       default:
         return Container();
     }

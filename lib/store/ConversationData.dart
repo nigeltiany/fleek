@@ -95,6 +95,7 @@ class ConversationData with ChangeNotifier implements DataStore {
   @override
   void closeFirebaseStreams() {
     _streamSubscription?.cancel();
+    _streamSubscription = null;
   }
 
 }

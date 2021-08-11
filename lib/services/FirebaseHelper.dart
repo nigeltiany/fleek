@@ -85,6 +85,15 @@ class FireStoreUtils {
     return file.path == null ? "" : Path.extension(file.path);
   }
 
+  static Future<void> updateLikeAsSeen(Swipe like) async {
+    FirebaseFirestore.instance
+      .collection(SWIPES)
+      .doc(FirebaseAuth.instance.currentUser.uid)
+      .collection(SWIPES_SUB_COLLECTION)
+      .doc(like.id)
+      .set({ "hasBeenSeen": true }, SetOptions(merge: true));
+  }
+
   static Future<String> uploadUserImageToFireStorage(AppUser user, File image, ImageType imageType) async {
 
     if (FirebaseAuth.instance.currentUser == null) return null;
@@ -361,7 +370,7 @@ class FireStoreUtils {
     // }
   }
 
-  static onSwipeLeft({ @required AppUser currentUser, @required AppUser dislikedUser }) async {
+  static onSwipeLeft({ @required AppUser currentUser, @required AppUser dislikedUser, bool seen = false }) async {
 
     DocumentReference documentReference = firestore.collection(SWIPES)
       .doc(FirebaseAuth.instance.currentUser.uid)
@@ -374,7 +383,7 @@ class FireStoreUtils {
       swiper: SwipeSubject.fromUser(currentUser),
       subject: SwipeSubject.fromUser(dislikedUser),
       createdAt: Timestamp.now(),
-      hasBeenSeen: false,
+      hasBeenSeen: seen,
       searchInterest: currentUser.settings.searchInterest
     );
 
@@ -382,7 +391,7 @@ class FireStoreUtils {
 
   }
 
-  static Future<bool> onSwipeRight({ @required AppUser currentUser, @required AppUser likedUser, bool superLike = false }) async {
+  static Future<bool> onSwipeRight({ @required AppUser currentUser, @required AppUser likedUser, bool superLike = false, bool seen = false }) async {
     bool isSuccessful;
 
     DocumentReference documentReference = firestore.collection(SWIPES)
@@ -394,7 +403,7 @@ class FireStoreUtils {
       id: likedUser.userID,
       swiper: SwipeSubject.fromUser(currentUser),
       subject: SwipeSubject.fromUser(likedUser),
-      hasBeenSeen: false,
+      hasBeenSeen: seen,
       createdAt: Timestamp.now(),
       type: superLike ? SwipeType.SUPER_LIKE : SwipeType.LIKE,
       searchInterest: currentUser.settings.searchInterest

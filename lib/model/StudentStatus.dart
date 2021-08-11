@@ -4,12 +4,14 @@ class StudentStatus {
 
   String verificationID ="";
   bool verified = false;
+  Firestore.Timestamp verifiedAt;
   Firestore.Timestamp emailedAt = Firestore.Timestamp.now();
 
   StudentStatus({
     this.verificationID,
     this.verified,
     this.emailedAt,
+    this.verifiedAt,
   });
 
   factory StudentStatus.fromJson(Map<String, dynamic> parsedJson) {
@@ -17,6 +19,7 @@ class StudentStatus {
       verificationID: parsedJson["verification_id"] ?? "",
       verified: parsedJson["verified"] ?? false,
       emailedAt: parsedJson["emailed_at"],
+      verifiedAt: parsedJson["verified_at"],
     );
   }
 
@@ -25,6 +28,7 @@ class StudentStatus {
       "verification_id": this.verificationID,
       "verified": this.verified,
       "emailed_at": this.emailedAt,
+      "verified_at": this.verifiedAt,
     };
   }
 

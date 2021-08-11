@@ -175,6 +175,7 @@ class ChatData with ChangeNotifier implements DataStore {
   @override
   void closeFirebaseStreams() {
     _currentChatStream?.cancel();
+    _currentChatStream = null;
   }
 
 }

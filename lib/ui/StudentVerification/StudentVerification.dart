@@ -86,16 +86,18 @@ class _StudentVerificationScreenState extends State<StudentVerificationScreen> {
       var status = StudentStatus.fromJson(querySnapshot.data());
       if (status.verified) {
         sharedPreferences.remove(VERIFICATION_ID_KEY);
-        bool success = await signUp(
-          context: context,
-          user: context.read<AppUser>(),
-          keyPair: context.read<KeyPair>(),
-          encrypter: context.read<EncrypterState>(),
-          username: widget.signUpInfo.username,
-          email: widget.signUpInfo.email,
-          password: widget.signUpInfo.password,
-        );
-        if (!success) return;
+        if (widget.signUpInfo != null) {
+          bool success = await signUp(
+            context: context,
+            user: context.read<AppUser>(),
+            keyPair: context.read<KeyPair>(),
+            encrypter: context.read<EncrypterState>(),
+            username: widget.signUpInfo.username,
+            email: widget.signUpInfo.email,
+            password: widget.signUpInfo.password,
+          );
+          if (!success) return;
+        }
 
         await FireStoreUtils.updateUserPrivateDetails(
           UserPrivateDetails(
@@ -103,13 +105,13 @@ class _StudentVerificationScreenState extends State<StudentVerificationScreen> {
             firstName: _firstNameController.text,
             lastName: _lastNameController.text,
             email: FirebaseAuth.instance.currentUser.email,
-            studentEmail: _emailController.text,
+            studentEmail: studentEmail,
             verificationID: verificationID,
             verified: true,
           ),
         );
 
-        push(context, ProfileSetupScreen(step: ProfileSetupStep.NOT_STARTED));
+        goToNextScreenAfterAuth(context);
 
       } else if (status.emailedAt != null) {
         showDialog(

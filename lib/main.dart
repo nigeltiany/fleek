@@ -12,6 +12,7 @@ import 'package:dating/store/Data.dart';
 import 'package:dating/store/KeyPair.dart';
 import 'package:dating/services/FirebaseHelper.dart';
 import 'package:dating/services/helper.dart';
+import 'package:dating/store/LikeData.dart';
 import 'package:dating/store/MatchData.dart';
 import 'package:dating/store/Store.dart';
 import 'package:dating/ui/auth/AuthScreen.dart';
@@ -182,11 +183,13 @@ class MyAppState extends State<MyApp> with WidgetsBindingObserver {
   Widget _app() {
     return MultiProvider(
       providers: [
+        Provider<Store>.value(value: store),
         ChangeNotifierProvider<AppUser>.value(value: store.appUser),
         ChangeNotifierProvider<FleekData>.value(value: store.fleekData),
         ChangeNotifierProvider<ChatData>.value(value: store.chatData),
         ChangeNotifierProvider<ConversationData>.value(value: store.conversationData),
         ChangeNotifierProvider<MatchData>.value(value: store.matchData),
+        ChangeNotifierProvider<LikeData>.value(value: store.likeData),
         ChangeNotifierProvider<KeyPair>.value(value: KeyPair()),
         ChangeNotifierProvider<EncrypterState>.value(value: EncrypterState(null)),
         Provider<FlutterSecureStorage>.value(value: secureStorage),

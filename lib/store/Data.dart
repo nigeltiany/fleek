@@ -30,10 +30,6 @@ class FleekData with ChangeNotifier implements DataStore {
   SwipeCounter get swipeCounter => _swipeCounter;
 
   int get recentlyFetchedCount => _recentlyFetchedCount;
-
-  void clean() {
-    _streamController.close();
-  }
   
   FleekData () {
     _recentlyRemovedUserIDs = Map<SearchInterest, Set<String>>();
@@ -183,6 +179,7 @@ class FleekData with ChangeNotifier implements DataStore {
 
   @override
   void closeFirebaseStreams() {
+    _streamController?.close();
   }
 
 }

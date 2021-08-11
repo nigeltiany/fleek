@@ -21,8 +21,8 @@ class MatchData with ChangeNotifier implements DataStore {
   StreamSubscription<QuerySnapshot> _streamSubscription;
   Stream<FleekMatch> get matchStream => _matchStream;
 
-  MatchData(ConversationData conversationData) {
-    _matches = List<FleekMatch>();
+  MatchData() {
+    _matches = [];
     _matchDataStore = Map<String, FleekMatch>();
     _matchController = StreamController<FleekMatch>();
     _matchStream = _matchController.stream.asBroadcastStream();
@@ -92,13 +92,14 @@ class MatchData with ChangeNotifier implements DataStore {
 
   @override
   void clearData() {
-    _matches = List<FleekMatch>();
+    _matches = [];
     _matchDataStore = Map<String, FleekMatch>();
   }
 
   @override
   void closeFirebaseStreams() {
     _streamSubscription?.cancel();
+    _streamSubscription = null;
   }
 
 }
