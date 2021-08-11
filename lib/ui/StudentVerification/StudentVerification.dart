@@ -104,6 +104,7 @@ class _StudentVerificationScreenState extends State<StudentVerificationScreen> {
             lastName: _lastNameController.text,
             email: FirebaseAuth.instance.currentUser.email,
             studentEmail: _emailController.text,
+            verificationID: verificationID,
             verified: true,
           ),
         );

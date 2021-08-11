@@ -7,6 +7,7 @@ class UserPrivateDetails {
   String studentEmail;
   String phoneNumber;
   bool verified = true;
+  String verificationID;
 
   UserPrivateDetails({
     this.userID,
@@ -17,6 +18,7 @@ class UserPrivateDetails {
     this.studentEmail,
     this.phoneNumber,
     this.verified,
+    this.verificationID,
   });
 
   factory UserPrivateDetails.fromJson(Map<String, dynamic> parsedJson) {
@@ -28,6 +30,7 @@ class UserPrivateDetails {
       ..email = parsedJson["email"]
       ..studentEmail = parsedJson["studentEmail"]
       ..phoneNumber = parsedJson["phoneNumber"]
+      ..verificationID = parsedJson["verificationID"]
       ..verified = parsedJson["verified"] ?? false;
   }
 
@@ -40,6 +43,7 @@ class UserPrivateDetails {
       "email": this.email,
       "studentEmail": this.studentEmail,
       "phoneNumber": this.phoneNumber,
+      "verificationID": this.verificationID,
       "verified": this.verified,
     };
   }
