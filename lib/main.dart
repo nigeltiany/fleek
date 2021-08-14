@@ -307,7 +307,16 @@ class MyAppState extends State<MyApp> with WidgetsBindingObserver {
         // TODO: Handle this case.
         break;
       case NotificationType.MESSAGE:
-        push(_navigatorKey.currentContext, ChatScreen(identifiableUser: UserID(notification.senderUserID)));
+        Navigator.of(_navigatorKey.currentContext).pushAndRemoveUntil(
+          MaterialPageRoute(
+            builder: (context) {
+              return ChatScreen(identifiableUser: UserID(notification.senderUserID));
+            }
+          ),
+          (Route<dynamic> route) {
+            return !route.hasActiveRouteBelow;
+          }
+        );
         break;
       case NotificationType.UNKNOWN:
         break;

@@ -71,6 +71,7 @@ class ChatData with ChangeNotifier implements DataStore {
 
   void activeChatDone () {
     _earliestFirstMessage = null;
+    _chattingWith = null;
     if (_currentChatStream != null) {
       _currentChatStream.cancel();
     }
