@@ -10,6 +10,10 @@ abstract class IdentifiableUser {
   String get userID;
 }
 
+abstract class UserWithImage implements IdentifiableUser {
+  String profilePictureURL;
+}
+
 class UserID implements IdentifiableUser {
   final String _userID;
   UserID(this._userID);
@@ -17,7 +21,7 @@ class UserID implements IdentifiableUser {
   String get userID => _userID;
 }
 
-class AppUser with ChangeNotifier implements IdentifiableUser {
+class AppUser with ChangeNotifier implements IdentifiableUser, UserWithImage {
 
   String _userName;
   Firestore.Timestamp _birthDate;

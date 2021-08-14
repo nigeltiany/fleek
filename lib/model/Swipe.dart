@@ -25,7 +25,7 @@ SwipeType swipeTypeFromFirebaseString(String pref) {
   return SwipeType.LIKE;
 }
 
-class SwipeSubject implements IdentifiableUser {
+class SwipeSubject implements IdentifiableUser, UserWithImage {
 
   final AppUser _appUser;
 
@@ -55,6 +55,11 @@ class SwipeSubject implements IdentifiableUser {
         ..profilePictureURL = parsedJson['profilePictureURL'] ?? ''
         ..settings = Profile.Settings.fromJson(parsedJson['settings'] ?? Profile.Settings().toJson())
     );
+  }
+
+  @override
+  set profilePictureURL(String url) {
+    _appUser.profilePictureURL = url;
   }
 
 }

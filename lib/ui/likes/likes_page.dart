@@ -2,6 +2,7 @@ import 'dart:io';
 import 'dart:ui';
 
 import 'package:cached_network_image/cached_network_image.dart';
+import 'package:dating/components/UserImage.dart';
 import 'package:dating/constants.dart';
 import 'package:dating/model/Swipe.dart';
 import 'package:dating/model/User.dart';
@@ -75,27 +76,7 @@ class _LikesPageState extends State<LikesPage> {
         color: Color(COLOR_PRIMARY),
         child: ClipRRect(
           borderRadius: BorderRadius.circular(12),
-          child: CachedNetworkImage(
-            fit: BoxFit.cover,
-            imageUrl: like.subject.profilePictureURL,
-            progressIndicatorBuilder: (context, imageUrl, _) {
-              return Icon(
-                Icons.hourglass_empty,
-                size: 75,
-                color: isDarkMode(context) ? Colors.black : Colors.white,
-              );
-            },
-            errorWidget: (context, imageUrl, error) {
-              var errorWidget = Icon(Icons.error_outline,
-                size: 75,
-                color: isDarkMode(context) ? Colors.black : Colors.white,
-              );
-              if (error is HttpException && !recursiveCall) {
-                return profileSource(like, errorWidget);
-              }
-              return errorWidget;
-            },
-          ),
+          child: UserImage(userWithImage: like.subject),
         ),
       ),
     );

@@ -1,6 +1,7 @@
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:dating/components/PrimaryButton.dart';
 import 'package:dating/components/SecondaryButton.dart';
+import 'package:dating/components/UserImage.dart';
 import 'package:dating/constants.dart';
 import 'package:dating/model/Match.dart';
 import 'package:dating/services/helper.dart';
@@ -66,10 +67,7 @@ class _MatchScreenState extends State<MatchScreen> {
               return Stack(
                 fit: StackFit.expand,
                 children: [
-                  CachedNetworkImage(
-                    imageUrl: unseenMatches[index].match.profilePictureURL,
-                    fit: BoxFit.cover,
-                  ),
+                  UserImage(userWithImage: unseenMatches[index].match),
                   Padding(
                     padding: const EdgeInsets.only(bottom: 40.0),
                     child: Column(
