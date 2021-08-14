@@ -1,10 +1,13 @@
+import 'dart:io';
 import 'dart:ui';
 
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:dating/constants.dart';
 import 'package:dating/model/Swipe.dart';
+import 'package:dating/model/User.dart';
 import 'package:dating/services/FirebaseHelper.dart';
 import 'package:dating/services/helper.dart';
+import 'package:dating/store/ConversationData.dart';
 import 'package:dating/store/LikeData.dart';
 import 'package:dating/ui/userDetailsScreen/UserDetailsScreen.dart';
 import 'package:flutter/material.dart';
@@ -43,7 +46,7 @@ class _LikesPageState extends State<LikesPage> {
     );
   }
 
-  Widget _imageBuilder(Swipe like) {
+  Widget _imageBuilder(Swipe like, { bool recursiveCall = false }) {
     return GestureDetector(
       onTap: () async {
         await Navigator.of(context).push(
@@ -75,7 +78,7 @@ class _LikesPageState extends State<LikesPage> {
           child: CachedNetworkImage(
             fit: BoxFit.cover,
             imageUrl: like.subject.profilePictureURL,
-            placeholder: (context, imageUrl) {
+            progressIndicatorBuilder: (context, imageUrl, _) {
               return Icon(
                 Icons.hourglass_empty,
                 size: 75,
@@ -83,11 +86,14 @@ class _LikesPageState extends State<LikesPage> {
               );
             },
             errorWidget: (context, imageUrl, error) {
-              return Icon(
-                Icons.error_outline,
+              var errorWidget = Icon(Icons.error_outline,
                 size: 75,
                 color: isDarkMode(context) ? Colors.black : Colors.white,
               );
+              if (error is HttpException && !recursiveCall) {
+                return profileSource(like, errorWidget);
+              }
+              return errorWidget;
             },
           ),
         ),
@@ -113,6 +119,29 @@ class _LikesPageState extends State<LikesPage> {
         );
       },
     );
+  }
+
+  Widget profileSource (Swipe like, Widget errorWidget) {
+    var likedUser = Provider.of<ConversationData>(context, listen: false).getUser(like.subject.userID);
+    if (likedUser == null) {
+      return FutureBuilder<AppUser>(
+        future: FireStoreUtils.getUserByID(like.subject.userID).then((user) {
+          Provider.of<ConversationData>(context, listen: false).addConversationUser(user);
+          like.subject = SwipeSubject.fromUser(user);
+          return user;
+        }),
+        builder: (BuildContext context, AsyncSnapshot<AppUser> snapshot) {
+          if (snapshot.connectionState == ConnectionState.waiting) {
+            return CircularProgressIndicator();
+          } else if (snapshot.hasData) {
+            return _imageBuilder(like, recursiveCall: true);
+          }
+          return errorWidget;
+        },
+      );
+    }
+    like.subject = SwipeSubject.fromUser(likedUser);
+    return _imageBuilder(like, recursiveCall: true);
   }
 
 }

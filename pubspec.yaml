@@ -6,7 +6,7 @@ environment:
   sdk: ">=2.8.0 <3.0.0"
 
 dependencies:
-  cached_network_image: ^2.5.0
+  cached_network_image: ^2.5.1
   cloud_firestore: ^0.14.4
   cloud_functions: ^0.7.2
   cryptography: ^1.4.1
