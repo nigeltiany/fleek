@@ -1,10 +1,12 @@
 import 'dart:async';
 import 'dart:io';
+import 'dart:ui';
 
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:dating/components/Avatar.dart';
+import 'package:dating/components/Snackbars.dart';
 import 'package:dating/constants.dart';
-import 'package:dating/model/Swipe.dart';
+import 'package:dating/services/file_encryption.dart';
 import 'package:dating/store/ChatData.dart';
 import 'package:dating/store/ConversationData.dart';
 import 'package:dating/store/KeyPair.dart';
@@ -16,6 +18,7 @@ import 'package:dating/ui/chat/helpers.dart';
 import 'package:flutter_sound/flutter_sound.dart';
 import 'package:mime/mime.dart' show lookupMimeType;
 import 'package:gecies/gecies.dart';
+import 'package:permission_handler/permission_handler.dart';
 import 'package:provider/provider.dart';
 import 'package:dating/model/ConversationModel.dart';
 import 'package:dating/model/MessageData.dart';
@@ -62,6 +65,9 @@ class _ChatScreenState extends State<ChatScreen> {
   String tempPathForAudioMessages;
   AppUser chatWithUser;
   FlutterSoundRecorder _soundRecorder = FlutterSoundRecorder();
+
+  OverlayEntry customSnackBar;
+  OverlayWithUpdater customProgressBar;
 
   ChatData chatData;
 
@@ -237,7 +243,9 @@ class _ChatScreenState extends State<ChatScreen> {
       child: Row(
         children: <Widget>[
           IconButton(
-            onPressed: _onCameraClick,
+            onPressed: () {
+              _onCameraClick(context);
+            },
             icon: Icon(
               Icons.camera_alt,
               color: Color(COLOR_PRIMARY),
@@ -432,7 +440,7 @@ class _ChatScreenState extends State<ChatScreen> {
     );
   }
 
-  _onCameraClick() {
+  _onCameraClick(BuildContext context) {
 
     final action = Container(
       color: isDarkMode(context) ? Color(DARK_MODE_SCAFFOLD) : Colors.white,
@@ -458,11 +466,7 @@ class _ChatScreenState extends State<ChatScreen> {
                 onTap: () async {
                   Navigator.pop(context);
                   PickedFile image = await _imagePicker.getImage(source: ImageSource.camera);
-                  if (image != null) {
-                    var encryptionResult = await encryptFileAtPath(image.path);
-                    String url = await FireStoreUtils.uploadChatImageToFireStorage(context, encryptionResult.file, normalizedConversationID(currentUser.userID, chatWithUser.userID));
-                    await _sendMessage(encryptionResult.fileSecret.toString(), Url(url: url, mime: lookupMimeType(image.path)));
-                  }
+                  _sendImage(image);
                 },
               ),
               ListTile(
@@ -471,11 +475,7 @@ class _ChatScreenState extends State<ChatScreen> {
                 onTap: () async {
                   Navigator.pop(context);
                   PickedFile image = await _imagePicker.getImage(source: ImageSource.gallery);
-                  if (image != null) {
-                    var encryptionResult = await encryptFileAtPath(image.path);
-                    String url = await FireStoreUtils.uploadChatImageToFireStorage(context, encryptionResult.file, normalizedConversationID(currentUser.userID, chatWithUser.userID));
-                    _sendMessage(encryptionResult.fileSecret.toString(), Url(url: url, mime: lookupMimeType(image.path)));
-                  }
+                  _sendImage(image);
                 },
               ),
             ],
@@ -550,6 +550,32 @@ class _ChatScreenState extends State<ChatScreen> {
 
   }
 
+  _sendImage(PickedFile image) async {
+    if (image != null) {
+      _clearExistingSnackBars();
+      customSnackBar = showEncryptingSnackBar(context, FileType.IMAGE);
+      await encryptFileAtPath(image.path).catchError((e) {
+        customSnackBar.remove();
+        _showAlertDialog(context, "Encryption Error", "Unable to encrypt image");
+      }).then((EncryptionResult encryptionResult) async {
+        customSnackBar.remove();
+        customProgressBar = showUploadingSnackBar(context);
+        await FireStoreUtils.uploadChatImageToFireStorage(
+          context,
+          encryptionResult.file,
+          normalizedConversationID(currentUser.userID, chatWithUser.userID),
+          progressCallback: customProgressBar.updatedCallback
+        ).catchError((e) {
+          customProgressBar.overlayEntry.remove();
+          _showAlertDialog(context, "Upload Error", "Unable to upload image");
+        }).then((String url) async {
+          customProgressBar.overlayEntry.remove();
+          await _sendMessage(encryptionResult.fileSecret.toString(), Url(url: url, mime: lookupMimeType(image.path)));
+        });
+      });
+    }
+  }
+
   _sendMessage(String content, Url url) async {
 
     if (content.trim().isEmpty) {
@@ -587,10 +613,9 @@ class _ChatScreenState extends State<ChatScreen> {
     message.content.content[currentUser.userID] = myMessage;
     message.content.content[message.recipientID] = otherUsersMessage;
 
-    String notificationText = "";
+    String notificationText = "${message.senderUsername} sent you a message";
     if (url == null) {
       conversationModel.lastMessage = message.content;
-      notificationText = "${message.senderUsername} sent you a message";
     } else {
       if (url.mime.contains('image')) {
         notificationText = "${message.senderUsername} sent you a photo";
@@ -599,7 +624,7 @@ class _ChatScreenState extends State<ChatScreen> {
       } else if (url.mime.contains('audio')) {
         notificationText = "${message.senderUsername} sent you a recording";
       }
-      var myText = await currentUsersEncrypter(notificationText);
+      var myText = await currentUsersEncrypter(notificationText.replaceFirst("${message.senderUsername}", "You").replaceFirst("you a", "a"));
       var otherUsersText = await otherUsersEncrypter(notificationText);
       conversationModel.lastMessage = Content(content: {
         "${currentUser.userID}" : myText,
@@ -715,10 +740,26 @@ class _ChatScreenState extends State<ChatScreen> {
       currentRecordingState = RecordingState.HIDDEN;
     });
 
-    var encryptionResult = await encryptFileAtPath(_path);
-    Url url = await FireStoreUtils.uploadAudioFile(encryptionResult.file, context);
+    _clearExistingSnackBars();
+    customSnackBar = showEncryptingSnackBar(context, FileType.AUDIO);
+    await encryptFileAtPath(_path).catchError((e) {
+      customSnackBar.remove();
+      _showAlertDialog(context, "Encryption Error", "Unable to encrypt recording");
+    }).then((EncryptionResult encryptionResult) async {
+      customSnackBar.remove();
+      customProgressBar = showUploadingSnackBar(context);
+      await FireStoreUtils.uploadAudioFile(
+        encryptionResult.file,
+        context,
+        progressCallback: customProgressBar.updatedCallback
+      ).catchError((e) {
+        customProgressBar.overlayEntry.remove();
+        _showAlertDialog(context, "Encryption Error", "Unable to upload audio message");
+      }).then((Url url) async {
+        await _sendMessage(encryptionResult.fileSecret.toString(), url);
+      });
+    });
 
-    await _sendMessage(encryptionResult.fileSecret.toString(), url);
     await _soundRecorder.closeAudioSession();
     Directory(_path).deleteSync(recursive: true);
 
@@ -738,6 +779,13 @@ class _ChatScreenState extends State<ChatScreen> {
   }
 
   _onStartRecording(BuildContext innerContext) async {
+
+    var perm = await Permission.microphone.request();
+    if (perm != PermissionStatus.granted) {
+      _onMicClicked();
+      return;
+    }
+
     await _soundRecorder.openAudioSession().then((value) {
       _soundRecorder.startRecorder(
         codec: Codec.aacADTS,
@@ -757,6 +805,19 @@ class _ChatScreenState extends State<ChatScreen> {
     }).catchError((_) {
       _showAlertDialog(context, "Recording Error", "Unable to create and send a recording");
     });
+  }
+
+  _clearExistingSnackBars () {
+    if (customSnackBar != null) {
+      if (customSnackBar.mounted) {
+        customSnackBar.remove();
+      }
+    }
+    if (customProgressBar != null) {
+      if (customProgressBar.overlayEntry.mounted) {
+        customProgressBar.overlayEntry.remove();
+      }
+    }
   }
 
 }

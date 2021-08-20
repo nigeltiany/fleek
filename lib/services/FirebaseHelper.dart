@@ -130,26 +130,33 @@ class FireStoreUtils {
 
   }
 
-  static Future<String> uploadChatImageToFireStorage(BuildContext context, File image, String conversationID) async {
+  static void _progressCallback(TaskSnapshot event) {
+    updateProgress(
+      'Uploading image ${(event.bytesTransferred.toDouble() / 1000)
+      .toStringAsFixed(2)} /'
+      '${(event.totalBytes.toDouble() / 1000)
+      .toStringAsFixed(2)} '
+      'KB'
+    );
+  }
 
-    showProgress(context, 'Uploading image...', false);
+  static Future<String> uploadChatImageToFireStorage(BuildContext context, File image, String conversationID, { Function (TaskSnapshot event) progressCallback }) async {
+
+    if (progressCallback == null) {
+      showProgress(context, 'Uploading image...', false);
+    }
 
     var uniqueID = Uuid().v4();
     Reference upload = storage.child("conversation_images/${conversationID.replaceAll(USER_ID_DELIMITER, "-u0u-")}/$uniqueID${_getFileExtension(image)}");
     UploadTask uploadTask = upload.putFile(image);
 
-    uploadTask.snapshotEvents.listen((event) {
-      updateProgress(
-        'Uploading image ${(event.bytesTransferred.toDouble() / 1000)
-          .toStringAsFixed(2)} /'
-          '${(event.totalBytes.toDouble() / 1000)
-          .toStringAsFixed(2)} '
-          'KB'
-      );  
-    });
+    uploadTask.snapshotEvents.listen(progressCallback == null ? _progressCallback : progressCallback);
 
     await uploadTask;
-    Navigator.of(context).pop();
+
+    if (progressCallback == null) {
+      Navigator.of(context).pop();
+    }
 
     return uploadTask.snapshot.ref.getDownloadURL();
 
@@ -474,26 +481,33 @@ class FireStoreUtils {
 
   }
 
-  static Future<Url> uploadAudioFile(file, BuildContext context) async {
+  static Future<Url> uploadAudioFile(file, BuildContext context, { Function (TaskSnapshot event) progressCallback }) async {
 
-    showProgress(context, 'Uploading Audio...', false);
+    if (progressCallback == null) {
+      showProgress(context, 'Uploading Audio...', false);
+    }
 
     var uniqueID = Uuid().v4();
     Reference upload = storage.child("audio/$uniqueID.mp3");
     UploadTask uploadTask = upload.putFile(file);
 
-    uploadTask.snapshotEvents.listen((event) {
+    var defaultCallback = (event) {
       updateProgress(
-        'Uploading image ${(event.bytesTransferred.toDouble() / 1000)
+        'Uploading Audio Message ${(event.bytesTransferred.toDouble() / 1000)
         .toStringAsFixed(2)} /'
         '${(event.totalBytes.toDouble() / 1000)
         .toStringAsFixed(2)} '
         'KB'
       );
-    });
+    };
+
+    uploadTask.snapshotEvents.listen(progressCallback == null ? defaultCallback : progressCallback);
 
     await uploadTask;
-    Navigator.of(context).pop();
+
+    if (progressCallback == null) {
+      Navigator.of(context).pop();
+    }
 
     String url = await uploadTask.snapshot.ref.getDownloadURL();
     return Url(
