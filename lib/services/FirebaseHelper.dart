@@ -86,17 +86,13 @@ class FireStoreUtils {
   }
 
   static Future<void> updateLikeAsSeen(Swipe like) async {
-    var subject = like.subject.toJson();
-    subject.removeWhere((key, value) => key != "profilePictureURL");
+    like.hasBeenSeen = true;
     FirebaseFirestore.instance
       .collection(SWIPES)
       .doc(FirebaseAuth.instance.currentUser.uid)
       .collection(SWIPES_SUB_COLLECTION)
       .doc(like.id)
-      .set({
-        "hasBeenSeen": true,
-        "subject": subject,
-      }, SetOptions(merge: true));
+      .set(like.toJson(), SetOptions(merge: true));
   }
 
   static Future<String> uploadUserImageToFireStorage(AppUser user, File image, ImageType imageType) async {

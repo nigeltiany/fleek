@@ -59,23 +59,27 @@ class LikeData with ChangeNotifier implements DataStore {
 
   _listenForLikes(User user) {
     _streamSubscription = _likesQuery().snapshots().listen((querySnapshot) {
+
+      querySnapshot.docChanges.forEach((docChange) {
+
+        if (docChange.type == DocumentChangeType.removed) {
+          _likesDataStore.removeWhere((key, _) => key == docChange.doc.id);
+          _likes.removeWhere((like) => like.id == docChange.doc.id);
+        } else if (docChange.type == DocumentChangeType.added) {
+          _addLike(Swipe.fromJson(docChange.doc.data()));
+        }
+
+      });
+
       if (querySnapshot.docChanges.isNotEmpty) {
-        _likesDataStore.removeWhere((key, _) => key == querySnapshot.docChanges.first.doc.id);
-        _likes.removeWhere((like) => like.id == querySnapshot.docChanges.first.doc.id);
-        querySnapshot.docChanges.forEach((change) {
-          _addLike(Swipe.fromJson(change.doc.data()));
+        _likes.sort((Swipe a, Swipe b) {
+          Timestamp first = (a.createdAt ?? Timestamp.now());
+          Timestamp second = (b.createdAt ?? Timestamp.now());
+          return first.compareTo(second) * -1;
         });
         notifyListeners();
-      } else {
-        querySnapshot.docs.forEach((doc) {
-          _addLike(Swipe.fromJson(doc.data()));
-        });
       }
-      _likes.sort((Swipe a, Swipe b) {
-        Timestamp first = (a.createdAt ?? Timestamp.now());
-        Timestamp second = (b.createdAt ?? Timestamp.now());
-        return first.compareTo(second) * -1;
-      });
+
     });
   }
 
