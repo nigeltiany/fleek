@@ -220,6 +220,7 @@ class _AccountDetailsScreenState extends State<AccountDetailsScreen> {
 
                 user.signedIn = false;
                 user.settings.showMe = false;
+                user.online = false;
                 user.lastOnlineTimestamp = Timestamp.now();
                 await FireStoreUtils.updateCurrentUser(user);
                 await FirebaseAuth.instance.signOut();
