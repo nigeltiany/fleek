@@ -53,7 +53,7 @@ class _LikesPageState extends State<LikesPage> {
         await Navigator.of(context).push(
           MaterialPageRoute(
             builder: (context) => UserDetailsScreen(
-              identifiableUser: like.subject,
+              identifiableUser: like.swiper,
               isMatch: false,
             ),
           ),
@@ -76,7 +76,7 @@ class _LikesPageState extends State<LikesPage> {
         color: Color(COLOR_PRIMARY),
         child: ClipRRect(
           borderRadius: BorderRadius.circular(12),
-          child: UserImage(userWithImage: like.subject),
+          child: UserImage(userWithImage: like.swiper),
         ),
       ),
     );
@@ -102,27 +102,27 @@ class _LikesPageState extends State<LikesPage> {
     );
   }
 
-  Widget profileSource (Swipe like, Widget errorWidget) {
-    var likedUser = Provider.of<ConversationData>(context, listen: false).getUser(like.subject.userID);
-    if (likedUser == null) {
-      return FutureBuilder<AppUser>(
-        future: FireStoreUtils.getUserByID(like.subject.userID).then((user) {
-          Provider.of<ConversationData>(context, listen: false).addConversationUser(user);
-          like.subject = SwipeSubject.fromUser(user);
-          return user;
-        }),
-        builder: (BuildContext context, AsyncSnapshot<AppUser> snapshot) {
-          if (snapshot.connectionState == ConnectionState.waiting) {
-            return CircularProgressIndicator();
-          } else if (snapshot.hasData) {
-            return _imageBuilder(like, recursiveCall: true);
-          }
-          return errorWidget;
-        },
-      );
-    }
-    like.subject = SwipeSubject.fromUser(likedUser);
-    return _imageBuilder(like, recursiveCall: true);
-  }
+  // Widget profileSource (Swipe like, Widget errorWidget) {
+  //   var likedUser = Provider.of<ConversationData>(context, listen: false).getUser(like.swiper.userID);
+  //   if (likedUser == null) {
+  //     return FutureBuilder<AppUser>(
+  //       future: FireStoreUtils.getUserByID(like.swiper.userID).then((user) {
+  //         Provider.of<ConversationData>(context, listen: false).addConversationUser(user);
+  //         like.swiper = SwipeSubject.fromUser(user);
+  //         return user;
+  //       }),
+  //       builder: (BuildContext context, AsyncSnapshot<AppUser> snapshot) {
+  //         if (snapshot.connectionState == ConnectionState.waiting) {
+  //           return CircularProgressIndicator();
+  //         } else if (snapshot.hasData) {
+  //           return _imageBuilder(like, recursiveCall: true);
+  //         }
+  //         return errorWidget;
+  //       },
+  //     );
+  //   }
+  //   like.swiper = SwipeSubject.fromUser(likedUser);
+  //   return _imageBuilder(like, recursiveCall: true);
+  // }
 
 }

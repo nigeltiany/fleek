@@ -44,11 +44,9 @@ class LikeData with ChangeNotifier implements DataStore {
   }
 
   Query _likesQuery() {
-    return FirebaseFirestore.instance
-      .collection(SWIPES)
-      .doc(FirebaseAuth.instance.currentUser.uid)
-      .collection(SWIPES_SUB_COLLECTION)
+    return FirebaseFirestore.instance.collectionGroup(SWIPES_SUB_COLLECTION)
       .where('type', whereIn: [SwipeType.LIKE.toFirebaseString(), SwipeType.SUPER_LIKE.toFirebaseString()])
+      .where('subject.id', isEqualTo: FirebaseAuth.instance.currentUser.uid)
       .orderBy('createdAt', descending: true);
   }
 

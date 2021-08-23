@@ -28,10 +28,14 @@ class _UserImageState extends State<UserImage> {
   Widget build(BuildContext context) {
 
     if (widget.userWithImage.profilePictureURL == null || widget.userWithImage.profilePictureURL.isEmpty) {
-      return Icon(
-        Icons.account_circle,
-        size: MediaQuery.of(context).size.width * .8,
-        color: isDarkMode(context) ? Colors.black : Colors.white,
+      return LayoutBuilder(
+        builder: (BuildContext context, BoxConstraints constraints) {
+          return Icon(
+            Icons.account_circle,
+            size: constraints.maxWidth * .8,
+            color: isDarkMode(context) ? Colors.black : Colors.white,
+          );
+        },
       );
     }
 
