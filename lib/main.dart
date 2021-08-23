@@ -242,15 +242,14 @@ class MyAppState extends State<MyApp> with WidgetsBindingObserver {
       AppUser databaseAppUserState = await FireStoreUtils.getCurrentUser();
       UserPrivateDetails userPrivateDetails = await FireStoreUtils.getCurrentUserPrivateDetails();
 
-
       if (databaseAppUserState == null) {
-        userFetched = true;
         store.appUser.userID = u.uid;
         store.appUser.signedIn = true;
-      } else {
         userFetched = true;
+      } else {
         store.appUser.signedIn = true;
         store.appUser.copy(databaseAppUserState);
+        userFetched = true;
         await FireStoreUtils.updateCurrentUser(store.appUser);
       }
 
@@ -282,6 +281,8 @@ class MyAppState extends State<MyApp> with WidgetsBindingObserver {
 
   @override
   void didChangeAppLifecycleState(AppLifecycleState state) {
+    // if userFetched equals to false, updating the database will save an empty user object
+    // only update the current user when user is fetched with the user data from the server copy
     if (FirebaseAuth.instance.currentUser != null && userFetched) {
       if (state == AppLifecycleState.paused) {
         tokenStream?.pause();
