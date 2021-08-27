@@ -67,6 +67,12 @@ class LikeData with ChangeNotifier implements DataStore {
           _likes.removeWhere((like) => like.id == docChange.doc.id);
         } else if (docChange.type == DocumentChangeType.added) {
           _addLike(Swipe.fromJson(docChange.doc.data()));
+        } else if (docChange.type == DocumentChangeType.modified) {
+          var like = Swipe.fromJson(docChange.doc.data());
+          if (like.type == SwipeType.PASS) {
+            _likesDataStore.removeWhere((key, _) => key == docChange.doc.id);
+            _likes.removeWhere((like) => like.id == docChange.doc.id);
+          }
         }
 
       });
